@@ -43,10 +43,14 @@ struct TopShelfSnapshot: Codable {
     static let appGroup = Bundle.main.object(forInfoDictionaryKey: "MnemeAppGroup") as? String ?? ""
     private static let key = "topShelfSnapshot"
 
+    /// In the group's caches: on tvOS that is the one place in a shared
+    /// container an app may write, and writing at its top level fails.
+    /// Caches can be cleared; the app writes the shelf again at every home
+    /// load.
     static var imagesFolder: URL? {
         FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: appGroup)?
-            .appending(path: "TopShelf", directoryHint: .isDirectory)
+            .appending(path: "Library/Caches/TopShelf", directoryHint: .isDirectory)
     }
 
     static func load() -> TopShelfSnapshot? {

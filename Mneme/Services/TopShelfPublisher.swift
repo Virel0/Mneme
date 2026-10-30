@@ -14,13 +14,21 @@ import TVServices
 /// Puts the home's rows on the Apple TV home screen: Continue Watching and
 /// Next Up as wide pictures that play, Latest Movies and Latest Shows as
 /// posters that open the title.
+@MainActor
 enum TopShelfPublisher {
 
     private static let itemLimit = 10
 
     static func publish(_ home: WatchHome, client: MeleteClient) async {
-        guard let folder = TopShelfSnapshot.imagesFolder else { return }
-        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        guard let folder = TopShelfSnapshot.imagesFolder else {
+            PlaybackDiagnostics.shared.record("topshelf", "no app group container")
+            return
+        }
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        } catch {
+            PlaybackDiagnostics.shared.record("topshelf", "cannot make the picture folder: \(error.localizedDescription)")
+        }
 
         func row(_ key: WatchHomeRow.Key) -> [WatchHomeItem] {
             Array((home.rows.first { $0.key == key }?.items ?? []).prefix(itemLimit))
@@ -49,6 +57,8 @@ enum TopShelfPublisher {
             }
         }
 
+        let items = sections.flatMap(\.items)
+        PlaybackDiagnostics.shared.record("topshelf", "\(items.count(where: { $0.imageURL != nil })) of \(items.count) pictures saved")
         TopShelfSnapshot(sections: sections, updatedAt: .now).save()
         prune(folder, keeping: Set(sections.flatMap(\.items).compactMap(\.imageURL?.lastPathComponent)))
         TVTopShelfContentProvider.topShelfContentDidChange()
