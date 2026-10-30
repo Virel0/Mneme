@@ -171,14 +171,51 @@ final class PlayerSession {
         isPaused.toggle()
     }
 
+    /// Where the playhead is going, while a seek is on its way. The clock
+    /// still reports the old place until the seek lands, so jumps add up from
+    /// here and the seek bar shows it.
+    private(set) var seekGoal: Double?
+
+    @ObservationIgnored
+    private var pendingSeek: Double?
+    @ObservationIgnored
+    private var seekTask: Task<Void, Never>?
+
+    /// Where the viewer is, as far as they are concerned: where a seek is
+    /// heading, else the playhead.
+    var shownPosition: Double {
+        seekGoal ?? position
+    }
+
+    /// Seeks one at a time, the latest target winning. Five quick presses
+    /// were five seeks queued in the engine, each starting from a picture
+    /// the last one had already moved away from.
     func seek(to seconds: Double) {
         guard let engine else { return }
-        let clamped = min(max(0, seconds), max(0, duration - 1))
-        Task { await engine.seek(to: clamped) }
+        let target = min(max(0, seconds), max(0, duration - 1))
+        seekGoal = target
+        pendingSeek = target
+        guard seekTask == nil else { return }
+
+        seekTask = Task {
+            while let target = pendingSeek {
+                pendingSeek = nil
+                let started = Date.now
+                let from = position
+                await engine.seek(to: target)
+                PlaybackDiagnostics.shared.record(
+                    "seek",
+                    String(format: "%.0fs to %.0fs in %.2fs", from, target, Date.now.timeIntervalSince(started)),
+                    seconds: engine.clock.currentTime
+                )
+            }
+            seekGoal = nil
+            seekTask = nil
+        }
     }
 
     func jump(by seconds: Double) {
-        seek(to: position + seconds)
+        seek(to: shownPosition + seconds)
     }
 
     func skip(_ offer: SkipOffer) {

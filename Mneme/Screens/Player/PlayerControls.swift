@@ -19,7 +19,6 @@ struct PlayerControls: View {
     let scrubTarget: Double?
     var focus: FocusState<PlayerFocus?>.Binding
     let select: () -> Void
-    let move: (MoveCommandDirection) -> Void
     let openPicker: (TrackPicker.Kind) -> Void
 
     var body: some View {
@@ -44,7 +43,7 @@ struct PlayerControls: View {
 
                 Spacer()
 
-                SeekBar(session: session, previews: previews, scrubTarget: scrubTarget, select: select, move: move)
+                SeekBar(session: session, previews: previews, scrubTarget: scrubTarget, select: select)
                     .focused(focus, equals: .bar)
 
                 HStack(spacing: 18) {
@@ -77,10 +76,9 @@ private struct SeekBar: View {
     let previews: TrickplayPreviews?
     let scrubTarget: Double?
     let select: () -> Void
-    let move: (MoveCommandDirection) -> Void
 
     private var shown: Double {
-        scrubTarget ?? session.position
+        scrubTarget ?? session.shownPosition
     }
 
     private func fraction(_ seconds: Double) -> CGFloat {
@@ -95,7 +93,7 @@ private struct SeekBar: View {
                     let width = proxy.size.width
                     ZStack(alignment: .leading) {
                         Capsule().fill(.white.opacity(0.25))
-                        Capsule().fill(.white).frame(width: width * fraction(session.position))
+                        Capsule().fill(.white).frame(width: width * fraction(session.shownPosition))
                         if let scrubTarget {
                             Capsule()
                                 .fill(.white)
@@ -122,7 +120,6 @@ private struct SeekBar: View {
             }
         }
         .buttonStyle(BareButtonStyle())
-        .onMoveCommand(perform: move)
     }
 
     @ViewBuilder

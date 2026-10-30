@@ -11,12 +11,11 @@ import SwiftUI
 
 /// The full-screen player and what the remote does in it.
 ///
-/// With the controls hidden: Select skips the part on offer, plays the next
-/// episode while it counts down, or pauses; Left and Right start scrubbing;
-/// Menu turns away the next episode, else leaves. With them showing, Left
-/// and Right move the scrub point ten seconds at a time over the seek bar's
-/// previews, Select jumps there, Down reaches Audio and Subtitles, and Menu
-/// puts them away.
+/// A click on the remote's left or right edge jumps ten seconds at once; a
+/// swipe across its surface scrubs, with the seek bar's previews, and Select
+/// jumps to where the swipe stopped. Select otherwise presses the Skip or
+/// Next Episode on offer, or pauses. Down reaches Audio and Subtitles. Menu
+/// backs out one layer at a time.
 struct PlayerView: View {
 
     @Environment(Library.self)
@@ -35,6 +34,9 @@ struct PlayerView: View {
     /// Where Select will jump to, while scrubbing.
     @State
     private var scrubTarget: Double?
+    /// Where a swipe started scrubbing from.
+    @State
+    private var swipeStart: Double?
     @State
     private var picker: TrackPicker.Kind?
     @State
@@ -107,6 +109,14 @@ struct PlayerView: View {
         if case let .failed(message) = session.phase {
             PlaybackFailure(message: message, leave: leave)
         } else {
+            RemoteInput(
+                onClick: click,
+                onSwipeBegan: beginSwipe,
+                onSwipeChanged: swipe,
+                onSwipeEnded: { swipeStart = nil }
+            )
+            .allowsHitTesting(false)
+
             remoteCatcher(session)
 
             if let offer = session.skipOffer, !controlsVisible, !session.isOfferingNext {
@@ -128,7 +138,6 @@ struct PlayerView: View {
                     scrubTarget: scrubTarget,
                     focus: $focus,
                     select: selectOnBar,
-                    move: moveOnBar,
                     openPicker: { picker = $0 }
                 )
                 .transition(.opacity)
@@ -165,12 +174,11 @@ struct PlayerView: View {
         .buttonStyle(BareButtonStyle())
         .focused($focus, equals: .catcher)
         .disabled(controlsVisible || picker != nil)
+        // Left and Right are `RemoteInput`'s: a click jumps, a swipe scrubs.
         .onMoveCommand { direction in
             touch()
-            switch direction {
-            case .left: scrub(by: -Self.scrubStep)
-            case .right: scrub(by: Self.scrubStep)
-            default: showControls()
+            if direction == .up || direction == .down {
+                showControls()
             }
         }
     }
@@ -200,20 +208,38 @@ struct PlayerView: View {
         }
     }
 
-    private func moveOnBar(_ direction: MoveCommandDirection) {
+    // MARK: - Clicks and swipes
+
+    /// A click jumps ten seconds at once; while scrubbing it nudges the scrub
+    /// point instead. Ignored while focus is on the buttons under the bar,
+    /// where Left and Right move between them.
+    private func click(_ edge: RemoteInput.Edge) {
+        guard let session, picker == nil, focus == .catcher || focus == .bar else { return }
         touch()
-        switch direction {
-        case .left: scrub(by: -Self.scrubStep)
-        case .right: scrub(by: Self.scrubStep)
-        default: break
+        let step = edge == .left ? -Self.scrubStep : Self.scrubStep
+        if let target = scrubTarget {
+            scrubTarget = min(max(0, target + step), session.duration)
+        } else {
+            session.jump(by: step)
+            showControls()
         }
     }
 
-    private func scrub(by seconds: Double) {
-        guard let session else { return }
+    private func beginSwipe() {
+        guard let session, picker == nil, focus == .catcher || focus == .bar else { return }
+        touch()
+        swipeStart = scrubTarget ?? session.shownPosition
         showControls()
-        let from = scrubTarget ?? session.position
-        scrubTarget = min(max(0, from + seconds), session.duration)
+    }
+
+    /// A thumb across the whole surface moves a fifth of the film, between
+    /// three and twenty minutes, so a long film and a short episode both
+    /// scrub at a speed that can be followed.
+    private func swipe(_ fraction: CGFloat) {
+        guard let session, let start = swipeStart else { return }
+        touch()
+        let span = min(max(session.duration * 0.2, 180), 1200)
+        scrubTarget = min(max(0, start + Double(fraction) * span), session.duration)
     }
 
     private func showControls() {
