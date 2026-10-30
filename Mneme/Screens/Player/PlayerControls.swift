@@ -100,7 +100,10 @@ private struct SeekBar: View {
                                 .frame(width: 4, height: 28)
                                 .offset(x: width * fraction(scrubTarget) - 2)
                             preview(at: scrubTarget)
-                                .offset(x: min(max(0, width * fraction(scrubTarget) - 160), width - 320), y: -220)
+                                .offset(
+                                    x: min(max(0, width * fraction(scrubTarget) - Self.previewWidth / 2), width - Self.previewWidth),
+                                    y: -(Self.previewWidth / (previews?.aspectRatio ?? 16 / 9)) - 40
+                                )
                         }
                     }
                 }
@@ -127,13 +130,17 @@ private struct SeekBar: View {
         if let image = previews?.image(at: seconds) {
             Image(decorative: image, scale: 1)
                 .resizable()
+                .interpolation(.high)
                 .aspectRatio(previews?.aspectRatio ?? 16 / 9, contentMode: .fit)
-                .frame(width: 320)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(.white, lineWidth: 2))
-                .shadow(radius: 12)
+                .frame(width: Self.previewWidth)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .shadow(color: .black.opacity(0.6), radius: 20, y: 8)
         }
     }
+
+    /// Melete's previews are 320 pixels wide; drawn larger, they are still
+    /// clear enough to find a scene by.
+    static let previewWidth: CGFloat = 560
 
     /// "1:02:03", "4:05".
     static func clock(_ seconds: Double) -> String {
@@ -147,44 +154,69 @@ private struct SeekBar: View {
     }
 }
 
-/// "Skip Intro", drawn as the focused button it acts as: Select presses it
-/// from anywhere while it shows.
-struct SkipBadge: View {
+/// "Skip Intro". Takes focus when it appears, so Select presses it.
+struct SkipButton: View {
 
     let title: String
+    let action: () -> Void
 
     var body: some View {
-        Label(title, systemImage: "forward.end.fill")
-            .font(.system(size: 26, weight: .semibold))
-            .foregroundStyle(.black)
-            .padding(.horizontal, 32)
-            .padding(.vertical, 18)
-            .background(.white, in: Capsule())
-            .shadow(color: .black.opacity(0.5), radius: 14, y: 6)
+        Button(action: action) {
+            Label(title, systemImage: "forward.end.fill")
+                .font(.system(size: 26, weight: .semibold))
+                .padding(.horizontal, 32)
+                .padding(.vertical, 18)
+        }
+        .buttonStyle(OfferButtonStyle())
     }
 }
 
-/// The next episode, counting down over the credits. Select plays it now;
-/// Menu turns it away.
-struct NextUpCard: View {
+/// The next episode, counting down over the credits. Takes focus when it
+/// appears: Select plays it now, Menu turns it away.
+struct NextUpButton: View {
 
     let next: PlayTarget
     let secondsLeft: Int
+    let action: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Next Episode in \(secondsLeft)")
-                .font(.headline)
-            Text(next.label)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-            Text("Select to play now · Menu to keep watching")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        Button(action: action) {
+            HStack(spacing: 20) {
+                Image(systemName: "play.fill")
+                    .font(.system(size: 30, weight: .bold))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Next Episode in \(secondsLeft)")
+                        .font(.headline)
+                    Text(next.label)
+                        .font(.callout)
+                        .opacity(0.75)
+                        .lineLimit(1)
+                }
+            }
+            .padding(.horizontal, 32)
+            .padding(.vertical, 22)
+            .frame(width: 580, alignment: .leading)
         }
-        .padding(28)
-        .frame(width: 560, alignment: .leading)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .buttonStyle(OfferButtonStyle())
+    }
+}
+
+/// White when focused, as every focused button in the player is; a dark
+/// plate otherwise, so the offer is still readable over the picture.
+private struct OfferButtonStyle: ButtonStyle {
+
+    @Environment(\.isFocused)
+    private var isFocused
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(isFocused ? .black : .white)
+            .background(
+                isFocused ? Color.white : Color.black.opacity(0.7),
+                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+            )
+            .scaleEffect(configuration.isPressed ? 0.97 : (isFocused ? 1.04 : 1))
+            .shadow(color: .black.opacity(0.5), radius: 14, y: 6)
+            .animation(.easeOut(duration: 0.15), value: isFocused)
     }
 }

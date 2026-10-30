@@ -81,6 +81,25 @@ struct PlayerView: View {
             default: break
             }
         }
+        // An offer takes focus when it appears, so Select presses it, and
+        // gives it back when it goes.
+        .onChange(of: session?.isOfferingNext) { _, offering in
+            if offering == true {
+                if controlsVisible {
+                    hideControls()
+                }
+                moveFocus(to: .nextUp)
+            } else if focus == .nextUp {
+                moveFocus(to: .catcher)
+            }
+        }
+        .onChange(of: session?.skipOffer != nil) { _, offered in
+            if offered, !controlsVisible, session?.isOfferingNext == false {
+                moveFocus(to: .skip)
+            } else if !offered, focus == .skip {
+                moveFocus(to: .catcher)
+            }
+        }
         .onChange(of: session?.phase) { _, phase in
             if phase == .finished {
                 leave()
@@ -120,15 +139,23 @@ struct PlayerView: View {
             remoteCatcher(session)
 
             if let offer = session.skipOffer, !controlsVisible, !session.isOfferingNext {
-                SkipBadge(title: offer.title)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    .padding(80)
+                SkipButton(title: offer.title) {
+                    touch()
+                    session.skip(offer)
+                }
+                .focused($focus, equals: .skip)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding(80)
             }
 
             if let next = session.next, let left = session.nextCountdown {
-                NextUpCard(next: next, secondsLeft: left)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    .padding(80)
+                NextUpButton(next: next, secondsLeft: left) {
+                    touch()
+                    session.playNext()
+                }
+                .focused($focus, equals: .nextUp)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding(80)
             }
 
             if controlsVisible {
@@ -214,7 +241,7 @@ struct PlayerView: View {
     /// point instead. Ignored while focus is on the buttons under the bar,
     /// where Left and Right move between them.
     private func click(_ edge: RemoteInput.Edge) {
-        guard let session, picker == nil, focus == .catcher || focus == .bar else { return }
+        guard let session, picker == nil, focus.allowsJumping else { return }
         touch()
         let step = edge == .left ? -Self.scrubStep : Self.scrubStep
         if let target = scrubTarget {
@@ -226,7 +253,7 @@ struct PlayerView: View {
     }
 
     private func beginSwipe() {
-        guard let session, picker == nil, focus == .catcher || focus == .bar else { return }
+        guard let session, picker == nil, focus.allowsJumping else { return }
         touch()
         swipeStart = scrubTarget ?? session.shownPosition
         showControls()
@@ -245,13 +272,24 @@ struct PlayerView: View {
     private func showControls() {
         guard !controlsVisible else { return }
         withAnimation(.easeOut(duration: 0.2)) { controlsVisible = true }
-        focus = .bar
+        moveFocus(to: .bar)
     }
 
     private func hideControls() {
         scrubTarget = nil
         withAnimation(.easeOut(duration: 0.3)) { controlsVisible = false }
-        focus = .catcher
+        let offering = session?.isOfferingNext == true
+        moveFocus(to: offering ? .nextUp : (session?.skipOffer != nil ? .skip : .catcher))
+    }
+
+    /// Moves focus a moment later, once what it moves to is on screen and
+    /// switched on. Set in the same instant, tvOS can drop the move and leave
+    /// nothing focused, and then Select does nothing at all.
+    private func moveFocus(to target: PlayerFocus) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(60))
+            focus = target
+        }
     }
 
     private func touch() {
@@ -282,6 +320,19 @@ enum PlayerFocus: Hashable {
     case bar
     case audio
     case subtitles
+    case skip
+    case nextUp
+}
+
+extension PlayerFocus? {
+
+    /// Where Left and Right jump and scrub, rather than move between buttons.
+    var allowsJumping: Bool {
+        switch self {
+        case .catcher, .bar, .skip, .nextUp: true
+        default: false
+        }
+    }
 }
 
 /// A spinner for as long as the engine has no picture to give: opening a 4K
