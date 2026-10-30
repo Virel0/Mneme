@@ -19,7 +19,13 @@ would notice, not every commit.
 - Find by Description on Search, when the server has AI on.
 - Home and My List follow changes made elsewhere as they happen.
 
+- Cast and crew with a page per person, extras, collections and file details on a title's page,
+  and From the Start beside Resume.
+- Because You Watched on Home, and sorting and genres on Shows, Anime and Movies.
+- A quality limit, chapters, playback speed, subtitle size, and resuming a few seconds early.
+- Audio and subtitle languages kept by Melete, approving another device's Quick Connect code,
+  and Who's Watching at launch.
+
 ### Not yet back
-- Trailers in the hero, and Featured for You.
-- Cast, extras and collections on a title's page.
+- Featured for You.
 - The iPhone and iPad app.

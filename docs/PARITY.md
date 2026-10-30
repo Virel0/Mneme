@@ -11,19 +11,22 @@ What the Jellyfin fork of Mneme did, and where the Melete app stands on each:
 | Feature | Melete app | Note |
 |---|---|---|
 | Hero: logo, facts, Play that says what it does, More Info, My List, stepping and rotation | Done | |
-| Muted trailer in the hero and the spotlight | Melete | Trailers are YouTube links and off by default (`MELETE_TRAILERS_ONLINE`); the player plays files |
+| A quiet clip of the title in the hero and the spotlight | Done | Melete's 720p conversion of the title itself, on the home network only |
 | Continue Watching, Next Up, My List, latest per library | Done | From `/home` |
+| Because You Watched | Done | When Melete has discovery on |
 | Featured for You (picks by a language model) | Melete | No recommendations endpoint; a marker shows in debug builds |
-| Because You Watched | Not built | `/discover/similar/{id}` answers it when Melete has discovery on |
 | Popular Right Now | Done, moved | Trending, on Search |
-| Tiles lift, the spotlight shows the focused title above the rows | Done | Without the clip |
-| Home drawn at once from a copy on disk | Not built | Home is one request now, so the wait is short |
+| Tiles lift, the spotlight shows the focused title above the rows | Done | |
+| Home drawn at once from a copy on the device | Done | |
 | Shows, Anime and Movies with their own hero and an A to Z grid | Done | |
-| Genre rail and unwatched shelf on the browse tabs | Not built | `/browse/genres` and `genre=` exist |
+| Sorting and genres on the browse tabs | Done | A to Z, newest, recently added; one genre at a time |
 | Two-pane season and episode picker that holds still | Done | |
-| Cast, crew, extras and collections on a title's page | Not built | `/credits`, `/extras`, `/collections/{id}`, `/people/{id}` exist |
+| Cast and crew, with a page per person | Done | |
+| Extras and collections on a title's page | Done | |
+| File details on a title's page | Done | |
+| Start over instead of resuming | Done | |
 | Profiles: switching and adding from the chip | Done | |
-| "Who's watching?" at launch, a default profile | Not built | The app opens as whoever used it last |
+| "Who's watching?" at launch | Done | With more than one person signed in; can be turned off |
 | Top Shelf | Done | |
 
 ## Artwork
@@ -39,7 +42,7 @@ What the Jellyfin fork of Mneme did, and where the Melete app stands on each:
 | Feature | Melete app | Note |
 |---|---|---|
 | Search by name | Done | |
-| A language model finds titles from a description | Done | Find by Description, on Melete's key; asked for rather than automatic |
+| A language model finds titles from a description | Done | Find by Description, on Melete's key |
 | Requests for titles not in the library | Done | Melete's own requests, not Jellyseerr |
 | Your requests and how they are getting on | Done | Live, from the event stream |
 
@@ -48,19 +51,31 @@ What the Jellyfin fork of Mneme did, and where the Melete app stands on each:
 | Feature | Melete app | Note |
 |---|---|---|
 | AetherEngine, direct play, resume | Done | |
+| A quality limit, converted to fit | Done | Melete's conversion; also when a connection from outside has a limit |
 | Audio and subtitle choice, remembered for the series | Done | Melete's track pick and track choice |
+| Audio and subtitle languages | Done | Kept by Melete, for every device |
 | Skip recap, intro, preview; next episode at the credits | Done | |
 | Auto play next and auto skip | Done | Settings of the device until Melete keeps them per person |
 | Seek-bar previews | Done | Melete's trickplay sheets |
+| Chapters on the seek bar | Done | |
+| Playback speed | Done | |
+| Subtitle size | Done | |
+| Resume a few seconds early | Done | |
 | Diagnostics report with the engine's timings | Done | Sent to Melete |
-| Playback speed | Not built | |
-| Chapters on the seek bar | Not built | `/files/{id}` lists them |
-| Subtitle size and style | Not built | |
-| Resume a few seconds early | Not built | |
 
-## Platforms
+## Account
 
 | Feature | Melete app | Note |
 |---|---|---|
-| Apple TV | Done | |
-| iPhone and iPad | Not built | After the Apple TV app replaces the Jellyfin one |
+| Quick Connect and password sign-in | Done | |
+| Approve another device's Quick Connect code | Done | |
+
+## Not carried across
+
+| Feature | Why |
+|---|---|
+| Server administration: users, devices, logs, tasks, metadata editing | Melete's web interface does these |
+| Live TV and the programme guide | Melete has no live TV |
+| Poster styles, accent colour, indicator choices | Mneme has one look |
+| Touch gestures and toolbar buttons of the iPhone player | Not on a television |
+| The iPhone and iPad app | After the Apple TV app replaces the Jellyfin one |
