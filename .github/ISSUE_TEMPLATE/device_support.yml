@@ -1,0 +1,38 @@
+name: A file or device that won't play
+description: A title that will not play, stutters or looks wrong on your Apple TV.
+labels: [playback]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: Does not start, stalls, wrong colours, no sound, subtitles missing…
+    validations:
+      required: true
+  - type: textarea
+    id: file
+    attributes:
+      label: The file
+      description: From the title's page, About the File (video, audio, size). No file names or paths, please.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Apple TV model, tvOS version, and how it connects
+      placeholder: Apple TV 4K (3rd generation), tvOS 26.1, Ethernet
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where the Apple TV is
+      options:
+        - On the same network as Melete
+        - Away from Melete's network
+  - type: checkboxes
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      options:
+        - label: I sent a diagnostics report from Settings after it happened

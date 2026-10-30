@@ -1,0 +1,40 @@
+name: Bug report
+description: Something in Mneme does not work as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Shows
+        2. ...
+  - type: input
+    id: version
+    attributes:
+      label: Mneme version and build
+      description: Settings → About.
+    validations:
+      required: true
+  - type: input
+    id: melete
+    attributes:
+      label: Melete version
+      description: Shown when you sign in, or in Melete's web interface.
+  - type: input
+    id: device
+    attributes:
+      label: Apple TV model and tvOS version
+  - type: checkboxes
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      options:
+        - label: I sent a diagnostics report from Settings after it happened (helps most with playback)

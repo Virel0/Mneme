@@ -1,0 +1,20 @@
+name: Feature request
+description: Something Mneme could do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What you would like
+      description: What you are trying to do, and what is in the way now.
+    validations:
+      required: true
+  - type: dropdown
+    id: server
+    attributes:
+      label: Does it need something from Melete?
+      description: Anything Mneme shows comes from Melete's API.
+      options:
+        - I don't know
+        - No, it is the app's own
+        - Yes, Melete would need to offer it

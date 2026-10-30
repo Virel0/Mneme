@@ -1,0 +1,15 @@
+# GitHub Actions only. The app's Swift packages are declared in the Xcode
+# project, which Dependabot cannot update; they are pinned on purpose
+# (AetherEngine to an exact commit) and moved by hand. GitHub still raises
+# security alerts for them from the committed Package.resolved.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]
