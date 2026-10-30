@@ -119,10 +119,8 @@ final class SearchModel {
         }
     }
 
-    /// Asks for a title; the answer replaces it wherever it is listed.
-    func request(_ item: DiscoverItem) async throws(MeleteError) -> MediaRequest {
-        let made = try await client.request(NewRequest(kind: item.kind, tmdbId: item.tmdbId))
+    /// A request just made, at the head of Your Requests.
+    func add(_ made: MediaRequest) {
         requests.insert(made, at: 0)
-        return made
     }
 }

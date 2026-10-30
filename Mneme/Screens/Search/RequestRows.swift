@@ -150,7 +150,7 @@ struct PosterCard: View {
     }
 }
 
-private struct PosterCardStyle: ButtonStyle {
+struct PosterCardStyle: ButtonStyle {
 
     @Environment(\.isFocused)
     private var isFocused

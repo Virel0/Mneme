@@ -13,6 +13,7 @@ import SwiftUI
 enum Route: Hashable {
     case title(TitleSummary)
     case play(PlayTarget)
+    case person(Int)
 }
 
 /// The signed-in app's navigation: one stack over the tabs, so a title's
@@ -29,5 +30,9 @@ final class Router {
 
     func play(_ target: PlayTarget) {
         path.append(.play(target))
+    }
+
+    func person(_ id: Int) {
+        path.append(.person(id))
     }
 }

@@ -18,8 +18,11 @@ struct RequestView: View {
 
     @Environment(\.dismiss)
     private var dismiss
+    @Environment(Library.self)
+    private var library
 
     let item: DiscoverItem
+    /// Search's model, told of a request made here; nil elsewhere.
     let model: SearchModel?
 
     @State
@@ -95,11 +98,11 @@ struct RequestView: View {
     }
 
     private func send() {
-        guard let model else { return }
         state = .sending
         Task {
             do {
-                let made = try await model.request(item)
+                let made = try await library.client.request(NewRequest(kind: item.kind, tmdbId: item.tmdbId))
+                model?.add(made)
                 state = .sent(made.state == "approved" ? "Requested and on its way" : "Requested: waiting for approval")
             } catch {
                 state = .failed(error.localizedDescription)

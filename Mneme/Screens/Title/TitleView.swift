@@ -53,6 +53,8 @@ struct TitleView: View {
                 if model.summary.kind == .series {
                     EpisodePicker(model: model)
                 }
+
+                TitleMoreSections(model: model)
             }
             .padding(.bottom, 80)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -137,6 +139,12 @@ private struct TitleHeader: View {
                     }
                 }
                 .disabled(model.target == nil)
+
+                if let restart = model.restartTarget {
+                    HeroActionButton(title: restart.label, systemImage: "backward.end.fill", isProminent: false) {
+                        router.play(restart)
+                    }
+                }
 
                 HeroActionButton(
                     title: model.isTitleWatched ? "Watched" : (summary.kind == .series ? "Mark All Watched" : "Mark Watched"),

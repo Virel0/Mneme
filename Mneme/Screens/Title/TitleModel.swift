@@ -28,6 +28,12 @@ final class TitleModel {
     private(set) var selectedSeason: Int?
     private(set) var seasons: [Int: Season] = [:]
 
+    private(set) var credits: Credits?
+    private(set) var extras: [Extra] = []
+    private(set) var collection: MovieCollection?
+    /// What is in the movie's file, for the details at the foot of the page.
+    private(set) var fileInfo: FileInfo?
+
     private let library: Library
     private var client: MeleteClient {
         library.client
@@ -64,9 +70,47 @@ final class TitleModel {
             if summary.kind == .series {
                 await select(season: target?.season ?? seasonList.first?.season)
             }
+            await loadMore()
         } catch {
             self.error = error
         }
+    }
+
+    /// What sits under the header and the episodes: who made it, its
+    /// extras, the films it belongs with, and its file.
+    private func loadMore() async {
+        let ref = summary.ref
+        async let credits = try? client.credits(ref.kind, ref.id)
+        async let extras = try? client.extras(ref.kind, ref.id)
+        async let file: FileInfo? = if let id = movie?.files.first?.id {
+            try? await client.fileInfo(id)
+        } else {
+            nil
+        }
+
+        self.credits = await credits
+        self.extras = await extras ?? []
+        fileInfo = await file
+        if let id = self.credits?.collection?.id {
+            collection = try? await client.collection(id)
+        }
+    }
+
+    /// Start over from the beginning, offered beside a Resume.
+    var restartTarget: PlayTarget? {
+        guard let target, !target.restarts, target.label.hasPrefix("Resume") else { return nil }
+        return PlayTarget(
+            fileID: target.fileID,
+            label: "From the Start",
+            title: target.title,
+            season: target.season,
+            episode: target.episode,
+            restarts: true
+        )
+    }
+
+    func target(for extra: Extra) -> PlayTarget {
+        PlayTarget(fileID: extra.id, label: extra.title, title: summary.ref, season: nil, episode: nil, restarts: true)
     }
 
     private func loadProgress() async {
