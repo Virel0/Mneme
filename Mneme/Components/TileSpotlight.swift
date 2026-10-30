@@ -6,6 +6,7 @@
 // Copyright (c) 2026 Mneme contributors
 //
 
+import AetherEngine
 import Observation
 import SwiftUI
 
@@ -186,6 +187,9 @@ struct TileSpotlightView: View {
 
     let spotlight: TileSpotlight
 
+    @State
+    private var clip = PreviewClip()
+
     var body: some View {
         ZStack(alignment: .topLeading) {
             if let entry = spotlight.entry {
@@ -204,21 +208,32 @@ struct TileSpotlightView: View {
         .animation(.easeInOut(duration: 0.35), value: spotlight.entry?.ref)
         .allowsHitTesting(false)
         .task(id: spotlight.entry?.ref) {
-            guard let entry = spotlight.entry, !entry.isComplete else { return }
-            let completed = await library.complete(entry)
-            guard !Task.isCancelled else { return }
-            spotlight.update(completed)
+            clip.stop()
+            guard var entry = spotlight.entry else { return }
+            if !entry.isComplete {
+                entry = await library.complete(entry)
+                guard !Task.isCancelled else { return }
+                spotlight.update(entry)
+            }
+            clip.start(for: entry, client: library.client)
+        }
+        .onDisappear {
+            clip.stop()
         }
     }
 
     @ViewBuilder
     private func backdrop(for entry: TitleSummary) -> some View {
-        // A preview clip played over the still here in the Jellyfin app.
-        // Melete's trailers are YouTube links and off by default, so for now
-        // the still is all there is.
         FocusedBackdrop(path: entry.backdrop, focus: entry.backdropFocus)
             .frame(height: TileSpotlightLayout.backdropHeight)
             .frame(maxWidth: .infinity)
+            .overlay {
+                if let engine = clip.engine, clip.isPlaying {
+                    AetherPlayerSurface(engine: engine)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.6), value: clip.isPlaying)
             .overlay {
                 // Dark on the left for the text and at the bottom where the
                 // rows sit, so neither has to fight the picture.

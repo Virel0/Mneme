@@ -6,6 +6,7 @@
 // Copyright (c) 2026 Mneme contributors
 //
 
+import AetherEngine
 import MeleteKit
 import Nuke
 import SwiftUI
@@ -110,6 +111,9 @@ private struct HeroCard: View {
     /// Play's target, looked up when the pick does not say.
     @State
     private var target: PlayTarget?
+    /// The pick's clip, while the card has focus.
+    @State
+    private var clip = PreviewClip()
 
     let pick: TitleSummary
     /// "2 of 5" while there are picks to step through.
@@ -148,11 +152,24 @@ private struct HeroCard: View {
             .animation(.easeOut(duration: 0.2), value: isFocused)
             .onChange(of: isFocused) {
                 onFocusChange(isFocused)
+                if isFocused, let client {
+                    clip.start(for: pick, client: client)
+                } else {
+                    clip.stop()
+                }
+            }
+            .onDisappear {
+                clip.stop()
             }
             // Stepping keeps this card and changes the title under it. A card
             // rebuilt per title threw away its focus, so a second Left walked
             // the buttons instead of stepping again.
             .task(id: pick.ref) {
+                // A step changes the title under a focused card; its clip
+                // follows.
+                if isFocused, let client {
+                    clip.start(for: pick, client: client)
+                }
                 target = PlayTarget.known(for: pick)
                 guard target == nil, let client else { return }
                 let found = try? await PlayTarget.lookUp(for: pick, client: client)
@@ -168,6 +185,15 @@ private struct HeroCard: View {
                 .id(pick.ref)
                 .transition(.opacity)
                 .animation(.easeInOut(duration: 0.5), value: pick.ref)
+                .overlay {
+                    // Over the still once it plays, so a clip that is slow to
+                    // start never shows an empty card.
+                    if let engine = clip.engine, clip.isPlaying {
+                        AetherPlayerSurface(engine: engine)
+                            .transition(.opacity)
+                    }
+                }
+                .animation(.easeInOut(duration: 0.6), value: clip.isPlaying)
                 .overlay {
                     // Two ramps, opaque at the corner the text sits in, so the
                     // logo and facts never read against whatever the picture does.
