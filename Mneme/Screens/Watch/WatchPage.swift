@@ -68,9 +68,11 @@ struct WatchPage: View {
             }
             .padding(.bottom, 120)
             .padding(.top, sections.picks.isEmpty ? HeroLayout.top : 0)
+            .overlay(alignment: .top) { PageTop() }
         }
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
+        .modifier(ScrollsToTopOnRequest())
         .mask { SpotlightMask(spotlight: spotlight) }
         // The page keeps its own 60-point margins, as every row does, rather
         // than tvOS's wider safe area on top of them.

@@ -19,8 +19,13 @@ struct MyListView: View {
 
     @State
     private var spotlight = TileSpotlight()
+    @Environment(\.focusStrip)
+    private var focusStrip
+
     @State
     private var items: [TitleSummary]?
+    @FocusState
+    private var focused: TitleRef?
 
     private static let columns: CGFloat = 7
 
@@ -54,7 +59,10 @@ struct MyListView: View {
                 items = items ?? []
                 return
             }
+            let previous = items ?? []
+            let lost = focused
             items = list.items.filter(\.present).map(TitleSummary.init)
+            refocus(after: lost, in: previous)
         }
     }
 
@@ -66,6 +74,7 @@ struct MyListView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, RowLayout.edge)
                 .padding(.top, TileSpotlightLayout.preferredRowTop - 60)
+                .overlay(alignment: .top) { PageTop() }
 
             LazyVGrid(
                 columns: Array(repeating: GridItem(.fixed(tileWidth), spacing: RowLayout.spacing), count: Int(Self.columns)),
@@ -76,6 +85,7 @@ struct MyListView: View {
                     TitleTile(summary: item, slot: .grid(.portrait, width: tileWidth)) {
                         router.open(item)
                     }
+                    .focused($focused, equals: item.ref)
                 }
             }
             .padding(.horizontal, RowLayout.edge)
@@ -88,9 +98,29 @@ struct MyListView: View {
         }
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
+        .modifier(ScrollsToTopOnRequest())
         .mask { SpotlightMask(spotlight: spotlight) }
         // The page keeps its own 60-point margins, as every row does, rather
         // than tvOS's wider safe area on top of them.
         .ignoresSafeArea(edges: [.top, .horizontal])
+    }
+
+    /// A title taken off the list while focused leaves its neighbour
+    /// focused; an emptied list hands focus to its tab. Left alone, tvOS
+    /// gave focus to the first thing on screen, the profile chip.
+    private func refocus(after lost: TitleRef?, in previous: [TitleSummary]) {
+        guard let items else { return }
+        guard !items.isEmpty else {
+            focusStrip()
+            return
+        }
+        guard let lost, !items.contains(where: { $0.ref == lost }),
+              let index = previous.firstIndex(where: { $0.ref == lost })
+        else { return }
+        let neighbour = items[min(index, items.count - 1)].ref
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(60))
+            focused = neighbour
+        }
     }
 }

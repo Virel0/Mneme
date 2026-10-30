@@ -36,9 +36,11 @@ struct SearchView: View {
                     }
                 }
                 .padding(.vertical, 40)
+                .overlay(alignment: .top) { PageTop() }
             }
         }
         .scrollClipDisabled()
+        .modifier(ScrollsToTopOnRequest())
         .searchable(text: $query, prompt: "Movies, shows, or describe what you want")
         // The system draws the field and keyboard at the top of the view,
         // where the tab strip floats; the view starts below the strip instead.
@@ -60,8 +62,11 @@ struct SearchView: View {
 
     @ViewBuilder
     private func start(_ model: SearchModel) -> some View {
-        if !model.requests.isEmpty {
-            RequestRow(title: "Your Requests", requests: model.requests)
+        // The stream's copy once it has sent one: it follows each request
+        // as it downloads.
+        let requests = library.requests ?? model.requests
+        if !requests.isEmpty {
+            RequestRow(title: "Your Requests", requests: requests)
         }
         if let trending = model.trending {
             if trending.isEmpty {

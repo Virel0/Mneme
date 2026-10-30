@@ -26,6 +26,11 @@ struct MainView: View {
     @FocusState
     private var stripFocus: NavStripFocus?
 
+    /// Raised each time focus arrives in the strip from the page, which
+    /// scrolls the page back to its top under it.
+    @State
+    private var topRequest = 0
+
     init(session: Session, library: Library) {
         self.session = session
         _library = State(initialValue: library)
@@ -65,6 +70,9 @@ struct MainView: View {
         .task {
             await library.load()
         }
+        .task {
+            await library.listen()
+        }
         .onAppear {
             // Start the remote on the tab the app opened to. tvOS hands first
             // focus to the first focusable thing, the profile chip, and
@@ -75,6 +83,13 @@ struct MainView: View {
                 stripFocus = .tab(selected)
             }
         }
+        .onChange(of: stripFocus) { previous, current in
+            if previous == nil, current != nil {
+                topRequest += 1
+            }
+        }
+        .environment(\.pageTopRequest, topRequest)
+        .environment(\.focusStrip) { stripFocus = .tab(selected) }
         // Top Shelf's links: the title's page, or straight into the player.
         .onOpenURL { url in
             guard let route = DeepLink.route(for: url) else { return }
@@ -104,5 +119,49 @@ struct MainView: View {
                     .id(kind)
             }
         }
+    }
+}
+
+extension EnvironmentValues {
+
+    /// Changes when the page should go back to its top, as focus moves up
+    /// to the tab strip.
+    @Entry
+    var pageTopRequest = 0
+
+    /// Puts focus on the current tab, for a page left with nothing to focus.
+    @Entry
+    var focusStrip: () -> Void = {}
+}
+
+/// Scrolls the page to its top when `pageTopRequest` changes: put focus in
+/// the strip and the page under it goes back to where it started, instead of
+/// leaving rows half under the strip.
+struct ScrollsToTopOnRequest: ViewModifier {
+
+    @Environment(\.pageTopRequest)
+    private var request
+
+    func body(content: Content) -> some View {
+        ScrollViewReader { proxy in
+            content
+                .onChange(of: request) {
+                    withAnimation(.easeInOut(duration: 0.35)) {
+                        proxy.scrollTo(PageTop.id, anchor: .top)
+                    }
+                }
+        }
+    }
+}
+
+/// The marker a page puts at its top, for `ScrollsToTopOnRequest`.
+struct PageTop: View {
+
+    static let id = "page.top"
+
+    var body: some View {
+        Color.clear
+            .frame(height: 0)
+            .id(Self.id)
     }
 }

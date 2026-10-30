@@ -53,7 +53,15 @@ final class Library {
     /// Raised by every change to My List, so its page knows to reload.
     private(set) var favouritesVersion = 0
 
+    /// Raised when titles come or go, so lists of everything reload.
+    private(set) var libraryVersion = 0
+    /// The viewer's requests as the event stream last sent them; nil until
+    /// it has.
+    private(set) var requests: [MediaRequest]?
+
     private var completed: [TitleRef: TitleSummary] = [:]
+    private var lastLibraryVersion: Int?
+    private var lastFavouritesVersion: Int?
 
     init(client: MeleteClient) {
         self.client = client
@@ -109,6 +117,53 @@ final class Library {
             }
         }
         return nil
+    }
+
+    // MARK: - Live updates
+
+    /// Follows Melete's event stream for as long as the session is up,
+    /// reconnecting when it ends (Melete closes it every ten minutes) or
+    /// fails. Pages work without it; it saves them going stale.
+    func listen() async {
+        while !Task.isCancelled {
+            do {
+                for try await event in client.events() {
+                    await handle(event)
+                }
+            } catch {
+                // Down or refused: wait longer before trying again.
+                try? await Task.sleep(for: .seconds(20))
+            }
+            try? await Task.sleep(for: .seconds(2))
+        }
+    }
+
+    /// Each kind arrives once at the start, which only sets where things
+    /// stand, and again on every change.
+    private func handle(_ event: ServerEvent) async {
+        switch event.name {
+        case "library":
+            guard let library = event.decode(LibraryVersion.self) else { return }
+            defer { lastLibraryVersion = library.version }
+            guard let last = lastLibraryVersion, last != library.version else { return }
+            libraryVersion += 1
+            await load()
+
+        case "favourites":
+            guard let favourites = event.decode(FavouritesVersion.self) else { return }
+            defer { lastFavouritesVersion = favourites.version }
+            guard let last = lastFavouritesVersion, last != favourites.version,
+                  let list = try? await client.favourites(limit: 500)
+            else { return }
+            self.favourites = Set(list.items.map { TitleRef(kind: $0.kind, id: $0.id) })
+            favouritesVersion += 1
+
+        case "requests":
+            requests = event.decode([MediaRequest].self)
+
+        default:
+            break
+        }
     }
 
     // MARK: - My List

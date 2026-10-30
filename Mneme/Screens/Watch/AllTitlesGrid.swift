@@ -60,7 +60,10 @@ struct AllTitlesGrid: View {
             .padding(.vertical, RowLayout.verticalPadding)
             .focusSection()
         }
-        .task {
+        // Again from the start when titles come or go.
+        .task(id: library.libraryVersion) {
+            items = []
+            total = nil
             await loadMore()
         }
     }
