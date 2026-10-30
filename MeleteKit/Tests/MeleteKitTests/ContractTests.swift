@@ -84,6 +84,30 @@ struct ContractTests {
         ("TrackChoice", TrackChoice.self, []),
         ("Trickplay", Trickplay.self, []),
         ("DiagnosticsKept", DiagnosticsKept.self, []),
+        ("AiAbout", AiAbout.self, []),
+        ("AiSearchRequest", AiSearchRequest.self, []),
+        ("AiSuggestion", AiSuggestion.self, []),
+        ("AiSearch", AiSearch.self, []),
+        ("DiscoverItem", DiscoverItem.self, []),
+        (
+            "NewRequest",
+            NewRequest.self,
+            [
+                "mb_artist_id", "mb_release_group_id", "mb_recording_id", "title", "artist", "library_id",
+                "profile_id", "music_profile_id", "monitored", "search_now", "seasons",
+            ]
+        ),
+        ("WantedProgress", WantedProgress.self, ["kind", "wanted_id", "title", "download_id", "source", "updated_at"]),
+        (
+            "Request",
+            MediaRequest.self,
+            [
+                "user_id", "username", "service", "mb_artist_id", "mb_release_group_id", "mb_recording_id",
+                "artist", "decided_at", "decided_by", "wanted_id", "seasons", "search_started",
+                "progress.kind", "progress.wanted_id", "progress.title", "progress.download_id",
+                "progress.source", "progress.updated_at",
+            ]
+        ),
     ]
 
     @Test(arguments: models.map(\.0))

@@ -90,6 +90,8 @@ struct MainView: View {
         switch selected {
         case .myList:
             MyListView()
+        case .search:
+            SearchView()
         default:
             if let kind = selected.watchKind {
                 WatchPage(kind: kind)

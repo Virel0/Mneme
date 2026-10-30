@@ -15,6 +15,7 @@ enum AppTab: Hashable, CaseIterable {
     case anime
     case movies
     case myList
+    case search
 
     var title: String {
         switch self {
@@ -23,6 +24,7 @@ enum AppTab: Hashable, CaseIterable {
         case .anime: "Anime"
         case .movies: "Movies"
         case .myList: "My List"
+        case .search: "Search"
         }
     }
 
@@ -33,6 +35,7 @@ enum AppTab: Hashable, CaseIterable {
         case .anime: "sparkles.tv"
         case .movies: "film"
         case .myList: "checkmark.circle"
+        case .search: "magnifyingglass"
         }
     }
 
@@ -42,7 +45,7 @@ enum AppTab: Hashable, CaseIterable {
         case .shows: .shows
         case .anime: .anime
         case .movies: .movies
-        case .myList: nil
+        case .myList, .search: nil
         }
     }
 }
