@@ -20,6 +20,10 @@ import UIKit
 struct RemoteInput: UIViewRepresentable {
 
     var onClick: (Edge) -> Void
+    /// A light tap on the surface: brief, still, and not part of a click.
+    /// The edges of the clickpad are surface too, so a click reports a tap
+    /// as well; the caller waits a moment and drops the tap if a click came.
+    var onTap: () -> Void
     var onSwipeBegan: () -> Void
     /// The horizontal distance moved since the swipe began, as a fraction of
     /// the surface: about 1 for a thumb across its whole width.
@@ -39,7 +43,7 @@ struct RemoteInput: UIViewRepresentable {
         view.input = self
     }
 
-    final class InputView: UIView {
+    final class InputView: UIView, UIGestureRecognizerDelegate {
 
         var input: RemoteInput?
         private var recognizers: [UIGestureRecognizer] = []
@@ -70,10 +74,20 @@ struct RemoteInput: UIViewRepresentable {
             pan.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.indirect.rawValue)]
             pan.cancelsTouchesInView = false
 
-            recognizers = [left, right, pan]
+            let touch = LightTapRecognizer(target: self, action: #selector(lightTap))
+            touch.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.indirect.rawValue)]
+            touch.cancelsTouchesInView = false
+            touch.delegate = self
+
+            recognizers = [left, right, pan, touch]
             for recognizer in recognizers {
                 window.addGestureRecognizer(recognizer)
             }
+        }
+
+        @objc
+        private func lightTap() {
+            input?.onTap()
         }
 
         @objc
@@ -102,5 +116,59 @@ struct RemoteInput: UIViewRepresentable {
                 break
             }
         }
+    }
+}
+
+extension RemoteInput.InputView {
+
+    /// The touch-down recognizer reports alongside the swipe and the focus
+    /// engine rather than in place of them.
+    func gestureRecognizer(_: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith _: UIGestureRecognizer) -> Bool {
+        true
+    }
+}
+
+/// Recognises a light tap on the remote's surface: a touch that lifts
+/// within a third of a second without travelling. A swipe or a long rest is
+/// not one.
+private final class LightTapRecognizer: UIGestureRecognizer {
+
+    private var start: (time: TimeInterval, location: CGPoint)?
+
+    private static let maximumDuration: TimeInterval = 0.35
+    private static let maximumTravel: CGFloat = 40
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesBegan(touches, with: event)
+        guard let touch = touches.first else { return }
+        start = (touch.timestamp, touch.location(in: view))
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesMoved(touches, with: event)
+        guard let start, let touch = touches.first else { return }
+        let location = touch.location(in: view)
+        if hypot(location.x - start.location.x, location.y - start.location.y) > Self.maximumTravel {
+            state = .failed
+        }
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesEnded(touches, with: event)
+        guard let start, let touch = touches.first else {
+            state = .failed
+            return
+        }
+        state = touch.timestamp - start.time <= Self.maximumDuration ? .recognized : .failed
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent) {
+        super.touchesCancelled(touches, with: event)
+        state = .failed
+    }
+
+    override func reset() {
+        super.reset()
+        start = nil
     }
 }

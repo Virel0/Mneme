@@ -40,6 +40,10 @@ struct PlayerView: View {
     /// The jump a click just made, shown for a moment.
     @State
     private var skipFlash: SkipFlash?
+    /// When a click or Select last came, so a tap that was really part of
+    /// one is dropped.
+    @State
+    private var lastPress = Date.distantPast
     @State
     private var picker: TrackPicker.Kind?
     @State
@@ -103,6 +107,13 @@ struct PlayerView: View {
                 moveFocus(to: .catcher)
             }
         }
+        // Focus dropped with the controls down leaves Select with nothing to
+        // press; it goes back to the catcher.
+        .onChange(of: focus) { _, current in
+            if current == nil, !controlsVisible, picker == nil {
+                moveFocus(to: session?.isOfferingNext == true ? .nextUp : (session?.skipOffer != nil ? .skip : .catcher))
+            }
+        }
         .onChange(of: session?.phase) { _, phase in
             if phase == .finished {
                 leave()
@@ -133,6 +144,7 @@ struct PlayerView: View {
         } else {
             RemoteInput(
                 onClick: click,
+                onTap: tappedSurface,
                 onSwipeBegan: beginSwipe,
                 onSwipeChanged: swipe,
                 onSwipeEnded: { swipeStart = nil }
@@ -195,6 +207,7 @@ struct PlayerView: View {
     @ViewBuilder
     private func remoteCatcher(_ session: PlayerSession) -> some View {
         Button {
+            lastPress = .now
             touch()
             if session.isOfferingNext {
                 session.playNext()
@@ -250,6 +263,7 @@ struct PlayerView: View {
     /// point instead. Ignored while focus is on the buttons under the bar,
     /// where Left and Right move between them.
     private func click(_ edge: RemoteInput.Edge) {
+        lastPress = .now
         guard let session, picker == nil, focus.allowsJumping else { return }
         touch()
         let step = edge == .left ? -Self.scrubStep : Self.scrubStep
@@ -260,6 +274,20 @@ struct PlayerView: View {
             // controls up over it read as the player stopping.
             session.jump(by: step)
             flashSkip(forward: edge == .right)
+        }
+    }
+
+    /// A light tap on the surface brings the controls up, as in Apple's
+    /// player, without the click Select needs and without pausing. A click
+    /// reports a tap too, so the tap waits a moment and gives way to one.
+    private func tappedSurface() {
+        guard picker == nil, !controlsVisible, session?.isOfferingNext != true else { return }
+        let tapped = Date.now
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(200))
+            guard lastPress < tapped.addingTimeInterval(-0.4) else { return }
+            touch()
+            showControls()
         }
     }
 
@@ -348,11 +376,13 @@ enum PlayerFocus: Hashable {
 
 extension PlayerFocus? {
 
-    /// Where Left and Right jump and scrub, rather than move between buttons.
+    /// Left and Right jump and scrub everywhere but on the buttons under the
+    /// bar, where they move between them. Nothing focused counts too: focus
+    /// can be dropped as the controls go, and the remote must still work.
     var allowsJumping: Bool {
         switch self {
-        case .catcher, .bar, .skip, .nextUp: true
-        default: false
+        case .audio, .subtitles: false
+        default: true
         }
     }
 }
