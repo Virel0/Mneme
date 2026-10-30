@@ -16,6 +16,14 @@ struct TrackPicker: View {
     enum Kind {
         case audio
         case subtitles
+        case speed
+    }
+
+    static let speeds: [Float] = [0.5, 0.75, 1, 1.25, 1.5, 2]
+
+    /// "1.25×", "Normal".
+    static func speedTitle(_ rate: Float) -> String {
+        rate == 1 ? "Normal" : "\(rate.formatted(.number.precision(.fractionLength(0 ... 2))))×"
     }
 
     let kind: Kind
@@ -26,7 +34,7 @@ struct TrackPicker: View {
         HStack {
             Spacer()
             VStack(alignment: .leading, spacing: 16) {
-                Text(kind == .audio ? "Audio" : "Subtitles")
+                Text(title)
                     .font(.title3.weight(.semibold))
                     .padding(.horizontal, 24)
 
@@ -35,6 +43,7 @@ struct TrackPicker: View {
                         switch kind {
                         case .audio: audioRows
                         case .subtitles: subtitleRows
+                        case .speed: speedRows
                         }
                     }
                     .padding(.vertical, 8)
@@ -47,6 +56,24 @@ struct TrackPicker: View {
         }
         .ignoresSafeArea()
         .onExitCommand(perform: close)
+    }
+
+    private var title: String {
+        switch kind {
+        case .audio: "Audio"
+        case .subtitles: "Subtitles"
+        case .speed: "Speed"
+        }
+    }
+
+    @ViewBuilder
+    private var speedRows: some View {
+        ForEach(Self.speeds, id: \.self) { rate in
+            row(title: Self.speedTitle(rate), isOn: session.rate == rate) {
+                session.setRate(rate)
+                close()
+            }
+        }
     }
 
     @ViewBuilder

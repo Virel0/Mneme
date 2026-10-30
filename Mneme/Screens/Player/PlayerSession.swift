@@ -40,6 +40,13 @@ final class PlayerSession {
     private(set) var play: PlayResponse?
     private(set) var subtitles: [SubtitleTrack] = []
     private(set) var trickplay: Trickplay?
+    /// Whether Melete is converting this file to fit a bitrate limit.
+    private(set) var isConverted = false
+    /// The file's own chapters, for ticks on the seek bar.
+    private(set) var chapters: [Chapter] = []
+    /// Playback speed, 1 for normal.
+    private(set) var rate: Float = 1
+
     /// The subtitle track showing, as Melete names it; nil for none.
     var subtitleTrack: String?
 
@@ -119,22 +126,29 @@ final class PlayerSession {
             self.play = play
             PlaybackDiagnostics.shared.record("play", "file \(target.fileID) · \(target.label) · resume \(Int(play.resumeSeconds))s")
 
+            let source = try await PlaybackSource.choose(for: target.fileID, play: play, client: client)
+            isConverted = source.isConverted
+
             var options = LoadOptions()
             options.forwardBufferSegments = Self.forwardBufferSegments
-            let start = target.restarts ? nil : (play.resumeSeconds > 0 ? play.resumeSeconds : nil)
+            // A conversion is HLS, which Apple's own player mounts best.
+            options.nativeRemoteHLS = source.isConverted
 
             try await engine.load(
-                url: url,
-                startPosition: start,
+                url: source.url,
+                startPosition: startPosition(resume: play.resumeSeconds, restarts: target.restarts),
                 options: options,
                 // The chosen audio from the first frame, rather than a switch
-                // a second in.
-                audioSourceStreamIndex: play.tracks?.audio.map(Int32.init)
+                // a second in. A conversion already carries only that one.
+                audioSourceStreamIndex: source.isConverted ? nil : play.tracks?.audio.map(Int32.init)
             )
 
             subtitles = await (try? client.subtitles(file: target.fileID)) ?? []
+            // Subtitles always come from the stream link, which serves the
+            // file's text tracks whichever way the picture is delivered.
             applySubtitle(play.tracks?.subtitle, stream: url)
             engine.play()
+            applyRate()
             isPaused = false
             phase = .playing
 
@@ -146,9 +160,17 @@ final class PlayerSession {
         }
     }
 
+    /// Where to open: where it was left, backed up by the resume offset so
+    /// the viewer rejoins before the line they left on; or the start.
+    private func startPosition(resume: Double, restarts: Bool) -> Double? {
+        guard !restarts, resume > 0 else { return nil }
+        return max(0, resume - PlaybackPreferences.resumeOffset)
+    }
+
     /// What can wait until the picture is up: seek-bar previews, and what
     /// plays next.
     private func loadExtras(for target: PlayTarget, stream: URL) async {
+        chapters = await (try? client.fileInfo(target.fileID).chapters) ?? []
         trickplay = try? await client.trickplay(file: target.fileID)
         next = await NextUp.find(after: target, client: client)
     }
@@ -164,6 +186,7 @@ final class PlayerSession {
         guard let engine, phase == .playing else { return }
         if isPaused {
             engine.play()
+            applyRate()
         } else {
             engine.pause()
             Task { await report() }
@@ -212,6 +235,23 @@ final class PlayerSession {
             seekGoal = nil
             seekTask = nil
         }
+    }
+
+    /// The engine resumes at normal speed after a pause or a new file, so
+    /// the chosen speed is set again each time it starts.
+    func setRate(_ rate: Float) {
+        self.rate = rate
+        engine?.setRate(rate)
+    }
+
+    private func applyRate() {
+        guard rate != 1 else { return }
+        engine?.setRate(rate)
+    }
+
+    /// The chapter a time falls in.
+    func chapter(at seconds: Double) -> Chapter? {
+        chapters.last { $0.startSeconds <= seconds }
     }
 
     func jump(by seconds: Double) {

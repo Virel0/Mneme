@@ -56,6 +56,15 @@ struct PlayerControls: View {
                         openPicker(.subtitles)
                     }
                     .focused(focus, equals: .subtitles)
+
+                    HeroActionButton(
+                        title: session.rate == 1 ? "Speed" : TrackPicker.speedTitle(session.rate),
+                        systemImage: "gauge.with.dots.needle.67percent",
+                        isProminent: false
+                    ) {
+                        openPicker(.speed)
+                    }
+                    .focused(focus, equals: .speed)
                 }
                 .padding(.top, 28)
             }
@@ -94,6 +103,13 @@ private struct SeekBar: View {
                     ZStack(alignment: .leading) {
                         Capsule().fill(.white.opacity(0.25))
                         Capsule().fill(.white).frame(width: width * fraction(session.shownPosition))
+                        // A notch where each chapter starts.
+                        ForEach(session.chapters.dropFirst(), id: \.startSeconds) { chapter in
+                            Rectangle()
+                                .fill(.black.opacity(0.6))
+                                .frame(width: 3, height: 10)
+                                .offset(x: width * fraction(chapter.startSeconds) - 1.5)
+                        }
                         if let scrubTarget {
                             Capsule()
                                 .fill(.white)
@@ -111,6 +127,10 @@ private struct SeekBar: View {
 
                 HStack {
                     Text(Self.clock(shown))
+                    if let title = session.chapter(at: shown)?.title, !title.isEmpty {
+                        Text("· \(title)")
+                            .lineLimit(1)
+                    }
                     Spacer()
                     if session.isPaused {
                         Image(systemName: "pause.fill")

@@ -97,6 +97,26 @@ struct ContractTests {
                 "profile_id", "music_profile_id", "monitored", "search_now", "seasons",
             ]
         ),
+        ("CastMember", CastMember.self, []),
+        ("CrewMember", CrewMember.self, []),
+        ("Credits", Credits.self, []),
+        ("Extra", Extra.self, []),
+        ("Collection", MovieCollection.self, []),
+        ("Person", Person.self, []),
+        ("VideoStream", VideoStream.self, ["dolby_vision"]),
+        ("AudioStream", AudioStream.self, []),
+        ("MediaInfo", MediaInfo.self, ["subtitles", "video[].dolby_vision"]),
+        (
+            "FileInfo",
+            FileInfo.self,
+            ["modified_at", "segments", "trickplay", "subtitle_search", "offline", "media.subtitles", "media.video[].dolby_vision"]
+        ),
+        ("TranscodeRequest", TranscodeRequest.self, ["audio_channels", "audio_mode", "burn_subtitle"]),
+        ("TranscodeResponse", TranscodeResponse.self, []),
+        ("Languages", Languages.self, []),
+        ("QuickConnectApproveRequest", QuickConnectApproveRequest.self, []),
+        ("QuickConnectLookup", QuickConnectLookup.self, []),
+        ("QuickConnectApproved", QuickConnectApproved.self, []),
         ("WantedProgress", WantedProgress.self, ["kind", "wanted_id", "title", "download_id", "source", "updated_at"]),
         (
             "Request",

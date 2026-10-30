@@ -368,6 +368,7 @@ enum PlayerFocus: Hashable {
     case bar
     case audio
     case subtitles
+    case speed
     case skip
     case nextUp
 }
@@ -379,7 +380,7 @@ extension PlayerFocus? {
     /// can be dropped as the controls go, and the remote must still work.
     var allowsJumping: Bool {
         switch self {
-        case .audio, .subtitles: false
+        case .audio, .subtitles, .speed: false
         default: true
         }
     }

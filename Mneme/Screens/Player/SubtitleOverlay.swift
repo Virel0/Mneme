@@ -29,8 +29,8 @@ struct SubtitleOverlay: View {
         clock = engine.clock
     }
 
-    /// Close to what tvOS uses for its own captions.
-    private static let fontSize: CGFloat = 46
+    /// Chosen in Settings; 46 is close to what tvOS uses for its captions.
+    private let fontSize = CGFloat(PlaybackPreferences.subtitleSize)
 
     private var activeCues: [SubtitleCue] {
         let playhead = clock.sourceTime
@@ -86,7 +86,7 @@ struct SubtitleOverlay: View {
                 Text(text)
             }
         }
-        .font(.system(size: Self.fontSize, weight: .semibold))
+        .font(.system(size: fontSize, weight: .semibold))
         .foregroundStyle(.white)
         .multilineTextAlignment(.center)
         .fixedSize(horizontal: false, vertical: true)

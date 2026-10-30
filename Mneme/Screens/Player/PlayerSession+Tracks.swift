@@ -41,8 +41,9 @@ extension PlayerSession {
             return
         }
         // An embedded track is `s` and its stream index, which is the
-        // engine's id for it too; anything else is a file Melete serves.
-        if track.hasPrefix("s"), let index = Int(track.dropFirst()) {
+        // engine's id for it too; anything else is a file Melete serves. A
+        // conversion carries no subtitles, so every track comes from Melete.
+        if !isConverted, track.hasPrefix("s"), let index = Int(track.dropFirst()) {
             // Re-selecting the track already up restarts its decoder.
             guard engine.activeSubtitleTrackIndex != index else { return }
             engine.selectSubtitleTrack(index: index)
