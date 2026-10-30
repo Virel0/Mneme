@@ -21,6 +21,8 @@ struct ProfilesView: View {
 
     @State
     private var isAddingProfile = false
+    @State
+    private var showsSettings = false
 
     var body: some View {
         ZStack {
@@ -52,19 +54,28 @@ struct ProfilesView: View {
                     .buttonStyle(ProfileTileStyle())
                 }
 
-                if let current = sessions.current {
-                    HeroActionButton(
-                        title: "Sign Out of \(current.user.username)",
-                        systemImage: "rectangle.portrait.and.arrow.right",
-                        isProminent: false
-                    ) {
-                        signOut(current)
+                HStack(spacing: 24) {
+                    HeroActionButton(title: "Settings", systemImage: "gearshape", isProminent: false) {
+                        showsSettings = true
+                    }
+
+                    if let current = sessions.current {
+                        HeroActionButton(
+                            title: "Sign Out of \(current.user.username)",
+                            systemImage: "rectangle.portrait.and.arrow.right",
+                            isProminent: false
+                        ) {
+                            signOut(current)
+                        }
                     }
                 }
             }
         }
         .fullScreenCover(isPresented: $isAddingProfile) {
             SignInFlow()
+        }
+        .fullScreenCover(isPresented: $showsSettings) {
+            SettingsView()
         }
     }
 

@@ -10,6 +10,7 @@
 		B10000000000000000000001 /* MeleteKit in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000001 /* MeleteKit */; };
 		B10000000000000000000002 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000002 /* Nuke */; };
 		B10000000000000000000003 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000003 /* NukeUI */; };
+		B10000000000000000000004 /* AetherEngine in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000004 /* AetherEngine */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +48,7 @@
 				B10000000000000000000001 /* MeleteKit in Frameworks */,
 				B10000000000000000000002 /* Nuke in Frameworks */,
 				B10000000000000000000003 /* NukeUI in Frameworks */,
+				B10000000000000000000004 /* AetherEngine in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,6 +104,7 @@
 				D10000000000000000000001 /* MeleteKit */,
 				D10000000000000000000002 /* Nuke */,
 				D10000000000000000000003 /* NukeUI */,
+				D10000000000000000000004 /* AetherEngine */,
 			);
 			productName = Mneme;
 			productReference = F10000000000000000000001 /* Mneme.app */;
@@ -134,6 +137,7 @@
 			packageReferences = (
 				D20000000000000000000001 /* XCLocalSwiftPackageReference "MeleteKit" */,
 				D20000000000000000000002 /* XCRemoteSwiftPackageReference "Nuke" */,
+				D20000000000000000000003 /* XCRemoteSwiftPackageReference "AetherEngine" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C10000000000000000000002 /* Products */;
@@ -281,6 +285,14 @@
 				minimumVersion = 13.0.6;
 			};
 		};
+		D20000000000000000000003 /* XCRemoteSwiftPackageReference "AetherEngine" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Virel0/AetherEngine";
+			requirement = {
+				kind = revision;
+				revision = f5af2a389695021af6f3aee86dfd8e485cc2c975;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -297,6 +309,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D20000000000000000000002 /* XCRemoteSwiftPackageReference "Nuke" */;
 			productName = NukeUI;
+		};
+		D10000000000000000000004 /* AetherEngine */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D20000000000000000000003 /* XCRemoteSwiftPackageReference "AetherEngine" */;
+			productName = AetherEngine;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

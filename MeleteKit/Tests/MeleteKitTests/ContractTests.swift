@@ -76,6 +76,14 @@ struct ContractTests {
         ("Favourite", Favourite.self, []),
         ("FavouriteList", FavouriteList.self, []),
         ("FavouriteState", FavouriteState.self, []),
+        ("FileSegments", FileSegments.self, []),
+        ("TrackPick", TrackPick.self, []),
+        ("PlayResponse", PlayResponse.self, []),
+        ("ProgressReport", ProgressReport.self, []),
+        ("SubtitleTrack", SubtitleTrack.self, []),
+        ("TrackChoice", TrackChoice.self, []),
+        ("Trickplay", Trickplay.self, []),
+        ("DiagnosticsKept", DiagnosticsKept.self, []),
     ]
 
     @Test(arguments: models.map(\.0))

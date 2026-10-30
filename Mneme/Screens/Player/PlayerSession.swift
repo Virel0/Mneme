@@ -1,0 +1,268 @@
+//
+// Mneme is subject to the terms of the Mozilla Public
+// License, v2.0. If a copy of the MPL was not distributed with this
+// file, you can obtain one at https://mozilla.org/MPL/2.0/.
+//
+// Copyright (c) 2026 Mneme contributors
+//
+
+import AetherEngine
+import Foundation
+import MeleteKit
+import Observation
+
+/// One sitting of playback: a file, then whatever plays after it.
+///
+/// AetherEngine demuxes the file on the device and decodes it with
+/// VideoToolbox, so the file direct plays and every track in it is local:
+/// switching audio is a call into the engine, not a new stream from the
+/// server. Melete is told where the viewer is every ten seconds and when they
+/// stop; it marks the file watched at 90%.
+@MainActor
+@Observable
+final class PlayerSession {
+
+    enum Phase: Equatable {
+        case loading
+        case playing
+        case failed(String)
+        case finished
+    }
+
+    let engine: AetherEngine?
+    private let library: Library
+    var client: MeleteClient {
+        library.client
+    }
+
+    private(set) var target: PlayTarget
+    private(set) var phase: Phase = .loading
+    private(set) var play: PlayResponse?
+    private(set) var subtitles: [SubtitleTrack] = []
+    private(set) var trickplay: Trickplay?
+    /// The subtitle track showing, as Melete names it; nil for none.
+    var subtitleTrack: String?
+
+    /// The playhead, in seconds, from the engine's clock.
+    var position: Double = 0
+    var duration: Double = 0
+    var isPaused = false
+
+    /// What plays after this, once known.
+    private(set) var next: PlayTarget?
+    /// Seconds left before the next episode starts, while it is counting down.
+    private(set) var nextCountdown: Int?
+    /// The viewer turned the next-episode offer away for this file.
+    var isNextDismissed = false
+    /// The parts already skipped on their own, so one is skipped once and
+    /// not again on every tick while the seek lands.
+    @ObservationIgnored
+    var autoSkipped: Set<SkipOffer.Kind> = []
+
+    @ObservationIgnored
+    private var lastReport: Date?
+    @ObservationIgnored
+    var tasks: [Task<Void, Never>] = []
+    @ObservationIgnored
+    private var countdownTask: Task<Void, Never>?
+
+    /// How far ahead to buffer, in segments of about four seconds. The
+    /// engine stops early at its own budget, a quarter of the free space, so
+    /// a large number asks for as much as safely fits.
+    private static let forwardBufferSegments = 600
+
+    /// How long the next episode is offered before it starts.
+    static let countdownSeconds = 10
+
+    init(target: PlayTarget, library: Library) {
+        self.target = target
+        self.library = library
+        // Building the engine can throw; the player has to say so rather than
+        // take the app down.
+        engine = try? AetherEngine()
+    }
+
+    var guide: SegmentGuide? {
+        play.map { SegmentGuide(segments: $0.segments, duration: duration > 0 ? duration : $0.durationSeconds) }
+    }
+
+    var skipOffer: SkipOffer? {
+        guide?.skip(at: position)
+    }
+
+    // MARK: - Starting
+
+    func start() async {
+        guard let engine else {
+            phase = .failed("The player could not start on this device.")
+            return
+        }
+        observe(engine)
+        await load(target)
+    }
+
+    private func load(_ target: PlayTarget) async {
+        guard let engine else { return }
+        phase = .loading
+        next = nil
+        nextCountdown = nil
+        isNextDismissed = false
+        autoSkipped = []
+        lastReport = nil
+
+        do {
+            let play = try await client.play(file: target.fileID)
+            guard let url = client.url(for: play.streamUrl) else {
+                phase = .failed("Melete gave an address the player cannot open.")
+                return
+            }
+            self.play = play
+            PlaybackDiagnostics.shared.record("play", "file \(target.fileID) · \(target.label) · resume \(Int(play.resumeSeconds))s")
+
+            var options = LoadOptions()
+            options.forwardBufferSegments = Self.forwardBufferSegments
+            let start = target.restarts ? nil : (play.resumeSeconds > 0 ? play.resumeSeconds : nil)
+
+            try await engine.load(
+                url: url,
+                startPosition: start,
+                options: options,
+                // The chosen audio from the first frame, rather than a switch
+                // a second in.
+                audioSourceStreamIndex: play.tracks?.audio.map(Int32.init)
+            )
+
+            subtitles = await (try? client.subtitles(file: target.fileID)) ?? []
+            applySubtitle(play.tracks?.subtitle, stream: url)
+            engine.play()
+            isPaused = false
+            phase = .playing
+
+            Task { await loadExtras(for: target, stream: url) }
+        } catch let error as MeleteError {
+            fail(error.localizedDescription)
+        } catch {
+            fail(error.localizedDescription)
+        }
+    }
+
+    /// What can wait until the picture is up: seek-bar previews, and what
+    /// plays next.
+    private func loadExtras(for target: PlayTarget, stream: URL) async {
+        trickplay = try? await client.trickplay(file: target.fileID)
+        next = await NextUp.find(after: target, client: client)
+    }
+
+    func fail(_ message: String) {
+        PlaybackDiagnostics.shared.record("play.failed", message)
+        phase = .failed(message)
+    }
+
+    // MARK: - Transport
+
+    func togglePause() {
+        guard let engine, phase == .playing else { return }
+        if isPaused {
+            engine.play()
+        } else {
+            engine.pause()
+            Task { await report() }
+        }
+        isPaused.toggle()
+    }
+
+    func seek(to seconds: Double) {
+        guard let engine else { return }
+        let clamped = min(max(0, seconds), max(0, duration - 1))
+        Task { await engine.seek(to: clamped) }
+    }
+
+    func jump(by seconds: Double) {
+        seek(to: position + seconds)
+    }
+
+    func skip(_ offer: SkipOffer) {
+        PlaybackDiagnostics.shared.record("skip", offer.kind.rawValue)
+        seek(to: offer.end)
+    }
+
+    /// Leaving the player: the last position goes to Melete, and the home's
+    /// rows are asked for again, since Continue Watching and Next Up moved.
+    func stop() async {
+        for task in tasks {
+            task.cancel()
+        }
+        countdownTask?.cancel()
+        await report(force: true)
+        engine?.stop()
+        PlaybackDiagnostics.shared.record("stop", "at \(Int(position))s of \(Int(duration))s")
+        await library.load()
+    }
+
+    // MARK: - Progress
+
+    func report(force: Bool = false) async {
+        guard play != nil, position > 0 else { return }
+        guard force || ProgressCadence.isDue(lastReport: lastReport, now: .now) else { return }
+        lastReport = .now
+        _ = try? await client.reportProgress(
+            file: target.fileID,
+            ProgressReport(positionSeconds: position, durationSeconds: duration > 0 ? duration : nil, restart: target.restarts)
+        )
+    }
+
+    // MARK: - Next episode
+
+    var isOfferingNext: Bool {
+        nextCountdown != nil
+    }
+
+    func dismissNext() {
+        countdownTask?.cancel()
+        nextCountdown = nil
+        isNextDismissed = true
+    }
+
+    func playNext() {
+        guard let next else { return }
+        countdownTask?.cancel()
+        nextCountdown = nil
+        Task {
+            await report(force: true)
+            target = next
+            await load(next)
+        }
+    }
+
+    /// Starts the countdown once the credits begin, if there is a next
+    /// episode and the viewer has not turned it away.
+    func considerNext() {
+        guard next != nil, nextCountdown == nil, !isNextDismissed, !isPaused,
+              PlaybackPreferences.autoPlayNext,
+              let start = guide?.nextUpStart, position >= start
+        else { return }
+
+        nextCountdown = Self.countdownSeconds
+        countdownTask = Task { [weak self] in
+            while let self, let left = nextCountdown, left > 0 {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                // The count holds while paused.
+                if !isPaused {
+                    nextCountdown = left - 1
+                }
+            }
+            guard !Task.isCancelled else { return }
+            self?.playNext()
+        }
+    }
+
+    func ended() {
+        PlaybackDiagnostics.shared.record("ended", "file \(target.fileID)")
+        if next != nil, PlaybackPreferences.autoPlayNext, !isNextDismissed {
+            playNext()
+        } else {
+            phase = .finished
+        }
+    }
+}

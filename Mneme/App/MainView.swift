@@ -58,7 +58,7 @@ struct MainView: View {
                         case let .title(summary):
                             TitleView(summary: summary)
                         case let .play(target):
-                            PlayerPlaceholder(target: target)
+                            PlayerView(target: target)
                         }
                     }
         }
