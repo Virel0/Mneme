@@ -22,6 +22,16 @@ struct SettingsView: View {
     private var autoPlayNext = true
     @AppStorage(PlaybackPreferences.autoSkipIntrosKey)
     private var autoSkipIntros = false
+    @AppStorage(PlaybackPreferences.maxBitrateKey)
+    private var maxBitrate = 0
+    @AppStorage(PlaybackPreferences.resumeOffsetKey)
+    private var resumeOffset = 5.0
+    @AppStorage(PlaybackPreferences.subtitleSizeKey)
+    private var subtitleSize = 46.0
+    @AppStorage(PlaybackPreferences.previewClipsKey)
+    private var previewClips = true
+    @AppStorage(SessionStore.asksWhoIsWatchingKey)
+    private var asksWhoIsWatching = true
 
     @State
     private var diagnostics: DiagnosticsState = .idle
@@ -39,10 +49,39 @@ struct SettingsView: View {
                 Section {
                     Toggle("Play the next episode", isOn: $autoPlayNext)
                     Toggle("Skip intros, recaps and previews", isOn: $autoSkipIntros)
+                    Picker("Quality", selection: $maxBitrate) {
+                        ForEach(PlaybackPreferences.bitrateChoices, id: \.self) { bitrate in
+                            Text(bitrate == 0 ? "Original" : "Up to \(bitrate / 1_000_000) Mbps").tag(bitrate)
+                        }
+                    }
+                    Picker("Resume", selection: $resumeOffset) {
+                        ForEach([0.0, 5, 10, 15, 30], id: \.self) { seconds in
+                            Text(seconds == 0 ? "Where I Stopped" : "\(Int(seconds)) Seconds Earlier").tag(seconds)
+                        }
+                    }
+                    Picker("Subtitle Size", selection: $subtitleSize) {
+                        Text("Small").tag(38.0)
+                        Text("Medium").tag(46.0)
+                        Text("Large").tag(56.0)
+                        Text("Extra Large").tag(68.0)
+                    }
+                    Toggle("Preview clips on Home", isOn: $previewClips)
                 } header: {
                     Text("Playback")
                 } footer: {
-                    Text("Credits are never skipped: the next episode is offered there instead. These are kept on this Apple TV.")
+                    Text(
+                        "Credits are never skipped: the next episode is offered there instead. Over the quality chosen, Melete converts the film to fit. Preview clips play only on your home network. These are kept on this Apple TV."
+                    )
+                }
+
+                Section {
+                    NavigationLink("Languages") { LanguagesView() }
+                    NavigationLink("Sign In Another Device") { ApproveDeviceView() }
+                    Toggle("Ask Who's Watching at Launch", isOn: $asksWhoIsWatching)
+                } header: {
+                    Text("Account")
+                } footer: {
+                    Text("Who's watching is asked only when more than one person is signed in on this Apple TV.")
                 }
 
                 Section {

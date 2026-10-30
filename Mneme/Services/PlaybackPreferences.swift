@@ -19,6 +19,7 @@ enum PlaybackPreferences {
     static let maxBitrateKey = "maxBitrate"
     static let resumeOffsetKey = "resumeOffset"
     static let subtitleSizeKey = "subtitleSize"
+    static let previewClipsKey = "previewClips"
 
     /// Start the next episode when the credits have counted down. On unless
     /// turned off.
@@ -51,5 +52,10 @@ enum PlaybackPreferences {
     /// Subtitle text size, in points.
     static var subtitleSize: Double {
         UserDefaults.standard.object(forKey: subtitleSizeKey) as? Double ?? 46
+    }
+
+    /// Play a quiet clip of the title in the hero and the spotlight.
+    static var previewClips: Bool {
+        UserDefaults.standard.object(forKey: previewClipsKey) as? Bool ?? true
     }
 }

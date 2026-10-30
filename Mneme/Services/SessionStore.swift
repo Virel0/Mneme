@@ -36,6 +36,14 @@ final class SessionStore {
     private let defaults: UserDefaults
     private static let sessionsKey = "sessions"
     private static let currentKey = "currentSession"
+    static let asksWhoIsWatchingKey = "asksWhoIsWatching"
+
+    /// Whether "Who's watching?" opens the app: only with more than one
+    /// person signed in, and unless turned off in Settings, in which case
+    /// the app opens as whoever used it last.
+    var asksWhoIsWatching: Bool {
+        sessions.count > 1 && (defaults.object(forKey: Self.asksWhoIsWatchingKey) as? Bool ?? true)
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults

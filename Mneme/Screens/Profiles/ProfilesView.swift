@@ -92,7 +92,7 @@ struct ProfilesView: View {
     }
 }
 
-private struct ProfileButton: View {
+struct ProfileButton: View {
 
     let session: Session
     let isCurrent: Bool
@@ -117,7 +117,7 @@ private struct ProfileButton: View {
 
 /// A profile's square grows and lifts when focused; the system's
 /// borderless style drew a second plate around the glyph inside it.
-private struct ProfileTileStyle: ButtonStyle {
+struct ProfileTileStyle: ButtonStyle {
 
     @Environment(\.isFocused)
     private var isFocused
