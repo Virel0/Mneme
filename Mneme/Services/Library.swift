@@ -6,6 +6,7 @@
 // Copyright (c) 2026 Mneme contributors
 //
 
+import CryptoKit
 import Foundation
 import MeleteKit
 import Observation
@@ -43,6 +44,8 @@ final class Library {
     }
 
     let client: MeleteClient
+    /// Where this person's home is kept between launches.
+    private let homeCache: URL?
 
     private(set) var home: HomeState = .loading
     /// Every anime series' id; nil until known.
@@ -67,13 +70,21 @@ final class Library {
     private var lastLibraryVersion: Int?
     private var lastFavouritesVersion: Int?
 
-    init(client: MeleteClient) {
+    init(client: MeleteClient, sessionID: String) {
         self.client = client
+        let name = SHA256.hash(data: Data(sessionID.utf8)).prefix(12).map { String(format: "%02x", $0) }.joined()
+        homeCache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?
+            .appending(path: "home-\(name).json")
     }
 
     // MARK: - Home
 
     func load() async {
+        // The home as it last was, drawn at once, while the server is asked.
+        if case .loading = home, let cached = readCachedHome() {
+            home = .loaded(cached)
+        }
+
         async let home = client.home()
         async let anime = client.animeSeriesIDs()
         async let favourites = client.favourites(limit: 500)
@@ -81,6 +92,7 @@ final class Library {
         do {
             let home = try await home
             self.home = .loaded(home)
+            saveHome(home)
             let client = client
             Task { await TopShelfPublisher.publish(home, client: client) }
             Task { await loadBecauseYouWatched(from: home) }
@@ -92,8 +104,12 @@ final class Library {
                     .map { TitleRef(kind: $0.kind, id: $0.id) }
             )
         } catch {
-            // `async let` drops the typed throw; every error here is Melete's.
-            self.home = .failed(error as? MeleteError ?? .transport(error.localizedDescription))
+            // A home already on screen, cached or earlier, stays rather than
+            // giving way to an error.
+            if case .loaded = self.home {} else {
+                // `async let` drops the typed throw; every error here is Melete's.
+                self.home = .failed(error as? MeleteError ?? .transport(error.localizedDescription))
+            }
         }
         // The pages work without these, so a failure leaves them as they were.
         if let anime = try? await anime {
@@ -122,6 +138,16 @@ final class Library {
             }
         }
         return nil
+    }
+
+    private func readCachedHome() -> WatchHome? {
+        guard let homeCache, let data = try? Data(contentsOf: homeCache) else { return nil }
+        return try? JSONDecoder().decode(WatchHome.self, from: data)
+    }
+
+    private func saveHome(_ home: WatchHome) {
+        guard let homeCache, let data = try? JSONEncoder().encode(home) else { return }
+        try? data.write(to: homeCache, options: .atomic)
     }
 
     /// TMDB's recommendations for the title most lately watched, keeping

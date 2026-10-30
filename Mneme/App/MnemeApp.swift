@@ -38,7 +38,7 @@ struct RootView: View {
         } else if let session = sessions.current, let client = sessions.client(for: session) {
             // Keyed on the session, so switching profiles starts the app afresh
             // for the new person rather than showing them someone else's pages.
-            MainView(session: session, library: Library(client: client))
+            MainView(session: session, library: Library(client: client, sessionID: session.id))
                 .id(session.id)
         } else {
             SignInFlow()
