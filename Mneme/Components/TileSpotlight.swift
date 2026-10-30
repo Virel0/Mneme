@@ -21,6 +21,12 @@ final class TileSpotlight {
 
     private(set) var entry: TitleSummary?
 
+    /// Counts each tile gaining focus. A departure clears only the showing
+    /// it began: the same title can sit in two rows (Continue Watching and
+    /// Next Up), and matching by title let leaving one clear the other.
+    @ObservationIgnored
+    private var showing = 0
+
     /// Where the focused row's tiles start, in window points. Set by the row
     /// as it scrolls into place, so the page's fade follows a tall row up.
     private(set) var rowTop: CGFloat = TileSpotlightLayout.preferredRowTop
@@ -65,16 +71,19 @@ final class TileSpotlight {
     /// should not flash back to the hero for it.
     private static let holdDelay: Duration = .milliseconds(300)
 
-    func show(_ entry: TitleSummary) {
+    /// Shows a title; returns the showing, for `leave`.
+    @discardableResult
+    func show(_ entry: TitleSummary) -> Int {
         pendingClear?.cancel()
         pendingShow?.cancel()
         isHeld = false
+        showing += 1
 
         // The first tile lights the spotlight at once: there is nothing on
         // screen to protect from churn.
         guard self.entry != nil else {
             self.entry = entry
-            return
+            return showing
         }
 
         pendingShow = Task { [weak self] in
@@ -83,16 +92,17 @@ final class TileSpotlight {
             self?.entry = entry
             self?.pendingShow = nil
         }
+        return showing
     }
 
-    /// The tile showing this title lost focus. Clears unless another tile
-    /// takes focus first.
-    func leave(_ ref: TitleRef) {
+    /// The tile of this showing lost focus. Clears unless another tile has
+    /// taken focus since.
+    func leave(_ shown: Int) {
         pendingClear?.cancel()
         pendingClear = Task { [weak self] in
             try? await Task.sleep(for: Self.holdDelay)
             guard !Task.isCancelled, let self else { return }
-            guard entry?.ref == ref, pendingShow == nil, !isHeld else { return }
+            guard showing == shown, pendingShow == nil, !isHeld else { return }
             entry = nil
         }
     }
@@ -107,8 +117,8 @@ final class TileSpotlight {
 
     func release() {
         isHeld = false
-        guard let ref = entry?.ref else { return }
-        leave(ref)
+        guard entry != nil else { return }
+        leave(showing)
     }
 
     /// A list entry's facts arrived after it was shown.

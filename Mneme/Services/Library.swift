@@ -53,6 +53,10 @@ final class Library {
     /// Raised by every change to My List, so its page knows to reload.
     private(set) var favouritesVersion = 0
 
+    /// Titles like the one most lately watched, from Melete's discovery;
+    /// nil while discovery is off or nothing has been watched.
+    private(set) var becauseYouWatched: (title: String, items: [TitleSummary])?
+
     /// Raised when titles come or go, so lists of everything reload.
     private(set) var libraryVersion = 0
     /// The viewer's requests as the event stream last sent them; nil until
@@ -79,6 +83,7 @@ final class Library {
             self.home = .loaded(home)
             let client = client
             Task { await TopShelfPublisher.publish(home, client: client) }
+            Task { await loadBecauseYouWatched(from: home) }
             watching = Set(
                 home.rows
                     .filter { $0.key == .continueWatching || $0.key == .nextUp }
@@ -117,6 +122,29 @@ final class Library {
             }
         }
         return nil
+    }
+
+    /// TMDB's recommendations for the title most lately watched, keeping
+    /// those in the library. Melete answers only with discovery on; off, the
+    /// row is simply not there.
+    private func loadBecauseYouWatched(from home: WatchHome) async {
+        let watched = home.rows
+            .filter { $0.key == .continueWatching || $0.key == .nextUp }
+            .flatMap(\.items)
+            .max { ($0.progress?.updatedAt ?? 0) < ($1.progress?.updatedAt ?? 0) }
+        guard let watched else { return }
+
+        let tmdbId: Int? = switch watched.kind {
+        case .movie: try? await client.movie(watched.id).tmdbId
+        case .series: try? await client.series(watched.id).tmdbId
+        }
+        guard let tmdbId, let similar = try? await client.similar(watched.kind, tmdbId: tmdbId) else { return }
+
+        let items = similar.compactMap { item -> TitleSummary? in
+            guard item.state == .playable, let id = item.libraryId else { return nil }
+            return TitleSummary(placeholder: TitleRef(kind: item.kind, id: id), title: item.title, poster: item.poster, year: item.year)
+        }
+        becauseYouWatched = items.isEmpty ? nil : (watched.title, items)
     }
 
     // MARK: - Live updates

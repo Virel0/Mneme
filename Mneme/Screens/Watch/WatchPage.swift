@@ -36,7 +36,7 @@ struct WatchPage: View {
                     Task { await library.load() }
                 }
             case let .loaded(home):
-                content(WatchSections(home: home, kind: kind, kindOf: library.kind(of:)))
+                content(WatchSections(home: home, kind: kind, kindOf: library.kind(of:), becauseYouWatched: library.becauseYouWatched))
             }
         }
         .environment(\.tileSpotlight, spotlight)

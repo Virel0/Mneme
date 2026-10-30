@@ -76,14 +76,14 @@ extension TitleSummary {
 
     /// A title known only by its kind, id and name; its page fills in the
     /// rest when it loads.
-    init(placeholder ref: TitleRef, title: String) {
+    init(placeholder ref: TitleRef, title: String, poster: String? = nil, year: Int? = nil) {
         self.ref = ref
         self.title = title
-        year = nil
+        self.year = year
         genres = []
         runtimeMinutes = nil
         overview = nil
-        poster = nil
+        self.poster = poster
         backdrop = nil
         backdropFocus = nil
         logo = nil

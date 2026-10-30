@@ -60,6 +60,10 @@ struct TitleTile: View {
     @State
     private var liftAnchor: UnitPoint = .bottom
 
+    /// This tile's showing in the spotlight, while it has focus.
+    @State
+    private var shown: Int?
+
     let summary: TitleSummary
     let slot: TileSlot
     let action: () -> Void
@@ -119,9 +123,9 @@ struct TitleTile: View {
         .onChange(of: isFocused) {
             guard let spotlight else { return }
             if isFocused {
-                spotlight.show(summary)
-            } else {
-                spotlight.leave(summary.ref)
+                shown = spotlight.show(summary)
+            } else if let shown {
+                spotlight.leave(shown)
             }
         }
     }

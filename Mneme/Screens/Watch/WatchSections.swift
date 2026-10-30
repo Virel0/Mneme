@@ -35,12 +35,23 @@ struct WatchSections {
     /// As many picks as the home's hero has.
     private static let heroCount = 8
 
-    init(home: WatchHome, kind: WatchKind, kindOf: (TitleRef) -> WatchKind) {
+    init(
+        home: WatchHome,
+        kind: WatchKind,
+        kindOf: (TitleRef) -> WatchKind,
+        becauseYouWatched: (title: String, items: [TitleSummary])? = nil
+    ) {
         guard kind != .home else {
             picks = home.hero.map(TitleSummary.init)
-            rows = home.rows
+            var rows = home.rows
                 .filter { !$0.items.isEmpty }
                 .map { Row(key: $0.key, title: $0.key.title, items: $0.items.map(TitleSummary.init)) }
+            // After what is being watched, before what is new.
+            if let because = becauseYouWatched {
+                let after = rows.lastIndex { $0.key == .continueWatching || $0.key == .nextUp }.map { $0 + 1 } ?? 0
+                rows.insert(Row(key: .becauseYouWatched, title: "Because You Watched \(because.title)", items: because.items), at: after)
+            }
+            self.rows = rows
             return
         }
 
@@ -79,6 +90,9 @@ extension WatchKind {
 }
 
 extension WatchHomeRow.Key {
+
+    /// Mneme's own row, not one of the home's.
+    static let becauseYouWatched = WatchHomeRow.Key(rawValue: "because_you_watched")
 
     var title: String {
         switch self {
