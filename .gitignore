@@ -1,0 +1,10 @@
+.DS_Store
+xcuserdata/
+build/
+DerivedData/
+.build/
+.swiftpm/
+*.xcarchive
+
+# Signing team and bundle identifier: personal, never committed.
+XcodeConfig/DevelopmentTeam.xcconfig
