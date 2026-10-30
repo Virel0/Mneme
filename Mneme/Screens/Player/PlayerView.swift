@@ -145,6 +145,11 @@ struct PlayerView: View {
             RemoteInput(
                 onClick: click,
                 onTap: tappedSurface,
+                onUpOrDown: {
+                    guard !controlsVisible, picker == nil else { return }
+                    touch()
+                    showControls()
+                },
                 onSwipeBegan: beginSwipe,
                 onSwipeChanged: swipe,
                 onSwipeEnded: { swipeStart = nil }
@@ -223,13 +228,6 @@ struct PlayerView: View {
         .buttonStyle(BareButtonStyle())
         .focused($focus, equals: .catcher)
         .disabled(controlsVisible || picker != nil)
-        // Left and Right are `RemoteInput`'s: a click jumps, a swipe scrubs.
-        .onMoveCommand { direction in
-            touch()
-            if direction == .up || direction == .down {
-                showControls()
-            }
-        }
     }
 
     /// Menu backs out one layer at a time: the scrub, then the controls,

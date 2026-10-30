@@ -13,7 +13,9 @@ import UIKit
 ///
 /// SwiftUI's `onMoveCommand` reports both as the same discrete step, so a
 /// swipe across the surface became a single ten-second jump: scrubbing that
-/// stuttered instead of following the thumb. Clicks are presses of the arrow
+/// stuttered instead of following the thumb. Nothing on screen may have an
+/// `onMoveCommand` either: a focused view with one takes the arrow presses
+/// before these recognisers see them. Clicks are presses of the arrow
 /// types; a swipe is a pan of indirect touches. Both recognisers sit on the
 /// window, so they hear the remote wherever focus is, and leave the touches
 /// to the focus engine too.
@@ -24,6 +26,8 @@ struct RemoteInput: UIViewRepresentable {
     /// The edges of the clickpad are surface too, so a click reports a tap
     /// as well; the caller waits a moment and drops the tap if a click came.
     var onTap: () -> Void
+    /// A click on the top or bottom edge.
+    var onUpOrDown: () -> Void
     var onSwipeBegan: () -> Void
     /// The horizontal distance moved since the swipe began, as a fraction of
     /// the surface: about 1 for a thumb across its whole width.
@@ -70,6 +74,13 @@ struct RemoteInput: UIViewRepresentable {
             left.cancelsTouchesInView = false
             right.cancelsTouchesInView = false
 
+            let vertical = UITapGestureRecognizer(target: self, action: #selector(clickUpOrDown))
+            vertical.allowedPressTypes = [
+                NSNumber(value: UIPress.PressType.upArrow.rawValue),
+                NSNumber(value: UIPress.PressType.downArrow.rawValue),
+            ]
+            vertical.cancelsTouchesInView = false
+
             let pan = UIPanGestureRecognizer(target: self, action: #selector(swipe(_:)))
             pan.allowedTouchTypes = [NSNumber(value: UITouch.TouchType.indirect.rawValue)]
             pan.cancelsTouchesInView = false
@@ -79,7 +90,7 @@ struct RemoteInput: UIViewRepresentable {
             touch.cancelsTouchesInView = false
             touch.delegate = self
 
-            recognizers = [left, right, pan, touch]
+            recognizers = [left, right, vertical, pan, touch]
             for recognizer in recognizers {
                 window.addGestureRecognizer(recognizer)
             }
@@ -88,6 +99,11 @@ struct RemoteInput: UIViewRepresentable {
         @objc
         private func lightTap() {
             input?.onTap()
+        }
+
+        @objc
+        private func clickUpOrDown() {
+            input?.onUpOrDown()
         }
 
         @objc
