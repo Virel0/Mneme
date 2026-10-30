@@ -37,6 +37,9 @@ struct PlayerView: View {
     /// Where a swipe started scrubbing from.
     @State
     private var swipeStart: Double?
+    /// The jump a click just made, shown for a moment.
+    @State
+    private var skipFlash: SkipFlash?
     @State
     private var picker: TrackPicker.Kind?
     @State
@@ -158,6 +161,12 @@ struct PlayerView: View {
                 .padding(80)
             }
 
+            if let skipFlash {
+                SkipFlashView(flash: skipFlash)
+                    .id(skipFlash.id)
+                    .transition(.opacity.combined(with: .scale(scale: 0.85)))
+            }
+
             if controlsVisible {
                 PlayerControls(
                     session: session,
@@ -247,8 +256,21 @@ struct PlayerView: View {
         if let target = scrubTarget {
             scrubTarget = min(max(0, target + step), session.duration)
         } else {
+            // The film keeps playing under a small arrow; bringing the
+            // controls up over it read as the player stopping.
             session.jump(by: step)
-            showControls()
+            flashSkip(forward: edge == .right)
+        }
+    }
+
+    private func flashSkip(forward: Bool) {
+        let step = Int(Self.scrubStep)
+        let flash = skipFlash?.adding(step, forward: forward) ?? SkipFlash(isForward: forward, seconds: step)
+        withAnimation(.easeOut(duration: 0.15)) { skipFlash = flash }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(900))
+            guard skipFlash?.id == flash.id else { return }
+            withAnimation(.easeIn(duration: 0.3)) { skipFlash = nil }
         }
     }
 
