@@ -26,6 +26,13 @@ struct AllTitlesGrid: View {
     private var total: Int?
     @State
     private var isLoading = false
+    @State
+    private var sort: ListSort = .title
+    /// Nil for every genre.
+    @State
+    private var genre: String?
+    @State
+    private var genres: [String] = []
 
     private static let pageSize = 100
     private static let columns: CGFloat = 7
@@ -36,9 +43,33 @@ struct AllTitlesGrid: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: RowLayout.headingSpacing) {
-            Text(heading)
-                .font(.title3.weight(.semibold))
-                .padding(.horizontal, RowLayout.edge)
+            HStack(spacing: 24) {
+                Text(heading)
+                    .font(.title3.weight(.semibold))
+                Spacer()
+                Menu {
+                    Picker("Sort", selection: $sort) {
+                        Text("A to Z").tag(ListSort.title)
+                        Text("Newest").tag(ListSort.year)
+                        Text("Recently Added").tag(ListSort.recent)
+                    }
+                } label: {
+                    Label(sortName, systemImage: "arrow.up.arrow.down")
+                }
+                Menu {
+                    Picker("Genre", selection: $genre) {
+                        Text("All Genres").tag(String?.none)
+                        ForEach(genres, id: \.self) { name in
+                            Text(name).tag(String?.some(name))
+                        }
+                    }
+                } label: {
+                    Label(genre ?? "All Genres", systemImage: "line.3.horizontal.decrease")
+                }
+                .disabled(genres.isEmpty)
+            }
+            .padding(.horizontal, RowLayout.edge)
+            .focusSection()
 
             LazyVGrid(
                 columns: Array(repeating: GridItem(.fixed(tileWidth), spacing: RowLayout.spacing), count: Int(Self.columns)),
@@ -61,10 +92,17 @@ struct AllTitlesGrid: View {
             .focusSection()
         }
         // Again from the start when titles come or go.
-        .task(id: library.libraryVersion) {
+        // Again from the start when titles come or go, or the order or
+        // genre changes.
+        .task(id: Reload(version: library.libraryVersion, sort: sort, genre: genre)) {
             items = []
             total = nil
             await loadMore()
+        }
+        .task {
+            genres = await (try? library.client.genres())?
+                .filter { kind == .movies ? $0.movies > 0 : $0.series > 0 }
+                .map(\.name) ?? []
         }
     }
 
@@ -84,14 +122,28 @@ struct AllTitlesGrid: View {
 
         let client = library.client
         let page: Page<ListItem>? = switch kind {
-        case .movies: try? await client.movies(limit: Self.pageSize, offset: items.count)
-        case .anime: try? await client.series(anime: .only, limit: Self.pageSize, offset: items.count)
-        case .home, .shows: try? await client.series(anime: .exclude, limit: Self.pageSize, offset: items.count)
+        case .movies: try? await client.movies(genre: genre, sort: sort, limit: Self.pageSize, offset: items.count)
+        case .anime: try? await client.series(genre: genre, anime: .only, sort: sort, limit: Self.pageSize, offset: items.count)
+        case .home, .shows: try? await client.series(genre: genre, anime: .exclude, sort: sort, limit: Self.pageSize, offset: items.count)
         }
         guard let page else { return }
 
         let titleKind: TitleKind = kind == .movies ? .movie : .series
         items += page.items.map { TitleSummary($0, kind: titleKind) }
         total = page.total
+    }
+
+    private var sortName: String {
+        switch sort {
+        case .title: "A to Z"
+        case .year: "Newest"
+        case .recent: "Recently Added"
+        }
+    }
+
+    private struct Reload: Equatable {
+        let version: Int
+        let sort: ListSort
+        let genre: String?
     }
 }
