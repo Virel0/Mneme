@@ -8,3 +8,6 @@ DerivedData/
 
 # Signing team and bundle identifier: personal, never committed.
 XcodeConfig/DevelopmentTeam.xcconfig
+
+# Package checkouts made by CI builds.
+.spm/
