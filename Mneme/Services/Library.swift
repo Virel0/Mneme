@@ -69,6 +69,8 @@ final class Library {
         do {
             let home = try await home
             self.home = .loaded(home)
+            let client = client
+            Task { await TopShelfPublisher.publish(home, client: client) }
             watching = Set(
                 home.rows
                     .filter { $0.key == .continueWatching || $0.key == .nextUp }

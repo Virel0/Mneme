@@ -18,8 +18,21 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mneme</string>
+			</array>
+		</dict>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>MnemeAppGroup</key>
+	<string>group.$(MNEME_APP_ID)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<!-- A home server is usually plain http, on the local network. -->

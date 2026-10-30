@@ -75,6 +75,12 @@ struct MainView: View {
                 stripFocus = .tab(selected)
             }
         }
+        // Top Shelf's links: the title's page, or straight into the player.
+        .onOpenURL { url in
+            guard let route = DeepLink.route(for: url) else { return }
+            showsProfiles = false
+            router.path = [route]
+        }
         .fullScreenCover(isPresented: $showsProfiles) {
             ProfilesView()
         }

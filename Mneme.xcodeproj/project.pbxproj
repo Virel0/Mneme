@@ -11,12 +11,38 @@
 		B10000000000000000000002 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000002 /* Nuke */; };
 		B10000000000000000000003 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000003 /* NukeUI */; };
 		B10000000000000000000004 /* AetherEngine in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000004 /* AetherEngine */; };
+		B10000000000000000000005 /* MnemeTopShelf.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* MnemeTopShelf.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A70000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A20000000000000000000002;
+			remoteInfo = MnemeTopShelf;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A30000000000000000000007 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B10000000000000000000005 /* MnemeTopShelf.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F10000000000000000000001 /* Mneme.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mneme.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F10000000000000000000002 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 		F10000000000000000000003 /* MeleteKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = MeleteKit; sourceTree = "<group>"; };
+		F10000000000000000000004 /* MnemeTopShelf.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MnemeTopShelf.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -24,8 +50,17 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/Info.plist,
+				Resources/Mneme.entitlements,
 			);
 			target = A20000000000000000000001 /* Mneme */;
+		};
+		E10000000000000000000002 /* Exceptions for "MnemeTopShelf" folder in "MnemeTopShelf" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				MnemeTopShelf.entitlements,
+			);
+			target = A20000000000000000000002 /* MnemeTopShelf */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -38,9 +73,29 @@
 			path = Mneme;
 			sourceTree = "<group>";
 		};
+		C20000000000000000000002 /* MnemeTopShelf */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E10000000000000000000002 /* Exceptions for "MnemeTopShelf" folder in "MnemeTopShelf" target */,
+			);
+			path = MnemeTopShelf;
+			sourceTree = "<group>";
+		};
+		C20000000000000000000003 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		A30000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A30000000000000000000002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -59,6 +114,8 @@
 			isa = PBXGroup;
 			children = (
 				C20000000000000000000001 /* Mneme */,
+				C20000000000000000000002 /* MnemeTopShelf */,
+				C20000000000000000000003 /* Shared */,
 				F10000000000000000000003 /* MeleteKit */,
 				C10000000000000000000003 /* XcodeConfig */,
 				C10000000000000000000002 /* Products */,
@@ -69,6 +126,7 @@
 			isa = PBXGroup;
 			children = (
 				F10000000000000000000001 /* Mneme.app */,
+				F10000000000000000000004 /* MnemeTopShelf.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -91,13 +149,16 @@
 				A30000000000000000000001 /* Sources */,
 				A30000000000000000000002 /* Frameworks */,
 				A30000000000000000000003 /* Resources */,
+				A30000000000000000000007 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A60000000000000000000001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C20000000000000000000001 /* Mneme */,
+				C20000000000000000000003 /* Shared */,
 			);
 			name = Mneme;
 			packageProductDependencies = (
@@ -110,6 +171,27 @@
 			productReference = F10000000000000000000001 /* Mneme.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A20000000000000000000002 /* MnemeTopShelf */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A50000000000000000000003 /* Build configuration list for PBXNativeTarget "MnemeTopShelf" */;
+			buildPhases = (
+				A30000000000000000000004 /* Sources */,
+				A30000000000000000000005 /* Frameworks */,
+				A30000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C20000000000000000000002 /* MnemeTopShelf */,
+				C20000000000000000000003 /* Shared */,
+			);
+			name = MnemeTopShelf;
+			productName = MnemeTopShelf;
+			productReference = F10000000000000000000004 /* MnemeTopShelf.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -121,6 +203,9 @@
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					A20000000000000000000001 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					A20000000000000000000002 = {
 						CreatedOnToolsVersion = 26.6;
 					};
 				};
@@ -145,11 +230,19 @@
 			projectRoot = "";
 			targets = (
 				A20000000000000000000001 /* Mneme */,
+				A20000000000000000000002 /* MnemeTopShelf */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		A30000000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A30000000000000000000003 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -160,6 +253,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		A30000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A30000000000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -169,7 +269,51 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		A60000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A20000000000000000000002 /* MnemeTopShelf */;
+			targetProxy = A70000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		A40000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MnemeTopShelf/MnemeTopShelf.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = MnemeTopShelf/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited).topshelf";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+			};
+			name = Debug;
+		};
+		A40000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = MnemeTopShelf/MnemeTopShelf.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = MnemeTopShelf/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited).topshelf";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+			};
+			name = Release;
+		};
 		A40000000000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = F10000000000000000000002 /* Shared.xcconfig */;
@@ -218,6 +362,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				CODE_SIGN_ENTITLEMENTS = Mneme/Resources/Mneme.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Mneme/Resources/Info.plist;
@@ -234,6 +379,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				CODE_SIGN_ENTITLEMENTS = Mneme/Resources/Mneme.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Mneme/Resources/Info.plist;
@@ -249,6 +395,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		A50000000000000000000003 /* Build configuration list for PBXNativeTarget "MnemeTopShelf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A40000000000000000000005 /* Debug */,
+				A40000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		A50000000000000000000001 /* Build configuration list for PBXProject "Mneme" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -112,6 +112,7 @@ extension TitleSummary {
     /// A list entry with the facts its page answered filled in.
     func completed(with movie: MovieDetail) -> TitleSummary {
         completed(
+            year: movie.year,
             genres: movie.genres,
             runtimeMinutes: movie.runtimeMinutes,
             overview: movie.overview,
@@ -123,6 +124,7 @@ extension TitleSummary {
 
     func completed(with series: SeriesDetail) -> TitleSummary {
         completed(
+            year: series.year,
             genres: series.genres,
             runtimeMinutes: nil,
             overview: series.overview,
@@ -133,6 +135,7 @@ extension TitleSummary {
     }
 
     private func completed(
+        year: Int?,
         genres: [String],
         runtimeMinutes: Int?,
         overview: String?,
@@ -143,7 +146,7 @@ extension TitleSummary {
         TitleSummary(
             ref: ref,
             title: title,
-            year: year,
+            year: year ?? self.year,
             genres: genres,
             runtimeMinutes: runtimeMinutes,
             overview: overview,
