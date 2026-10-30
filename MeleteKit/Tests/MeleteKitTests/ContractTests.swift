@@ -59,10 +59,27 @@ struct ContractTests {
         ("WatchHome", WatchHome.self, []),
         ("WatchHomeRow", WatchHomeRow.self, []),
         ("WatchHomeItem", WatchHomeItem.self, []),
+        ("File", MediaFile.self, []),
+        ("MovieDetail", MovieDetail.self, []),
+        ("SeriesDetail", SeriesDetail.self, []),
+        ("SeasonSummary", SeasonSummary.self, []),
+        ("Season", Season.self, []),
+        ("Episode", Episode.self, []),
+        ("TitleArtwork", TitleArtwork.self, []),
+        ("ListItem", ListItem.self, []),
+        ("Page", Page<ListItem>.self, []),
+        ("Genre", Genre.self, []),
+        ("ProgressEntry", ProgressEntry.self, []),
+        ("Progress", Progress.self, []),
+        ("WatchedRequest", WatchedRequest.self, []),
+        ("SeriesWatched", SeriesWatched.self, []),
+        ("Favourite", Favourite.self, []),
+        ("FavouriteList", FavouriteList.self, []),
+        ("FavouriteState", FavouriteState.self, []),
     ]
 
     @Test(arguments: models.map(\.0))
-    func modelMatchesSchema(_ name: String) throws {
+    func `model matches schema`(_ name: String) throws {
         let (_, type, skipped) = try #require(Self.models.first { $0.0 == name })
         let schema = try #require(Self.schemas[name] as? [String: Any], "\(name) is not in openapi.json")
 
@@ -90,7 +107,9 @@ struct ContractTests {
     }
 
     static func type(of schema: [String: Any]) -> String? {
-        if let type = schema["type"] as? String { return type }
+        if let type = schema["type"] as? String {
+            return type
+        }
         return (schema["type"] as? [String])?.first { $0 != "null" }
     }
 

@@ -19,13 +19,17 @@ public struct WatchHomeRow: Codable, Sendable, Identifiable {
     public let key: Key
     public let items: [WatchHomeItem]
 
-    public var id: Key { key }
+    public var id: Key {
+        key
+    }
 
     /// Kept open rather than an enum, so a row a newer server adds is shown
     /// under its key instead of failing the whole home.
     public struct Key: RawRepresentable, Codable, Hashable, Sendable {
         public let rawValue: String
-        public init(rawValue: String) { self.rawValue = rawValue }
+        public init(rawValue: String) {
+            self.rawValue = rawValue
+        }
 
         public static let continueWatching = Key(rawValue: "continue_watching")
         public static let nextUp = Key(rawValue: "next_up")

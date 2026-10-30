@@ -16,7 +16,9 @@ struct Session: Codable, Hashable, Identifiable {
     let user: User
 
     /// Unique per user per server, and the token's keychain account.
-    var id: String { "\(server.absoluteString)#\(user.id)" }
+    var id: String {
+        "\(server.absoluteString)#\(user.id)"
+    }
 }
 
 /// The sessions this device has, and which one is in use.

@@ -30,7 +30,9 @@ struct RootView: View {
 
     var body: some View {
         if let session = sessions.current, let client = sessions.client(for: session) {
-            HomeView(model: HomeModel(client: client))
+            // Keyed on the session, so switching profiles starts the app afresh
+            // for the new person rather than showing them someone else's pages.
+            MainView(session: session, library: Library(client: client))
                 .id(session.id)
         } else {
             SignInFlow()

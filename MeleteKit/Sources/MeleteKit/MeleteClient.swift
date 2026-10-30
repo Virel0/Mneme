@@ -112,5 +112,7 @@ public struct MeleteClient: Sendable {
 public struct NoContent: Decodable, Sendable {}
 
 extension Collection {
-    var isNotEmpty: Bool { !isEmpty }
+    var isNotEmpty: Bool {
+        !isEmpty
+    }
 }
