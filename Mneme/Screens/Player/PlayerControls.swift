@@ -131,8 +131,10 @@ private struct SeekBar: View {
             Image(decorative: image, scale: 1)
                 .resizable()
                 .interpolation(.high)
-                .aspectRatio(previews?.aspectRatio ?? 16 / 9, contentMode: .fit)
-                .frame(width: Self.previewWidth)
+                // A fixed size, not one that fits the space offered: the
+                // preview is drawn inside the seek bar, which is ten points
+                // tall, and fitted there a picture came out ten points high.
+                .frame(width: Self.previewWidth, height: Self.previewWidth / (previews?.aspectRatio ?? 16 / 9))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .shadow(color: .black.opacity(0.6), radius: 20, y: 8)
         }
