@@ -10,7 +10,7 @@ import MeleteKit
 import SwiftUI
 
 /// The foot of a title's page: its extras, who is in it and who made it,
-/// the films it belongs with, and what its file is.
+/// the films it belongs with, titles like it, and what its file is.
 struct TitleMoreSections: View {
 
     @Environment(Router.self)
@@ -56,6 +56,26 @@ struct TitleMoreSections: View {
                                 title: item.title,
                                 caption: item.state == .playable ? item.year.map(String.init) : "Not in the Library"
                             )
+                        }
+                        .buttonStyle(PosterCardStyle())
+                    }
+                }
+            }
+
+            if !model.similar.isEmpty {
+                section("More Like This") {
+                    ForEach(model.similar, id: \.self) { item in
+                        Button {
+                            if let id = item.id {
+                                router.open(TitleSummary(
+                                    placeholder: TitleRef(kind: item.kind, id: id),
+                                    title: item.title,
+                                    poster: item.poster,
+                                    year: item.year
+                                ))
+                            }
+                        } label: {
+                            PosterCard(poster: item.poster, title: item.title, caption: item.year.map(String.init))
                         }
                         .buttonStyle(PosterCardStyle())
                     }

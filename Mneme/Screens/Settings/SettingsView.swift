@@ -18,8 +18,6 @@ struct SettingsView: View {
     @Environment(SessionStore.self)
     private var sessions
 
-    @AppStorage(PlaybackPreferences.autoPlayNextKey)
-    private var autoPlayNext = true
     @AppStorage(PlaybackPreferences.autoSkipIntrosKey)
     private var autoSkipIntros = false
     @AppStorage(PlaybackPreferences.maxBitrateKey)
@@ -28,6 +26,8 @@ struct SettingsView: View {
     private var resumeOffset = 5.0
     @AppStorage(PlaybackPreferences.subtitleSizeKey)
     private var subtitleSize = 46.0
+    @AppStorage(PlaybackPreferences.meleteConvertsAudioKey)
+    private var meleteConvertsAudio = false
     @AppStorage(PlaybackPreferences.previewClipsKey)
     private var previewClips = true
     @AppStorage(SessionStore.asksWhoIsWatchingKey)
@@ -47,7 +47,11 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    Toggle("Play the next episode", isOn: $autoPlayNext)
+                    // Kept by Melete for every device, where the server does.
+                    Toggle("Play the next episode", isOn: Binding(
+                        get: { library.autoplayNext },
+                        set: { on in Task { await library.setAutoplayNext(on) } }
+                    ))
                     Toggle("Skip intros, recaps and previews", isOn: $autoSkipIntros)
                     Picker("Quality", selection: $maxBitrate) {
                         ForEach(PlaybackPreferences.bitrateChoices, id: \.self) { bitrate in
@@ -66,11 +70,12 @@ struct SettingsView: View {
                         Text("Extra Large").tag(68.0)
                     }
                     Toggle("Preview clips on Home", isOn: $previewClips)
+                    Toggle("Melete converts surround sound", isOn: $meleteConvertsAudio)
                 } header: {
                     Text("Playback")
                 } footer: {
                     Text(
-                        "Credits are never skipped: the next episode is offered there instead. Over the quality chosen, Melete converts the film to fit. Preview clips play only on your home network. These are kept on this Apple TV."
+                        "Credits are never skipped: the next episode is offered there instead. Over the quality chosen, Melete converts the film to fit. Preview clips play only on your home network. With Melete converting surround sound, a TrueHD or DTS soundtrack is converted by the server, lossless, instead of by this Apple TV; TrueHD's Atmos is lost. Playing the next episode is kept by Melete for all your devices; the rest are kept on this Apple TV."
                     )
                 }
 

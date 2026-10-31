@@ -104,6 +104,8 @@ private struct SignInView: View {
     private var username = ""
     @State
     private var password = ""
+    @State
+    private var code = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 32) {
@@ -111,7 +113,28 @@ private struct SignInView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
-            if usesPassword {
+            if usesPassword, model.codeChallenge != nil {
+                Text("Enter the six-digit code from your authenticator app.")
+
+                TextField("Code", text: $code)
+                    .keyboardType(.numberPad)
+                    .textContentType(.oneTimeCode)
+                    .onSubmit(finishSignIn)
+
+                Button(action: finishSignIn) {
+                    if model.isWorking {
+                        ProgressView()
+                    } else {
+                        Text("Verify")
+                    }
+                }
+                .disabled(model.isWorking || code.trimmingCharacters(in: .whitespaces).count < 6)
+
+                Button("Back") {
+                    code = ""
+                    model.cancelCode()
+                }
+            } else if usesPassword {
                 TextField("Username", text: $username)
                     .textContentType(.username)
                     .autocorrectionDisabled()
@@ -159,5 +182,9 @@ private struct SignInView: View {
 
     private func signIn() {
         Task { await model.signIn(server: server, username: username, password: password) }
+    }
+
+    private func finishSignIn() {
+        Task { await model.finishSignIn(server: server, code: code) }
     }
 }

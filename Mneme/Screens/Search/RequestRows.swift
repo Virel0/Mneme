@@ -58,6 +58,9 @@ struct RequestRow: View {
             if progress.step == "downloading", let percent = progress.percent {
                 return "\(stepName(progress.step)) · \(Int(percent))%"
             }
+            if let copied = progress.copied {
+                return String(format: "Copying home · %.1f of %.1f GB", Double(copied.bytes) / 1e9, Double(copied.total) / 1e9)
+            }
             return stepName(progress.step)
         default:
             return "Asked For"

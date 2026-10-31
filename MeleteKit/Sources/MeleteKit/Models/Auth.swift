@@ -43,6 +43,28 @@ public struct QuickConnectCode: Codable, Sendable {
     public let expiresIn: Int
 }
 
+/// The password was right and the account has two-factor sign-in on: the
+/// sign-in finishes with this challenge and a code from the authenticator.
+public struct SecondFactorNeeded: Codable, Sendable {
+    public let error: String
+    /// What the code is: `totp`, six digits from an authenticator app.
+    public let secondFactor: String
+    /// Starts with `m2f_`. Finishes the sign-in once.
+    public let challenge: String
+    /// Seconds the challenge lasts.
+    public let expiresIn: Int
+}
+
+public struct SecondFactorRequest: Codable, Sendable {
+    public let challenge: String
+    public let code: String
+}
+
+public enum SignInResult: Sendable {
+    case signedIn(LoginResponse)
+    case codeNeeded(SecondFactorNeeded)
+}
+
 public struct QuickConnectPoll: Codable, Sendable {
     public let secret: String
 }
@@ -58,11 +80,35 @@ public extension MeleteClient {
         try await send(Endpoint(.get, "api/v1/health"))
     }
 
-    func signIn(username: String, password: String, deviceName: String) async throws(MeleteError) -> LoginResponse {
-        try await send(Endpoint(
+    /// Signs in, or, for an account with two-factor sign-in on, answers the
+    /// challenge to finish with `finishSignIn(challenge:code:)`. A wrong
+    /// username or password is `.unauthorized`.
+    func signIn(username: String, password: String, deviceName: String) async throws(MeleteError) -> SignInResult {
+        let (data, status) = try await perform(Endpoint<LoginResponse>(
             .post,
             "api/v1/auth/login",
             json: LoginRequest(username: username, password: password, deviceName: deviceName)
+        ))
+        if status == 401, let needed = try? JSONDecoder.melete.decode(SecondFactorNeeded.self, from: data) {
+            return .codeNeeded(needed)
+        }
+        guard (200 ..< 300).contains(status) else {
+            throw MeleteError(status: status, data: data)
+        }
+        do {
+            return try .signedIn(JSONDecoder.melete.decode(LoginResponse.self, from: data))
+        } catch {
+            throw .decoding(String(describing: error))
+        }
+    }
+
+    /// Finishes a two-factor sign-in. A wrong code is `.unauthorized`, and a
+    /// challenge that ran out, after five minutes, is a 410.
+    func finishSignIn(challenge: String, code: String) async throws(MeleteError) -> LoginResponse {
+        try await send(Endpoint(
+            .post,
+            "api/v1/auth/login/second-factor",
+            json: SecondFactorRequest(challenge: challenge, code: code)
         ))
     }
 

@@ -20,6 +20,7 @@ enum PlaybackPreferences {
     static let resumeOffsetKey = "resumeOffset"
     static let subtitleSizeKey = "subtitleSize"
     static let previewClipsKey = "previewClips"
+    static let meleteConvertsAudioKey = "meleteConvertsAudio"
 
     /// Start the next episode when the credits have counted down. On unless
     /// turned off.
@@ -38,6 +39,13 @@ enum PlaybackPreferences {
     static var maxBitrate: Int? {
         let value = UserDefaults.standard.integer(forKey: maxBitrateKey)
         return value > 0 ? value : nil
+    }
+
+    /// Have Melete convert a soundtrack the Apple TV can't play itself
+    /// (TrueHD, DTS, PCM), streaming the video unchanged beside it, instead
+    /// of converting it on the Apple TV. Off unless turned on.
+    static var meleteConvertsAudio: Bool {
+        UserDefaults.standard.bool(forKey: meleteConvertsAudioKey)
     }
 
     /// The choices offered, in bits per second; 0 is the original.

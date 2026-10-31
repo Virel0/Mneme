@@ -13,8 +13,8 @@ What the Jellyfin fork of Mneme did, and where the Melete app stands on each:
 | Hero: logo, facts, Play that says what it does, More Info, My List, stepping and rotation | Done | |
 | A quiet clip of the title in the hero and the spotlight | Done | Melete's 720p conversion of the title itself, on the home network only |
 | Continue Watching, Next Up, My List, latest per library | Done | From `/home` |
-| Because You Watched | Done | When Melete has discovery on |
-| Featured for You (picks by a language model) | Melete | No recommendations endpoint; a marker shows in debug builds |
+| Because You Watched | Done | Melete's rows, one for each finished title; Mneme's own for a server before 0.2.0 |
+| Featured for You (picks by a language model) | Done | Melete's row, when an admin has AI picks on |
 | Popular Right Now | Done, moved | Trending, on Search |
 | Tiles lift, the spotlight shows the focused title above the rows | Done | |
 | Home drawn at once from a copy on the device | Done | |
@@ -55,7 +55,7 @@ What the Jellyfin fork of Mneme did, and where the Melete app stands on each:
 | Audio and subtitle choice, remembered for the series | Done | Melete's track pick and track choice |
 | Audio and subtitle languages | Done | Kept by Melete, for every device |
 | Skip recap, intro, preview; next episode at the credits | Done | |
-| Auto play next and auto skip | Done | Settings of the device until Melete keeps them per person |
+| Auto play next and auto skip | Done | Auto play and its countdown kept by Melete per person; auto skip a setting of the device |
 | Seek-bar previews | Done | Melete's trickplay sheets |
 | Chapters on the seek bar | Done | |
 | Playback speed | Done | |
@@ -67,7 +67,7 @@ What the Jellyfin fork of Mneme did, and where the Melete app stands on each:
 
 | Feature | Melete app | Note |
 |---|---|---|
-| Quick Connect and password sign-in | Done | |
+| Quick Connect and password sign-in | Done | With a two-factor code for an account that has it on |
 | Approve another device's Quick Connect code | Done | |
 
 ## Not carried across

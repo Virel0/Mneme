@@ -65,9 +65,36 @@ final class Library {
     /// The viewer's requests as the event stream last sent them; nil until
     /// it has.
     private(set) var requests: [MediaRequest]?
-    /// Whether the hero may play its picks' trailers: the viewer's choice in
-    /// Melete. A television is a large screen, so only "off" stops them.
-    private(set) var heroTrailers = true
+    /// The viewer's playback choices kept by Melete; nil until read, and
+    /// from a server older than them.
+    private(set) var playbackSettings: PlaybackSettings?
+
+    /// Whether the hero may play its picks' trailers. A television is a
+    /// large screen, so only "off" stops them.
+    var heroTrailers: Bool {
+        playbackSettings?.heroTrailers != .off
+    }
+
+    /// Start the next episode when the countdown ends: the viewer's choice in
+    /// Melete, or this Apple TV's where the server doesn't keep it.
+    var autoplayNext: Bool {
+        playbackSettings?.autoplayNext ?? PlaybackPreferences.autoPlayNext
+    }
+
+    /// Seconds the next episode is offered before it starts.
+    var countdownSeconds: Int {
+        playbackSettings?.countdownSeconds ?? 10
+    }
+
+    func setAutoplayNext(_ on: Bool) async {
+        guard playbackSettings != nil else {
+            UserDefaults.standard.set(on, forKey: PlaybackPreferences.autoPlayNextKey)
+            return
+        }
+        if let settings = try? await client.setPlaybackSettings(PlaybackSettingsChange(autoplayNext: on)) {
+            playbackSettings = settings
+        }
+    }
 
     private var completed: [TitleRef: TitleSummary] = [:]
     private var lastLibraryVersion: Int?
@@ -98,7 +125,11 @@ final class Library {
             saveHome(home)
             let client = client
             Task { await TopShelfPublisher.publish(home, client: client) }
-            Task { await loadBecauseYouWatched(from: home) }
+            if home.rows.contains(where: { $0.key == .becauseYouWatched }) {
+                becauseYouWatched = nil
+            } else {
+                Task { await loadBecauseYouWatched(from: home) }
+            }
             Task { await loadPlaybackSettings() }
             watching = Set(
                 home.rows
@@ -158,8 +189,7 @@ final class Library {
     /// those in the library. Melete answers only with discovery on; off, the
     /// row is simply not there.
     private func loadPlaybackSettings() async {
-        guard let settings = try? await client.playbackSettings() else { return }
-        heroTrailers = settings.heroTrailers != .off
+        playbackSettings = try? await client.playbackSettings()
     }
 
     private func loadBecauseYouWatched(from home: WatchHome) async {

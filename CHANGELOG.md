@@ -37,9 +37,13 @@ commit.
 - Drifting light behind "Who's Watching?".
 - The hero plays the title's trailer when its folder has one, as Melete's hero trailers setting says.
 - Tabs crossfade, and the home comes up out of the intro.
+- Two-factor sign-in: an account with it on is asked for the authenticator's code.
+- Featured for You and Melete's Because You Watched rows on Home, and More Like This on a title's page.
+- "Melete converts surround sound" in Settings, for TrueHD and DTS soundtracks.
+- Playing the next episode, and its countdown, follow your choice in Melete on every device.
+- A request being copied home shows how far it has got.
 
 ### Not yet back
-- Featured for You, which needs a recommendations endpoint in Melete.
 - The iPhone and iPad app.
 
 [Unreleased]: https://github.com/Virel0/Mneme/commits/main

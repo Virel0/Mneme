@@ -23,6 +23,11 @@ final class SignInModel {
     private(set) var isWorking = false
     private(set) var error: String?
     private(set) var quickConnectCode: String?
+    /// Set when the password was right and the account has two-factor
+    /// sign-in on: the sign-in finishes with a code from the authenticator.
+    private(set) var codeChallenge: SecondFactorNeeded?
+    @ObservationIgnored
+    private var challengeExpiry: Date?
 
     private var pollTask: Task<Void, Never>?
 
@@ -124,15 +129,56 @@ final class SignInModel {
         defer { isWorking = false }
 
         do {
-            let login = try await MeleteClient(baseURL: server)
+            switch try await MeleteClient(baseURL: server)
                 .signIn(username: username, password: password, deviceName: Self.deviceName)
-            pollTask?.cancel()
-            signedIn?(server, login)
+            {
+            case let .signedIn(login):
+                pollTask?.cancel()
+                signedIn?(server, login)
+            case let .codeNeeded(challenge):
+                codeChallenge = challenge
+                challengeExpiry = Date.now.addingTimeInterval(TimeInterval(challenge.expiresIn))
+            }
         } catch .unauthorized {
             error = "That username and password don't match."
         } catch {
             self.error = error.localizedDescription
         }
+    }
+
+    // MARK: - Two-factor code
+
+    func finishSignIn(server: URL, code: String) async {
+        guard let challenge = codeChallenge else { return }
+        guard let challengeExpiry, Date.now < challengeExpiry else {
+            cancelCode()
+            error = "That took too long. Sign in with your password again."
+            return
+        }
+        isWorking = true
+        error = nil
+        defer { isWorking = false }
+
+        do {
+            let login = try await MeleteClient(baseURL: server).finishSignIn(challenge: challenge.challenge, code: code)
+            pollTask?.cancel()
+            signedIn?(server, login)
+        } catch .unauthorized {
+            error = "That code didn't work. Enter the one your authenticator shows now."
+        } catch .server(status: 410, _) {
+            cancelCode()
+            error = "That took too long. Sign in with your password again."
+        } catch let .tooManyRequests(message) {
+            error = message
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+
+    /// Back to the password, dropping the challenge.
+    func cancelCode() {
+        codeChallenge = nil
+        challengeExpiry = nil
     }
 
     /// Set by the view, to hand the new session to the session store.
