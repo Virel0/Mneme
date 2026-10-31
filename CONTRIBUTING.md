@@ -26,7 +26,8 @@ open `Mneme.xcodeproj`.
 
 ## Checks
 
-CI runs these on every pull request; run them before you push:
+CI runs these on every pull request; run them before you push, with SwiftFormat at the version
+named at the top of `.swiftformat` (CI downloads exactly that release):
 
 ```sh
 swiftformat --lint .
