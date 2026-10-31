@@ -139,7 +139,7 @@ private struct SignInView: View {
                             .font(.system(size: 96, weight: .bold, design: .monospaced))
                             .kerning(12)
                     } else {
-                        ProgressView()
+                        LoadingMark()
                     }
                 }
                 .frame(height: 140)

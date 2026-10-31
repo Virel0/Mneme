@@ -45,9 +45,17 @@ struct TitleTile: View {
     private var spotlight
     @Environment(Library.self)
     private var library
+    @Environment(Router.self)
+    private var router
 
     @FocusState
     private var isFocused: Bool
+
+    /// Where the picture sits on the screen while the tile has focus, for
+    /// the page it opens to grow out of. Only the focused tile keeps it, so
+    /// scrolling does not update every tile's state.
+    @State
+    private var frameOnScreen = CGRect.zero
 
     /// Whether the row's mask is cutting a piece off this tile.
     @State
@@ -77,10 +85,16 @@ struct TitleTile: View {
     }
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            router.pressedTile = TileZoom(picture: picturePath, frame: frameOnScreen)
+            action()
+        } label: {
             VStack(alignment: .leading, spacing: 12) {
                 picture
                     .frame(width: size.width, height: size.height)
+                    .onGeometryChange(for: CGRect.self) { proxy in
+                        isFocused ? proxy.frame(in: .global) : .zero
+                    } action: { frameOnScreen = $0 }
                     .scaleEffect(isFocused ? Self.liftScale : 1, anchor: liftAnchor)
 
                 // No caption under a poster: it carries its title in the art,

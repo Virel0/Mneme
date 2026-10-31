@@ -108,4 +108,9 @@ extension Color {
     /// to end on exactly the page's colour, and a slightly wrong black reads as
     /// a rectangle.
     static let mnemePageBackground = Color(red: 0.035, green: 0.035, blue: 0.045)
+
+    /// The wordmark's two colours: the violet of its letters and the cyan of
+    /// their glow and the rule beneath.
+    static let mnemeViolet = Color(red: 0.49, green: 0.36, blue: 1.0)
+    static let mnemeCyan = Color(red: 0.37, green: 0.91, blue: 0.94)
 }

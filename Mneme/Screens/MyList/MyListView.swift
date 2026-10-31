@@ -49,7 +49,7 @@ struct MyListView: View {
                     grid(items)
                 }
             } else {
-                ProgressView()
+                LoadingMark()
             }
         }
         .environment(\.tileSpotlight, spotlight)

@@ -30,7 +30,7 @@ struct WatchPage: View {
 
             switch library.home {
             case .loading:
-                ProgressView()
+                LoadingMark()
             case let .failed(error):
                 FailureView(title: "Couldn't load \(kind.title)", error: error) {
                     Task { await library.load() }

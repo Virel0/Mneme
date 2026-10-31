@@ -64,7 +64,7 @@ struct PersonView: View {
                 }
                 .padding(.vertical, 80)
             } else {
-                ProgressView()
+                LoadingMark()
                     .frame(maxWidth: .infinity, minHeight: 600)
             }
         }

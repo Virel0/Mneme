@@ -29,6 +29,9 @@ commit.
   Who's Watching at launch.
 - Home and My List follow changes made elsewhere as they happen, and the home is drawn at once
   from the copy kept on the device.
+- An intro when the app opens, skipped by any press.
+- Opening a title grows its tile into the page, title pages drift slowly, playback fades up from
+  black, and loading shows Mneme's own mark.
 
 ### Not yet back
 - Featured for You, which needs a recommendations endpoint in Melete.

@@ -62,7 +62,9 @@ struct TitleView: View {
             // instead of staying behind the episodes.
             .background(alignment: .top) {
                 FocusedBackdrop(path: model.summary.backdrop, focus: model.summary.backdropFocus)
+                    .modifier(SlowDrift(focus: model.summary.backdropFocus))
                     .frame(height: TitleLayout.backdropHeight)
+                    .clipped()
                     .overlay {
                         LinearGradient(
                             colors: [Color.mnemePageBackground.opacity(0.9), Color.mnemePageBackground.opacity(0.3), .clear],
@@ -168,6 +170,32 @@ private struct TitleHeader: View {
         .padding(.horizontal, RowLayout.edge)
         .padding(.top, TitleLayout.headerTop)
         .shadow(color: .black.opacity(0.4), radius: 12)
+    }
+}
+
+/// The backdrop leans in a little and back out, over half a minute each
+/// way, around the picture's subject, so a page being read is not a still.
+private struct SlowDrift: ViewModifier {
+
+    let focus: Focus?
+
+    @Environment(\.accessibilityReduceMotion)
+    private var reduceMotion
+
+    func body(content: Content) -> some View {
+        if reduceMotion {
+            content
+        } else {
+            // Keyframes rather than a repeating animation: an animation's
+            // transaction also caught the picture's own fade-in and stretched
+            // it over the half minute.
+            content.keyframeAnimator(initialValue: 1.0, repeating: true) { view, scale in
+                view.scaleEffect(scale, anchor: UnitPoint(x: focus?.x ?? 0.5, y: focus?.y ?? 0.35))
+            } keyframes: { _ in
+                CubicKeyframe(1.07, duration: 30)
+                CubicKeyframe(1.0, duration: 30)
+            }
+        }
     }
 }
 
