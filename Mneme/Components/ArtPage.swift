@@ -50,24 +50,28 @@ struct ArtBackdrop: View {
     let art: String
 
     var body: some View {
-        ZStack {
-            Image(art)
-                .resizable()
-                .scaledToFill()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
-
-            LinearGradient(
-                stops: [
-                    .init(color: Color.mnemePageBackground.opacity(0.8), location: 0),
-                    .init(color: Color.mnemePageBackground.opacity(0.5), location: 0.35),
-                    .init(color: .clear, location: 0.55),
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        }
-        .ignoresSafeArea()
+        // On a clear view that takes whatever room it is offered: a picture
+        // sized to fill, laid out directly, asked for more height than the
+        // screen and pushed the tab strip off the top.
+        Color.clear
+            .overlay {
+                Image(art)
+                    .resizable()
+                    .scaledToFill()
+            }
+            .clipped()
+            .overlay {
+                LinearGradient(
+                    stops: [
+                        .init(color: Color.mnemePageBackground.opacity(0.8), location: 0),
+                        .init(color: Color.mnemePageBackground.opacity(0.5), location: 0.35),
+                        .init(color: .clear, location: 0.55),
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            }
+            .ignoresSafeArea()
     }
 }
 

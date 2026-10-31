@@ -35,6 +35,8 @@ commit.
 - Pictures of the Muses in neon line on the sign-in screen, an empty My List, a failed load, a file
   that can't be played and a search with no matches, and in the Top Shelf.
 - Drifting light behind "Who's Watching?".
+- The hero plays the title's trailer when its folder has one, as Melete's hero trailers setting says.
+- Tabs crossfade, and the home comes up out of the intro.
 
 ### Not yet back
 - Featured for You, which needs a recommendations endpoint in Melete.

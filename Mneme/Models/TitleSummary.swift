@@ -41,6 +41,8 @@ struct TitleSummary: Hashable, Identifiable, Sendable {
     /// Whether this came with its full facts, or is a list entry the
     /// spotlight still has to look up.
     let isComplete: Bool
+    /// The hero's picks only: the trailer Melete offers for the title.
+    var trailer: WatchHomeItem.Trailer?
 
     var id: TitleRef {
         ref
@@ -71,6 +73,7 @@ extension TitleSummary {
         episode = item.episode
         progress = item.progress
         isComplete = true
+        trailer = item.trailer
     }
 
     init(_ item: ListItem, kind: TitleKind) {
@@ -158,7 +161,8 @@ extension TitleSummary {
             unwatchedEpisodes: unwatchedEpisodes,
             episode: episode,
             progress: progress,
-            isComplete: true
+            isComplete: true,
+            trailer: trailer
         )
     }
 }

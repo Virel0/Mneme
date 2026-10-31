@@ -14,10 +14,13 @@ import Observation
 /// A quiet clip of a title, played over its backdrop in the hero or the
 /// spotlight once focus has rested there a moment.
 ///
-/// It is the title itself, from where the viewer left it or a little way
-/// in, through Melete's conversion at 720p: small enough to start at once
+/// In the hero, the title's trailer when its folder has one. Otherwise the
+/// title itself, from where the viewer left it or a little way in. Either
+/// goes through Melete's conversion at 720p: small enough to start at once
 /// and to leave the network to the film being watched. Played only on the
 /// home network, muted, and nothing about it is reported as watched.
+/// Trailers online are YouTube's web player, which an Apple TV app cannot
+/// show, so those titles get the clip of themselves.
 @MainActor
 @Observable
 final class PreviewClip {
@@ -31,15 +34,17 @@ final class PreviewClip {
     /// Long enough that sweeping across titles starts nothing.
     private static let delay: Duration = .milliseconds(900)
     private static let length: Duration = .seconds(40)
+    /// Enough for nearly any trailer to finish.
+    private static let trailerLength: Duration = .seconds(150)
 
-    func start(for summary: TitleSummary, client: MeleteClient) {
+    func start(for summary: TitleSummary, client: MeleteClient, trailer: WatchHomeItem.Trailer? = nil) {
         stop()
         guard PlaybackPreferences.previewClips, client.baseURL.isOnHomeNetwork else { return }
 
         task = Task { [weak self] in
             try? await Task.sleep(for: Self.delay)
             guard !Task.isCancelled else { return }
-            await self?.play(summary, client: client)
+            await self?.play(summary, trailer: trailer, client: client)
         }
     }
 
@@ -51,22 +56,30 @@ final class PreviewClip {
         isPlaying = false
     }
 
-    private func play(_ summary: TitleSummary, client: MeleteClient) async {
-        guard let target = try? await PlayTarget.lookUp(for: summary, client: client),
-              let start = await Self.startPoint(for: summary, target: target, client: client),
-              let converted = try? await client.transcode(
-                  file: target.fileID,
-                  TranscodeRequest(maxHeight: 720, maxBitrate: 3_000_000, videoCodec: "h264")
-              ),
-              let url = client.url(for: converted.playlistUrl),
-              !Task.isCancelled,
-              let engine = try? AetherEngine()
+    private func play(_ summary: TitleSummary, trailer: WatchHomeItem.Trailer?, client: MeleteClient) async {
+        let source: (file: Int, start: Double, length: Duration)
+        if trailer?.source == .folder, let file = trailer?.fileId {
+            source = (file, 0, Self.trailerLength)
+        } else if let target = try? await PlayTarget.lookUp(for: summary, client: client),
+                  let start = await Self.startPoint(for: summary, target: target, client: client)
+        {
+            source = (target.fileID, start, Self.length)
+        } else {
+            return
+        }
+        guard let converted = try? await client.transcode(
+            file: source.file,
+            TranscodeRequest(maxHeight: 720, maxBitrate: 3_000_000, videoCodec: "h264")
+        ),
+            let url = client.url(for: converted.playlistUrl),
+            !Task.isCancelled,
+            let engine = try? AetherEngine()
         else { return }
 
         var options = LoadOptions()
         options.nativeRemoteHLS = true
         engine.volume = 0
-        guard await (try? engine.load(url: url, startPosition: start, options: options)) != nil, !Task.isCancelled else {
+        guard await (try? engine.load(url: url, startPosition: source.start, options: options)) != nil, !Task.isCancelled else {
             engine.stop()
             return
         }
@@ -75,7 +88,7 @@ final class PreviewClip {
         self.engine = engine
         isPlaying = true
 
-        try? await Task.sleep(for: Self.length)
+        try? await Task.sleep(for: source.length)
         guard !Task.isCancelled else { return }
         stop()
     }

@@ -36,6 +36,9 @@ struct SearchView: View {
                     }
                 }
                 .padding(.vertical, 40)
+                // Held to the left: with no rows to fill the width, the
+                // page centred what was left.
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .overlay(alignment: .top) { PageTop() }
             }
         }
@@ -45,6 +48,16 @@ struct SearchView: View {
         // The system draws the field and keyboard at the top of the view,
         // where the tab strip floats; the view starts below the strip instead.
         .padding(.top, HeroLayout.top)
+        // Urania behind the page while nothing matches, lowered so she
+        // starts beneath the keyboard; above her is the page's own colour.
+        .background {
+            if showsNoMatches {
+                ArtBackdrop(art: "ArtNoMatches")
+                    .offset(y: 240)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.4), value: showsNoMatches)
         .task {
             let model = SearchModel(client: library.client)
             self.model = model
@@ -56,6 +69,14 @@ struct SearchView: View {
         .fullScreenCover(item: $requesting) { item in
             RequestView(item: item, model: model)
         }
+    }
+
+    /// A search that came back with nothing anywhere.
+    private var showsNoMatches: Bool {
+        guard let model, !query.trimmingCharacters(in: .whitespaces).isEmpty else { return false }
+        let results = model.results
+        return results.movies.isEmpty && results.shows.isEmpty && results.elsewhere.isEmpty
+            && !model.isSearching && model.ai == nil
     }
 
     // MARK: - Before typing
@@ -112,8 +133,12 @@ struct SearchView: View {
         if !results.elsewhere.isEmpty {
             DiscoverRow(title: "Not in the Library", items: results.elsewhere) { requesting = $0 }
         }
-        if results.movies.isEmpty, results.shows.isEmpty, results.elsewhere.isEmpty, !model.isSearching, model.ai == nil {
-            NoMatches(query: query)
+        if showsNoMatches {
+            Text("No matches for \u{201C}\(query)\u{201D}.")
+                .font(.title3)
+                .frame(maxWidth: 760, alignment: .leading)
+                .padding(.horizontal, RowLayout.edge)
+                .padding(.top, 60)
         }
     }
 
@@ -136,64 +161,5 @@ struct SearchView: View {
             }
         }
         .padding(.horizontal, RowLayout.edge)
-    }
-}
-
-/// "No matches", on a strip of Urania, the Muse of astronomy, searching the
-/// sky for a constellation that is not there. The strip dissolves into the
-/// page at every edge, since the page keeps margins the picture would
-/// otherwise end at, and is darkened on the left where the words are.
-private struct NoMatches: View {
-
-    let query: String
-
-    var body: some View {
-        Image("ArtNoMatches")
-            .resizable()
-            .scaledToFill()
-            .frame(height: 400)
-            .frame(maxWidth: .infinity)
-            .clipped()
-            .overlay {
-                LinearGradient(
-                    stops: [
-                        .init(color: Color.mnemePageBackground.opacity(0.8), location: 0),
-                        .init(color: Color.mnemePageBackground.opacity(0.5), location: 0.35),
-                        .init(color: .clear, location: 0.55),
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            }
-            .mask {
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .black, location: 0.08),
-                        .init(color: .black, location: 0.9),
-                        .init(color: .clear, location: 1),
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .mask {
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear, location: 0),
-                            .init(color: .black, location: 0.2),
-                            .init(color: .black, location: 0.75),
-                            .init(color: .clear, location: 1),
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                }
-            }
-            .overlay(alignment: .leading) {
-                Text("No matches for \u{201C}\(query)\u{201D}.")
-                    .font(.title3)
-                    .frame(maxWidth: 760, alignment: .leading)
-                    .padding(.leading, RowLayout.edge)
-            }
     }
 }

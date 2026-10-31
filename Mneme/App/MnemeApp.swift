@@ -41,10 +41,14 @@ struct RootView: View {
                 // Nothing behind the intro can take focus, so every press
                 // reaches the intro and skips it.
                     .disabled(!introIsOver)
+                    // The app comes up out of the intro's dark, settling from a
+                    // little larger, as the intro fades.
+                    .opacity(introIsOver ? 1 : 0)
+                    .scaleEffect(introIsOver ? 1 : 1.04)
 
             if !introIsOver {
                 LaunchIntro {
-                    withAnimation(.easeOut(duration: 0.5)) { introIsOver = true }
+                    withAnimation(.easeInOut(duration: 1.0)) { introIsOver = true }
                 }
                 .transition(.opacity)
             }

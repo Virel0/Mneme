@@ -102,12 +102,13 @@ struct FocusedBackdrop: View {
 
 extension Color {
 
-    /// The near-black the whole app sits on.
+    /// The near-black the whole app sits on: the violet black the app's
+    /// pictures are drawn on, so they and the page meet without an edge.
     ///
     /// Declared once because a gradient that fades a picture into the page has
     /// to end on exactly the page's colour, and a slightly wrong black reads as
-    /// a rectangle.
-    static let mnemePageBackground = Color(red: 0.035, green: 0.035, blue: 0.045)
+    /// a rectangle; on a television, which lifts near-blacks, more so.
+    static let mnemePageBackground = Color(red: 0.04, green: 0.016, blue: 0.08)
 
     /// The wordmark's two colours: the violet of its letters and the cyan of
     /// their glow and the rule beneath.

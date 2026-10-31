@@ -65,6 +65,9 @@ final class Library {
     /// The viewer's requests as the event stream last sent them; nil until
     /// it has.
     private(set) var requests: [MediaRequest]?
+    /// Whether the hero may play its picks' trailers: the viewer's choice in
+    /// Melete. A television is a large screen, so only "off" stops them.
+    private(set) var heroTrailers = true
 
     private var completed: [TitleRef: TitleSummary] = [:]
     private var lastLibraryVersion: Int?
@@ -96,6 +99,7 @@ final class Library {
             let client = client
             Task { await TopShelfPublisher.publish(home, client: client) }
             Task { await loadBecauseYouWatched(from: home) }
+            Task { await loadPlaybackSettings() }
             watching = Set(
                 home.rows
                     .filter { $0.key == .continueWatching || $0.key == .nextUp }
@@ -153,6 +157,11 @@ final class Library {
     /// TMDB's recommendations for the title most lately watched, keeping
     /// those in the library. Melete answers only with discovery on; off, the
     /// row is simply not there.
+    private func loadPlaybackSettings() async {
+        guard let settings = try? await client.playbackSettings() else { return }
+        heroTrailers = settings.heroTrailers != .off
+    }
+
     private func loadBecauseYouWatched(from home: WatchHome) async {
         let watched = home.rows
             .filter { $0.key == .continueWatching || $0.key == .nextUp }

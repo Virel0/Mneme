@@ -128,6 +128,12 @@ private struct HeroCard: View {
         focusedAction != nil
     }
 
+    /// The pick's trailer, unless the viewer turned the hero's trailers off
+    /// in Melete.
+    private var trailer: WatchHomeItem.Trailer? {
+        library.heroTrailers ? pick.trailer : nil
+    }
+
     var body: some View {
         artwork
             .overlay(alignment: .bottomLeading) {
@@ -153,7 +159,7 @@ private struct HeroCard: View {
             .onChange(of: isFocused) {
                 onFocusChange(isFocused)
                 if isFocused, let client {
-                    clip.start(for: pick, client: client)
+                    clip.start(for: pick, client: client, trailer: trailer)
                 } else {
                     clip.stop()
                 }
@@ -168,7 +174,7 @@ private struct HeroCard: View {
                 // A step changes the title under a focused card; its clip
                 // follows.
                 if isFocused, let client {
-                    clip.start(for: pick, client: client)
+                    clip.start(for: pick, client: client, trailer: trailer)
                 }
                 target = PlayTarget.known(for: pick)
                 guard target == nil, let client else { return }
