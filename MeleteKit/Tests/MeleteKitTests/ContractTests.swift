@@ -114,6 +114,7 @@ struct ContractTests {
         ("TranscodeRequest", TranscodeRequest.self, ["audio_channels", "audio_mode", "burn_subtitle"]),
         ("TranscodeResponse", TranscodeResponse.self, []),
         ("Languages", Languages.self, []),
+        ("PlaybackPreferences", PlaybackSettings.self, []),
         ("QuickConnectApproveRequest", QuickConnectApproveRequest.self, []),
         ("QuickConnectLookup", QuickConnectLookup.self, []),
         ("QuickConnectApproved", QuickConnectApproved.self, []),

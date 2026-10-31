@@ -167,3 +167,23 @@ public struct DiagnosticsReport: Codable, Sendable {
 public struct DiagnosticsKept: Codable, Sendable {
     public let id: Int
 }
+
+/// The viewer's playback choices, kept by Melete for every device they use.
+public struct PlaybackSettings: Codable, Sendable {
+    public let autoplayNext: Bool
+    public let countdownSeconds: Int
+    public let heroTrailers: HeroTrailers
+
+    /// Where the home's hero plays its picks' trailers. Kept open, so a
+    /// choice a newer server adds does not fail the request.
+    public struct HeroTrailers: RawRepresentable, Codable, Hashable, Sendable {
+        public let rawValue: String
+        public init(rawValue: String) {
+            self.rawValue = rawValue
+        }
+
+        public static let off = HeroTrailers(rawValue: "off")
+        public static let largeScreens = HeroTrailers(rawValue: "large_screens")
+        public static let everywhere = HeroTrailers(rawValue: "everywhere")
+    }
+}

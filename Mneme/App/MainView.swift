@@ -44,33 +44,38 @@ struct MainView: View {
             // The page inside a container that stays the same view while the
             // page is swapped. With the strip attached to the page itself,
             // changing tab rebuilt the strip and focus fell to its first button.
-            ZStack { page }
-                // Only for Menu pressed in the page: it brings focus up to the
-                // strip. On the strip, Menu keeps its system meaning and leaves
-                // the app.
-                    .onExitCommand {
-                        stripFocus = .tab(selected)
-                    }
-                    .safeAreaInset(edge: .top, spacing: 0) {
-                        NavStrip(
-                            focused: $stripFocus,
-                            selected: selected,
-                            userInitial: String(session.user.username.prefix(1)).uppercased(),
-                            select: { selected = $0 },
-                            openProfile: { showsProfiles = true }
-                        )
-                    }
-                    .background(Color.mnemePageBackground.ignoresSafeArea())
-                    .navigationDestination(for: Route.self) { route in
-                        switch route {
-                        case let .title(summary):
-                            TitleView(summary: summary)
-                        case let .play(target):
-                            PlayerView(target: target)
-                        case let .person(id):
-                            PersonView(id: id)
-                        }
-                    }
+            ZStack {
+                page
+                    .id(selected)
+                    .transition(.opacity)
+            }
+            .animation(.easeInOut(duration: 0.3), value: selected)
+            // Only for Menu pressed in the page: it brings focus up to the
+            // strip. On the strip, Menu keeps its system meaning and leaves
+            // the app.
+            .onExitCommand {
+                stripFocus = .tab(selected)
+            }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                NavStrip(
+                    focused: $stripFocus,
+                    selected: selected,
+                    userInitial: String(session.user.username.prefix(1)).uppercased(),
+                    select: { selected = $0 },
+                    openProfile: { showsProfiles = true }
+                )
+            }
+            .background(Color.mnemePageBackground.ignoresSafeArea())
+            .navigationDestination(for: Route.self) { route in
+                switch route {
+                case let .title(summary):
+                    TitleView(summary: summary)
+                case let .play(target):
+                    PlayerView(target: target)
+                case let .person(id):
+                    PersonView(id: id)
+                }
+            }
         }
         .task {
             await library.load()

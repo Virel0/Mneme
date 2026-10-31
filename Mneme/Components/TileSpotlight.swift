@@ -172,7 +172,6 @@ enum TileSpotlightLayout {
     static let gridFadeLift: CGFloat = 30
     static let gridRowSpacing: CGFloat = 90
 
-    static let backdropHeight: CGFloat = 780
     static let logoMaxWidth: CGFloat = 520
     static let logoMaxHeight: CGFloat = 120
     static let infoTop: CGFloat = 140
@@ -224,9 +223,11 @@ struct TileSpotlightView: View {
 
     @ViewBuilder
     private func backdrop(for entry: TitleSummary) -> some View {
+        // The whole screen, whatever room the page gives it: at a fixed
+        // height it left the rows below on bare page, and taller than the
+        // screen it pushed the tab strip off the top.
         FocusedBackdrop(path: entry.backdrop, focus: entry.backdropFocus)
-            .frame(height: TileSpotlightLayout.backdropHeight)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .overlay {
                 if let engine = clip.engine, clip.isPlaying {
                     AetherPlayerSurface(engine: engine)
@@ -250,9 +251,9 @@ struct TileSpotlightView: View {
             .overlay {
                 LinearGradient(
                     stops: [
-                        .init(color: .clear, location: 0.45),
-                        .init(color: Color.mnemePageBackground.opacity(0.85), location: 0.78),
-                        .init(color: Color.mnemePageBackground, location: 1),
+                        .init(color: .clear, location: 0.35),
+                        .init(color: Color.mnemePageBackground.opacity(0.8), location: 0.62),
+                        .init(color: Color.mnemePageBackground.opacity(0.92), location: 1),
                     ],
                     startPoint: .top,
                     endPoint: .bottom

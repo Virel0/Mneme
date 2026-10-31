@@ -26,6 +26,11 @@ public extension MeleteClient {
         try await send(Endpoint(.get, "api/v1/files/\(id)/subtitles"))
     }
 
+    /// The viewer's playback choices.
+    func playbackSettings() async throws(MeleteError) -> PlaybackSettings {
+        try await send(Endpoint(.get, "api/v1/me/playback"))
+    }
+
     func trickplay(file id: Int) async throws(MeleteError) -> Trickplay {
         try await send(Endpoint(.get, "api/v1/files/\(id)/trickplay"))
     }
