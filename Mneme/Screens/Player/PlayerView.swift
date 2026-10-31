@@ -435,15 +435,7 @@ private struct PlaybackFailure: View {
     let leave: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 60))
-            Text("This can't be played")
-                .font(.title2)
-            Text(message)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 900)
+        ArtPage(art: "ArtCannotPlay", title: "This can't be played", message: message) {
             Button("Back", action: leave)
         }
     }

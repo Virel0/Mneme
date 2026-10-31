@@ -1,22 +1,22 @@
 {
   "images": [
     {
-      "filename": "shelf-tv-2320x720.png",
+      "filename": "shelf-tv-2320x720.jpg",
       "idiom": "tv",
       "scale": "1x"
     },
     {
-      "filename": "shelf-tv-4640x1440.png",
+      "filename": "shelf-tv-4640x1440.jpg",
       "idiom": "tv",
       "scale": "2x"
     },
     {
-      "filename": "shelf-tv-marketing-2320x720.png",
+      "filename": "shelf-tv-2320x720.jpg",
       "idiom": "tv-marketing",
       "scale": "1x"
     },
     {
-      "filename": "shelf-tv-marketing-4640x1440.png",
+      "filename": "shelf-tv-4640x1440.jpg",
       "idiom": "tv-marketing",
       "scale": "2x"
     }

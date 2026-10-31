@@ -32,6 +32,9 @@ commit.
 - An intro when the app opens, skipped by any press.
 - Opening a title grows its tile into the page, title pages drift slowly, playback fades up from
   black, and loading shows Mneme's own mark.
+- Pictures of the Muses in neon line on the sign-in screen, an empty My List, a failed load, a file
+  that can't be played and a search with no matches, and in the Top Shelf.
+- Drifting light behind "Who's Watching?".
 
 ### Not yet back
 - Featured for You, which needs a recommendations endpoint in Melete.

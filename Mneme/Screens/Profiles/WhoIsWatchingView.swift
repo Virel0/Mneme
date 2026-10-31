@@ -24,6 +24,10 @@ struct WhoIsWatchingView: View {
         ZStack {
             Color.mnemePageBackground.ignoresSafeArea()
 
+            LoopingVideo(resource: "WhoIsWatching")
+                .opacity(0.6)
+                .ignoresSafeArea()
+
             VStack(spacing: 60) {
                 Text("Who's watching?")
                     .font(.title.bold())

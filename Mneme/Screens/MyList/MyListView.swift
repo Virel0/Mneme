@@ -40,10 +40,10 @@ struct MyListView: View {
 
             if let items {
                 if items.isEmpty {
-                    ContentUnavailableView(
-                        "Nothing on My List",
-                        systemImage: "plus.circle",
-                        description: Text("Add a movie or a show with the + on its page, and it will be here.")
+                    ArtPage(
+                        art: "ArtMyListEmpty",
+                        title: "Nothing on My List",
+                        message: "Add a movie or a show with the + on its page, and it will be here."
                     )
                 } else {
                     grid(items)
