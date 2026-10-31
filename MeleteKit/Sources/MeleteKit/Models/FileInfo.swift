@@ -57,6 +57,9 @@ public struct FileInfo: Codable, Hashable, Sendable {
     /// The most bits per second a video may take on this way in, or nil.
     public let maxBitrate: Int?
     public let chapters: [Chapter]
+    /// Whether Melete brought the file in from a download and it is unchanged
+    /// since. Nil from a server older than the field.
+    public let imported: Bool?
 }
 
 public struct TranscodeRequest: Codable, Sendable {
