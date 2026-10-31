@@ -32,7 +32,27 @@ struct RootView: View {
     @State
     private var hasChosen = false
 
+    @State
+    private var introIsOver = false
+
     var body: some View {
+        ZStack {
+            screen
+                // Nothing behind the intro can take focus, so every press
+                // reaches the intro and skips it.
+                    .disabled(!introIsOver)
+
+            if !introIsOver {
+                LaunchIntro {
+                    withAnimation(.easeOut(duration: 0.5)) { introIsOver = true }
+                }
+                .transition(.opacity)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var screen: some View {
         if sessions.asksWhoIsWatching, !hasChosen {
             WhoIsWatchingView { hasChosen = true }
         } else if let session = sessions.current, let client = sessions.client(for: session) {

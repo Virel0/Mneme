@@ -132,8 +132,10 @@ struct PlayerView: View {
     @ViewBuilder
     private func content(_ session: PlayerSession) -> some View {
         if let engine = session.engine {
-            AetherPlayerSurface(engine: engine)
-                .ignoresSafeArea()
+            PictureFadeIn(engine: engine) {
+                AetherPlayerSurface(engine: engine)
+            }
+            .ignoresSafeArea()
             SubtitleOverlay(engine: engine)
                 .ignoresSafeArea()
             ActivitySpinner(engine: engine)
@@ -397,12 +399,33 @@ private struct ActivitySpinner: View {
     var body: some View {
         switch engine.playbackPhase {
         case .loading, .rebuffering, .stalled:
-            ProgressView()
-                .scaleEffect(2)
-                .tint(.white)
+            LoadingMark(width: 320)
         default:
             EmptyView()
         }
+    }
+}
+
+/// The picture comes up out of black the first time playback starts, the
+/// other half of the fade that brought the player in.
+private struct PictureFadeIn<Picture: View>: View {
+
+    @ObservedObject
+    var engine: AetherEngine
+    @ViewBuilder
+    let picture: () -> Picture
+
+    @State
+    private var isShowing = false
+
+    var body: some View {
+        picture()
+            .opacity(isShowing ? 1 : 0)
+            .onChange(of: engine.playbackPhase, initial: true) { _, phase in
+                if phase == .playing, !isShowing {
+                    withAnimation(.easeOut(duration: 0.6)) { isShowing = true }
+                }
+            }
     }
 }
 
@@ -412,15 +435,7 @@ private struct PlaybackFailure: View {
     let leave: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 60))
-            Text("This can't be played")
-                .font(.title2)
-            Text(message)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 900)
+        ArtPage(art: "ArtCannotPlay", title: "This can't be played", message: message) {
             Button("Back", action: leave)
         }
     }

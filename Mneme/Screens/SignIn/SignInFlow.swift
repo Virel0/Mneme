@@ -18,10 +18,13 @@ struct SignInFlow: View {
     private var model = SignInModel()
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .leading) {
             Color.black.ignoresSafeArea()
+            ArtBackdrop(art: "ArtSignIn")
 
-            VStack(spacing: 48) {
+            // On the picture's dark left side, as on the app's other full-page
+            // pictures.
+            VStack(alignment: .leading, spacing: 48) {
                 Image("MnemeWordmark")
                     .resizable()
                     .scaledToFit()
@@ -38,10 +41,10 @@ struct SignInFlow: View {
                     Text(error)
                         .font(.callout)
                         .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
                 }
             }
-            .frame(maxWidth: 900)
+            .frame(maxWidth: 760, alignment: .leading)
+            .padding(.leading, RowLayout.edge)
         }
         .onAppear {
             model.signedIn = { server, login in
@@ -62,7 +65,7 @@ private struct ServerAddressView: View {
     private var address = ""
 
     var body: some View {
-        VStack(spacing: 32) {
+        VStack(alignment: .leading, spacing: 32) {
             Text("Connect to your Melete server")
                 .font(.title2)
 
@@ -103,7 +106,7 @@ private struct SignInView: View {
     private var password = ""
 
     var body: some View {
-        VStack(spacing: 32) {
+        VStack(alignment: .leading, spacing: 32) {
             Text("\(server.host() ?? server.absoluteString) · Melete \(version)")
                 .font(.callout)
                 .foregroundStyle(.secondary)
@@ -131,7 +134,6 @@ private struct SignInView: View {
                 }
             } else {
                 Text("In Melete on a phone or computer, open Your account, then Quick Connect, and enter this code.")
-                    .multilineTextAlignment(.center)
 
                 Group {
                     if let code = model.quickConnectCode {
@@ -139,7 +141,7 @@ private struct SignInView: View {
                             .font(.system(size: 96, weight: .bold, design: .monospaced))
                             .kerning(12)
                     } else {
-                        ProgressView()
+                        LoadingMark()
                     }
                 }
                 .frame(height: 140)

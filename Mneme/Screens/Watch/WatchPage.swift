@@ -30,7 +30,7 @@ struct WatchPage: View {
 
             switch library.home {
             case .loading:
-                ProgressView()
+                LoadingMark()
             case let .failed(error):
                 FailureView(title: "Couldn't load \(kind.title)", error: error) {
                     Task { await library.load() }
@@ -123,11 +123,7 @@ struct FailureView: View {
     let retry: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
-            Text(title)
-                .font(.title2)
-            Text(error.localizedDescription)
-                .foregroundStyle(.secondary)
+        ArtPage(art: "ArtCouldNotLoad", title: title, message: error.localizedDescription) {
             Button("Try Again", action: retry)
         }
     }

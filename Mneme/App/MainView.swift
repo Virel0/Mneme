@@ -26,6 +26,9 @@ struct MainView: View {
     @FocusState
     private var stripFocus: NavStripFocus?
 
+    @Environment(\.isEnabled)
+    private var isEnabled
+
     /// Raised each time focus arrives in the strip from the page, which
     /// scrolls the page back to its top under it.
     @State
@@ -75,14 +78,12 @@ struct MainView: View {
         .task {
             await library.listen()
         }
-        .onAppear {
-            // Start the remote on the tab the app opened to. tvOS hands first
-            // focus to the first focusable thing, the profile chip, and
-            // `defaultFocus` does not take on a safe-area inset; so the strip
-            // is told directly, a beat late, once it is in a window.
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(100))
-                stripFocus = .tab(selected)
+        .onAppear(perform: focusStripSoon)
+        // Behind the launch intro the page cannot take focus, so it is given
+        // again when the intro goes.
+        .onChange(of: isEnabled) {
+            if isEnabled {
+                focusStripSoon()
             }
         }
         .onChange(of: stripFocus) { previous, current in
@@ -98,6 +99,23 @@ struct MainView: View {
             showsProfiles = false
             router.path = [route]
         }
+        // tvOS crossfades between pages and draws no zoom transition, so a
+        // pressed tile's picture is grown over the crossfade here.
+        .overlay {
+            if let zoom = router.zoom {
+                TileZoomView(zoom: zoom, done: router.endZoom)
+                    .id(zoom.id)
+            }
+        }
+        // Playback starts out of the dark: the page fades to black, and the
+        // player is put in behind it.
+        .overlay {
+            if router.isCurtainDown {
+                Color.black
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
+        }
         .fullScreenCover(isPresented: $showsProfiles) {
             ProfilesView()
         }
@@ -106,6 +124,17 @@ struct MainView: View {
         .environment(library)
         .environment(router)
         .environment(\.melete, library.client)
+    }
+
+    /// Start the remote on the current tab. tvOS hands first focus to the
+    /// first focusable thing, the profile chip, and `defaultFocus` does not
+    /// take on a safe-area inset; so the strip is told directly, a beat late,
+    /// once it is in a window.
+    private func focusStripSoon() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
+            stripFocus = .tab(selected)
+        }
     }
 
     @ViewBuilder

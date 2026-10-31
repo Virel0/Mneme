@@ -18,9 +18,18 @@ public struct WatchHomeRow: Codable, Sendable, Identifiable {
 
     public let key: Key
     public let items: [WatchHomeItem]
+    /// For Because You Watched: the finished title the row's titles are
+    /// like. Nil on every other row, and from a server older than the field.
+    public let seed: Seed?
 
     public var id: Key {
         key
+    }
+
+    public struct Seed: Codable, Hashable, Sendable {
+        public let kind: TitleKind
+        public let id: Int
+        public let title: String
     }
 
     /// Kept open rather than an enum, so a row a newer server adds is shown
@@ -76,6 +85,29 @@ public struct WatchHomeItem: Codable, Hashable, Sendable, Identifiable {
     /// The episode partway through, or the next one; null elsewhere.
     public let episode: Episode?
     public let progress: Progress?
+    /// On the hero's picks only: a trailer to play muted. Nil when there is
+    /// none, and from a server older than the field.
+    public let trailer: Trailer?
+
+    public struct Trailer: Codable, Hashable, Sendable {
+        public let source: Source
+        /// For a trailer in the title's folder: the file to play.
+        public let fileId: Int?
+        /// For TMDB's: the address of YouTube's privacy-enhanced player.
+        public let embedUrl: String?
+
+        /// Kept open like row keys, so a source a newer server adds does not
+        /// fail the whole home.
+        public struct Source: RawRepresentable, Codable, Hashable, Sendable {
+            public let rawValue: String
+            public init(rawValue: String) {
+                self.rawValue = rawValue
+            }
+
+            public static let folder = Source(rawValue: "folder")
+            public static let online = Source(rawValue: "online")
+        }
+    }
 
     public struct Episode: Codable, Hashable, Sendable {
         public let fileId: Int

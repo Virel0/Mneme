@@ -113,9 +113,7 @@ struct SearchView: View {
             DiscoverRow(title: "Not in the Library", items: results.elsewhere) { requesting = $0 }
         }
         if results.movies.isEmpty, results.shows.isEmpty, results.elsewhere.isEmpty, !model.isSearching, model.ai == nil {
-            Text("No matches for \u{201C}\(query)\u{201D}.")
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, RowLayout.edge)
+            NoMatches(query: query)
         }
     }
 
@@ -138,5 +136,64 @@ struct SearchView: View {
             }
         }
         .padding(.horizontal, RowLayout.edge)
+    }
+}
+
+/// "No matches", on a strip of Urania, the Muse of astronomy, searching the
+/// sky for a constellation that is not there. The strip dissolves into the
+/// page at every edge, since the page keeps margins the picture would
+/// otherwise end at, and is darkened on the left where the words are.
+private struct NoMatches: View {
+
+    let query: String
+
+    var body: some View {
+        Image("ArtNoMatches")
+            .resizable()
+            .scaledToFill()
+            .frame(height: 400)
+            .frame(maxWidth: .infinity)
+            .clipped()
+            .overlay {
+                LinearGradient(
+                    stops: [
+                        .init(color: Color.mnemePageBackground.opacity(0.8), location: 0),
+                        .init(color: Color.mnemePageBackground.opacity(0.5), location: 0.35),
+                        .init(color: .clear, location: 0.55),
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            }
+            .mask {
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .black, location: 0.08),
+                        .init(color: .black, location: 0.9),
+                        .init(color: .clear, location: 1),
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .mask {
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .black, location: 0.2),
+                            .init(color: .black, location: 0.75),
+                            .init(color: .clear, location: 1),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+            }
+            .overlay(alignment: .leading) {
+                Text("No matches for \u{201C}\(query)\u{201D}.")
+                    .font(.title3)
+                    .frame(maxWidth: 760, alignment: .leading)
+                    .padding(.leading, RowLayout.edge)
+            }
     }
 }
