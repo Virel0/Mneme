@@ -31,6 +31,9 @@ final class TitleModel {
     private(set) var credits: Credits?
     private(set) var extras: [Extra] = []
     private(set) var collection: MovieCollection?
+    /// Titles in the library like this one: the AI's picks when Melete has
+    /// them on, else its own.
+    private(set) var similar: [AiPick] = []
     /// What is in the movie's file, for the details at the foot of the page.
     private(set) var fileInfo: FileInfo?
 
@@ -82,6 +85,7 @@ final class TitleModel {
         let ref = summary.ref
         async let credits = try? client.credits(ref.kind, ref.id)
         async let extras = try? client.extras(ref.kind, ref.id)
+        async let similar = try? client.similarTitles(ref.kind, ref.id)
         async let file: FileInfo? = if let id = movie?.files.first?.id {
             try? await client.fileInfo(id)
         } else {
@@ -90,6 +94,7 @@ final class TitleModel {
 
         self.credits = await credits
         self.extras = await extras ?? []
+        self.similar = await (similar)?.items.filter { !$0.requestable && $0.id != nil } ?? []
         fileInfo = await file
         if let id = self.credits?.collection?.id {
             collection = try? await client.collection(id)

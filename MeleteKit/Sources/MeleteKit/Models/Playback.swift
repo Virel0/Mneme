@@ -187,3 +187,17 @@ public struct PlaybackSettings: Codable, Sendable {
         public static let everywhere = HeroTrailers(rawValue: "everywhere")
     }
 }
+
+/// A change to the viewer's playback choices; what is left nil keeps its
+/// value.
+public struct PlaybackSettingsChange: Codable, Sendable {
+    public let autoplayNext: Bool?
+    public let countdownSeconds: Int?
+    public let heroTrailers: PlaybackSettings.HeroTrailers?
+
+    public init(autoplayNext: Bool? = nil, countdownSeconds: Int? = nil, heroTrailers: PlaybackSettings.HeroTrailers? = nil) {
+        self.autoplayNext = autoplayNext
+        self.countdownSeconds = countdownSeconds
+        self.heroTrailers = heroTrailers
+    }
+}

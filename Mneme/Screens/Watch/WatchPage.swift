@@ -57,12 +57,7 @@ struct WatchPage: View {
                     }
                 }
 
-                if kind == .home {
-                    MeleteGapNotice(
-                        feature: "Featured for You",
-                        detail: "Picks chosen for each viewer need a recommendations endpoint in Melete."
-                    )
-                } else {
+                if kind != .home {
                     AllTitlesGrid(kind: kind)
                 }
             }

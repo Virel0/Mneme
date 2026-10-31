@@ -69,15 +69,34 @@ public struct TranscodeRequest: Codable, Sendable {
     public let maxBitrate: Int?
     /// An index from the file's audio streams.
     public let audioStream: Int?
+    /// Channels to keep; Melete's default is two.
+    public let audioChannels: Int?
     /// `h264` (plays everywhere, HDR tone-mapped), `hevc` (keeps HDR), or
-    /// `copy`.
+    /// `copy`: the video unchanged, only the audio converted.
     public let videoCodec: String?
+    /// With `copy`: the audio formats the player takes, so audio already in
+    /// one is copied and lossless audio stays lossless (FLAC or ALAC).
+    public let audioCodecs: [String]?
+    /// With `copy`: whether the player shows Dolby Vision, so the file's is
+    /// kept rather than labelled HDR10.
+    public let dolbyVision: Bool?
 
-    public init(maxHeight: Int? = nil, maxBitrate: Int? = nil, audioStream: Int? = nil, videoCodec: String? = nil) {
+    public init(
+        maxHeight: Int? = nil,
+        maxBitrate: Int? = nil,
+        audioStream: Int? = nil,
+        audioChannels: Int? = nil,
+        videoCodec: String? = nil,
+        audioCodecs: [String]? = nil,
+        dolbyVision: Bool? = nil
+    ) {
         self.maxHeight = maxHeight
         self.maxBitrate = maxBitrate
         self.audioStream = audioStream
+        self.audioChannels = audioChannels
         self.videoCodec = videoCodec
+        self.audioCodecs = audioCodecs
+        self.dolbyVision = dolbyVision
     }
 }
 

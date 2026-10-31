@@ -78,9 +78,6 @@ final class PlayerSession {
     /// a large number asks for as much as safely fits.
     private static let forwardBufferSegments = 600
 
-    /// How long the next episode is offered before it starts.
-    static let countdownSeconds = 10
-
     init(target: PlayTarget, library: Library) {
         self.target = target
         self.library = library
@@ -315,11 +312,11 @@ final class PlayerSession {
     /// episode and the viewer has not turned it away.
     func considerNext() {
         guard next != nil, nextCountdown == nil, !isNextDismissed, !isPaused,
-              PlaybackPreferences.autoPlayNext,
+              library.autoplayNext,
               let start = guide?.nextUpStart, position >= start
         else { return }
 
-        nextCountdown = Self.countdownSeconds
+        nextCountdown = library.countdownSeconds
         countdownTask = Task { [weak self] in
             while let self, let left = nextCountdown, left > 0 {
                 try? await Task.sleep(for: .seconds(1))
@@ -336,7 +333,7 @@ final class PlayerSession {
 
     func ended() {
         PlaybackDiagnostics.shared.record("ended", "file \(target.fileID)")
-        if next != nil, PlaybackPreferences.autoPlayNext, !isNextDismissed {
+        if next != nil, library.autoplayNext, !isNextDismissed {
             playNext()
         } else {
             phase = .finished

@@ -81,6 +81,16 @@ public struct WantedProgress: Codable, Hashable, Sendable {
     public let percent: Double?
     /// The latest word on it, in plain words.
     public let message: String?
+    /// While it is being copied home: how far that has got. Nil otherwise,
+    /// and from a server older than the field.
+    public let copied: Copying?
+
+    public struct Copying: Codable, Hashable, Sendable {
+        public let bytes: Int
+        public let total: Int
+        public let bytesPerSecond: Int?
+        public let secondsLeft: Int?
+    }
 }
 
 public struct MediaRequest: Codable, Hashable, Sendable, Identifiable {

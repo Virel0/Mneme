@@ -76,10 +76,39 @@ public struct Person: Codable, Hashable, Sendable {
     public let titles: [Title]
 }
 
+/// Titles like one: the AI's picks when Melete has them on, else its own.
+public struct SimilarTitles: Codable, Sendable {
+    /// `ai`, or why these are Melete's own: `off`, `making`, `limited`,
+    /// `busy`.
+    public let status: String
+    /// `ai` or `library`.
+    public let source: String
+    public let items: [AiPick]
+}
+
+/// A title chosen for the viewer: in the library, or to ask for.
+public struct AiPick: Codable, Hashable, Sendable {
+    public let kind: TitleKind
+    /// The library's id; nil for a title to ask for.
+    public let id: Int?
+    public let tmdbId: Int?
+    public let requestable: Bool
+    public let title: String
+    public let year: Int?
+    public let poster: String?
+    public let backdrop: String?
+    /// Why, in a few words; text a model wrote, shown as plain text.
+    public let reason: String?
+}
+
 public extension MeleteClient {
 
     func credits(_ kind: TitleKind, _ id: Int) async throws(MeleteError) -> Credits {
         try await send(Endpoint(.get, "api/v1/\(kind.pathComponent)/\(id)/credits"))
+    }
+
+    func similarTitles(_ kind: TitleKind, _ id: Int) async throws(MeleteError) -> SimilarTitles {
+        try await send(Endpoint(.get, "api/v1/\(kind.pathComponent)/\(id)/similar"))
     }
 
     func extras(_ kind: TitleKind, _ id: Int) async throws(MeleteError) -> [Extra] {

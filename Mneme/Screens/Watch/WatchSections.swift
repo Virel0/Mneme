@@ -19,9 +19,12 @@ struct WatchSections {
         let key: WatchHomeRow.Key
         let title: String
         let items: [TitleSummary]
+        /// For Because You Watched, which comes once for each title it is
+        /// like: that title.
+        var seed: WatchHomeRow.Seed?
 
-        var id: WatchHomeRow.Key {
-            key
+        var id: String {
+            seed.map { "\(key.rawValue):\($0.kind.rawValue):\($0.id)" } ?? key.rawValue
         }
 
         var shape: TileShape {
@@ -45,9 +48,10 @@ struct WatchSections {
             picks = home.hero.map(TitleSummary.init)
             var rows = home.rows
                 .filter { !$0.items.isEmpty }
-                .map { Row(key: $0.key, title: $0.key.title, items: $0.items.map(TitleSummary.init)) }
-            // After what is being watched, before what is new.
-            if let because = becauseYouWatched {
+                .map { Row(key: $0.key, title: $0.title, items: $0.items.map(TitleSummary.init), seed: $0.seed) }
+            // Mneme's own, from a server that doesn't send any: after what is
+            // being watched, before what is new.
+            if let because = becauseYouWatched, !rows.contains(where: { $0.key == .becauseYouWatched }) {
                 let after = rows.lastIndex { $0.key == .continueWatching || $0.key == .nextUp }.map { $0 + 1 } ?? 0
                 rows.insert(Row(key: .becauseYouWatched, title: "Because You Watched \(because.title)", items: because.items), at: after)
             }
@@ -89,10 +93,23 @@ extension WatchKind {
     }
 }
 
+extension WatchHomeRow {
+
+    var title: String {
+        if key == .becauseYouWatched, let seed {
+            return "Because You Watched \(seed.title)"
+        }
+        return key.title
+    }
+}
+
 extension WatchHomeRow.Key {
 
-    /// Mneme's own row, not one of the home's.
+    /// Melete's, once for each finished title; Mneme makes its own for a
+    /// server that doesn't send it.
     static let becauseYouWatched = WatchHomeRow.Key(rawValue: "because_you_watched")
+    /// The AI's picks, when an admin has them on.
+    static let featuredForYou = WatchHomeRow.Key(rawValue: "featured_for_you")
 
     var title: String {
         switch self {
@@ -102,6 +119,8 @@ extension WatchHomeRow.Key {
         case .latestShows: "Latest Shows"
         case .latestAnime: "Latest Anime"
         case .latestMovies: "Latest Movies"
+        case .featuredForYou: "Featured for You"
+        case .becauseYouWatched: "Because You Watched"
         default: rawValue.replacingOccurrences(of: "_", with: " ").capitalized
         }
     }

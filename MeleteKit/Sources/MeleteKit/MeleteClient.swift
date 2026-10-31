@@ -70,7 +70,9 @@ public struct MeleteClient: Sendable {
         return (data, status)
     }
 
-    private func perform(_ endpoint: Endpoint<some Decodable & Sendable>) async throws(MeleteError) -> (Data, Int) {
+    /// The answer and its status, whatever the status: for the few calls
+    /// that read a refusal's body.
+    func perform(_ endpoint: Endpoint<some Decodable & Sendable>) async throws(MeleteError) -> (Data, Int) {
         var components = URLComponents(
             url: baseURL.appending(path: endpoint.path),
             resolvingAgainstBaseURL: false
