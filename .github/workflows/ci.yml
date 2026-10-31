@@ -37,10 +37,17 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.6.app || sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app | sort -V | tail -1)"
 
+      # One exact release, checked against its checksum: a newer SwiftFormat
+      # brings new rules, and the check must not change under the code.
       - name: Format
+        env:
+          SWIFTFORMAT_VERSION: 0.63.1
+          SWIFTFORMAT_SHA256: 385ef1a263ba28685157b98c5536b9c9105e124518f28b7ef8a2bee4b167eaeb
         run: |
-          brew install swiftformat
-          swiftformat --lint .
+          curl -fsSL -o swiftformat.zip "https://github.com/nicklockwood/SwiftFormat/releases/download/$SWIFTFORMAT_VERSION/swiftformat.zip"
+          echo "$SWIFTFORMAT_SHA256  swiftformat.zip" | shasum -a 256 -c -
+          unzip -q swiftformat.zip -d "$RUNNER_TEMP/swiftformat"
+          "$RUNNER_TEMP/swiftformat/swiftformat" --lint .
 
       - name: MeleteKit tests
         working-directory: MeleteKit
