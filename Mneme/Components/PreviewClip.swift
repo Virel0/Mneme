@@ -45,7 +45,8 @@ final class PreviewClip {
     /// line for every title focused.
     private static var saidOffNetwork = false
 
-    func start(for summary: TitleSummary, client: MeleteClient, trailer: WatchHomeItem.Trailer? = nil) {
+    /// Plays the trailer file when given one, else a clip of the title.
+    func start(for summary: TitleSummary, client: MeleteClient, trailerFile: Int? = nil) {
         stop()
         guard PlaybackPreferences.previewClips else { return }
         guard client.baseURL.isOnHomeNetwork else {
@@ -59,7 +60,7 @@ final class PreviewClip {
         task = Task { [weak self] in
             try? await Task.sleep(for: Self.delay)
             guard !Task.isCancelled else { return }
-            await self?.play(summary, trailer: trailer, client: client)
+            await self?.play(summary, trailerFile: trailerFile, client: client)
         }
     }
 
@@ -73,10 +74,10 @@ final class PreviewClip {
 
     /// Each step that can fail says so in the diagnostics report: a clip
     /// that doesn't start otherwise leaves no trace.
-    private func play(_ summary: TitleSummary, trailer: WatchHomeItem.Trailer?, client: MeleteClient) async {
+    private func play(_ summary: TitleSummary, trailerFile: Int?, client: MeleteClient) async {
         let diagnostics = PlaybackDiagnostics.shared
         let source: (file: Int, start: Double, length: Duration, what: String)
-        if trailer?.source == .folder, let file = trailer?.fileId {
+        if let file = trailerFile {
             source = (file, 0, Self.trailerLength, "trailer")
         } else if let target = try? await PlayTarget.lookUp(for: summary, client: client),
                   let start = await Self.startPoint(for: summary, target: target, client: client)

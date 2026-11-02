@@ -186,6 +186,11 @@ struct TileSpotlightView: View {
 
     let spotlight: TileSpotlight
 
+    @Environment(ArtworkColours.self)
+    private var colours: ArtworkColours?
+    @Environment(\.isEnabled)
+    private var isEnabled
+
     @State
     private var clip = PreviewClip()
 
@@ -214,10 +219,17 @@ struct TileSpotlightView: View {
                 guard !Task.isCancelled else { return }
                 spotlight.update(entry)
             }
+            colours?.focus(on: entry.backdrop)
             clip.start(for: entry, client: library.client)
         }
         .onDisappear {
             clip.stop()
+        }
+        // Switched off under cinematic mode, which plays its own.
+        .onChange(of: isEnabled) {
+            if !isEnabled {
+                clip.stop()
+            }
         }
     }
 
@@ -227,7 +239,9 @@ struct TileSpotlightView: View {
         // height it left the rows below on bare page, and taller than the
         // screen it pushed the tab strip off the top.
         FocusedBackdrop(path: entry.backdrop, focus: entry.backdropFocus)
+            .modifier(SlowDrift(focus: entry.backdropFocus))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipped()
             .overlay {
                 if let engine = clip.engine, clip.isPlaying {
                     AetherPlayerSurface(engine: engine)
@@ -259,6 +273,19 @@ struct TileSpotlightView: View {
                     endPoint: .bottom
                 )
             }
+            // The title's own colour, glowing up from under the rows.
+            .overlay {
+                if let glow = colours?.colour(for: entry.backdrop) {
+                    RadialGradient(
+                        colors: [glow.opacity(0.3), glow.opacity(0.08), .clear],
+                        center: UnitPoint(x: 0.3, y: 1.1),
+                        startRadius: 0,
+                        endRadius: 1200
+                    )
+                    .transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.8), value: colours?.colour(for: entry.backdrop))
     }
 
     @ViewBuilder

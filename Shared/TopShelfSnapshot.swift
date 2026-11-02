@@ -9,32 +9,39 @@
 import Foundation
 
 /// What the Apple TV home screen shows for Mneme, written by the app and read
-/// by its Top Shelf extension through their shared app group.
+/// by its Top Shelf extension through their shared app group: the hero's
+/// picks, as a full-width carousel, each with a muted preview of its trailer
+/// where it has one.
 ///
 /// The extension cannot sign in, and Melete's artwork needs the session's
 /// token, so the app saves each picture as a file in the group and the
-/// snapshot points at those files.
+/// snapshot points at those files. Preview links carry their own token.
 struct TopShelfSnapshot: Codable {
 
-    struct Section: Codable {
-        let title: String
-        /// Wide pictures (what to play now) or posters.
-        let isLandscape: Bool
-        let items: [Item]
-    }
-
-    struct Item: Codable {
+    struct Feature: Codable {
         let id: String
         let title: String
+        let summary: String?
+        let genre: String?
+        /// Running time in seconds.
+        let duration: Double?
+        let year: Int?
         /// A file in the app group.
         let imageURL: URL?
+        /// An HLS stream of the trailer, which the system plays muted while
+        /// the title is highlighted. Melete's links last 24 hours.
+        let previewURL: URL?
+        /// When the preview link was made, so a fresh one is reused.
+        let previewMadeAt: Date?
+        /// The trailer the link plays, so a changed trailer gets a new one.
+        let previewFile: Int?
         /// Opens the title in Mneme.
         let displayURL: URL?
-        /// Plays it, where there is something to play.
+        /// Plays it.
         let playURL: URL?
     }
 
-    let sections: [Section]
+    let features: [Feature]
     let updatedAt: Date
 
     /// Shared with the extension through both targets' entitlements. Read

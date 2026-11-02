@@ -6,6 +6,7 @@
 // Copyright (c) 2026 Mneme contributors
 //
 
+import AetherEngine
 import MeleteKit
 import SwiftUI
 
@@ -17,9 +18,19 @@ struct TitleView: View {
     private var library
     @Environment(Router.self)
     private var router
+    @Environment(ArtworkColours.self)
+    private var colours: ArtworkColours?
 
     @State
     private var model: TitleModel?
+    @State
+    private var clip = PreviewClip()
+    /// Whether the header is in view and the page on screen: the trailer
+    /// plays only then.
+    @State
+    private var isAtTop = true
+    @State
+    private var isShown = false
 
     let summary: TitleSummary
 
@@ -37,7 +48,26 @@ struct TitleView: View {
                 }
             }
         }
+        .onAppear { isShown = true }
+        .onDisappear {
+            isShown = false
+            clip.stop()
+        }
+        // The title's trailer behind the header, or a clip of it without one,
+        // once its extras are known and while the header is in view.
+        .task(id: [isShown, isAtTop, model?.isLoaded == true]) {
+            guard isShown, isAtTop, let model, model.isLoaded else {
+                clip.stop()
+                return
+            }
+            clip.start(
+                for: model.summary,
+                client: library.client,
+                trailerFile: model.extras.first { $0.kind == "trailer" }?.id
+            )
+        }
         .task {
+            colours?.focus(on: summary.backdrop)
             let model = TitleModel(summary: summary, library: library)
             self.model = model
             await model.load()
@@ -66,6 +96,13 @@ struct TitleView: View {
                     .frame(height: TitleLayout.backdropHeight)
                     .clipped()
                     .overlay {
+                        if let engine = clip.engine, clip.isPlaying {
+                            AetherPlayerSurface(engine: engine)
+                                .transition(.opacity)
+                        }
+                    }
+                    .animation(.easeInOut(duration: 0.8), value: clip.isPlaying)
+                    .overlay {
                         LinearGradient(
                             colors: [Color.mnemePageBackground.opacity(0.9), Color.mnemePageBackground.opacity(0.3), .clear],
                             startPoint: .leading,
@@ -84,6 +121,11 @@ struct TitleView: View {
         }
         .scrollIndicators(.hidden)
         .scrollClipDisabled()
+        .onScrollGeometryChange(for: Bool.self) { geometry in
+            geometry.contentOffset.y < 250
+        } action: { _, atTop in
+            isAtTop = atTop
+        }
         // The page keeps its own 60-point margins, as every row does, rather
         // than tvOS's wider safe area on top of them.
         .ignoresSafeArea(edges: [.top, .horizontal])
@@ -170,32 +212,6 @@ private struct TitleHeader: View {
         .padding(.horizontal, RowLayout.edge)
         .padding(.top, TitleLayout.headerTop)
         .shadow(color: .black.opacity(0.4), radius: 12)
-    }
-}
-
-/// The backdrop leans in a little and back out, over half a minute each
-/// way, around the picture's subject, so a page being read is not a still.
-private struct SlowDrift: ViewModifier {
-
-    let focus: Focus?
-
-    @Environment(\.accessibilityReduceMotion)
-    private var reduceMotion
-
-    func body(content: Content) -> some View {
-        if reduceMotion {
-            content
-        } else {
-            // Keyframes rather than a repeating animation: an animation's
-            // transaction also caught the picture's own fade-in and stretched
-            // it over the half minute.
-            content.keyframeAnimator(initialValue: 1.0, repeating: true) { view, scale in
-                view.scaleEffect(scale, anchor: UnitPoint(x: focus?.x ?? 0.5, y: focus?.y ?? 0.35))
-            } keyframes: { _ in
-                CubicKeyframe(1.07, duration: 30)
-                CubicKeyframe(1.0, duration: 30)
-            }
-        }
     }
 }
 
