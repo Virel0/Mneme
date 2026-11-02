@@ -8,6 +8,20 @@ commit.
 
 ## [Unreleased]
 
+### Added
+- A Requests tab: every film and series you've asked for, by where it has got to, each opening
+  its progress.
+- Top Shelf shows each title's logo, details and overview on its picture.
+
+### Changed
+- The tabs run Home, Movies, Shows, Anime, My List, Requests, Search.
+- The playback engine is AetherEngine 7.54.0, up from 7.42.0.
+
+### Fixed
+- Opening a title no longer flashes a stretched poster over the page.
+- A title's page plays its trailer only when it's sharp enough for the film (1080p, or as sharp
+  as the film itself); otherwise a clip of the film.
+
 ## [1.0 build 11] - 2026-11-02
 
 ### Changed
