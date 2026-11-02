@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Mneme is subject to the terms of the Mozilla Public License, v2.0.
+# Mneme is free software under the GNU General Public License, version 3 or later. See LICENSE.md.
 #
 # Warns about Swift files over 800 lines and functions over 100, as GitHub
 # Actions annotations. A report, not a gate: it always exits 0.

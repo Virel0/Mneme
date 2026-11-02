@@ -7,7 +7,7 @@
 [![CI](https://github.com/Virel0/Mneme/actions/workflows/ci.yml/badge.svg)](https://github.com/Virel0/Mneme/actions/workflows/ci.yml)
 [![tvOS 26.1+](https://img.shields.io/badge/tvOS-26.1%2B-7C5CFF?logo=apple&logoColor=white)](#requirements)
 [![Swift](https://img.shields.io/badge/Swift-SwiftUI-5EE7F0?logo=swift&logoColor=white)](https://developer.apple.com/swift/)
-[![License: MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-5EE7F0)](LICENSE.md)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-5EE7F0)](LICENSE.md)
 
 [Features](#features) · [Requirements](#requirements) · [Install](#install) · [Privacy](#privacy) · [Design](docs/DESIGN.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
@@ -72,4 +72,4 @@ details are in [SECURITY.md](SECURITY.md).
 
 ## License
 
-[Mozilla Public License 2.0](LICENSE.md).
+[GNU General Public License, version 3 or later](LICENSE.md), as Melete is.
