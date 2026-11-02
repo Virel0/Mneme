@@ -12,15 +12,20 @@ import Foundation
 import MeleteKit
 import TVServices
 
-/// Puts the home's rows on the Apple TV home screen: Continue Watching and
-/// Next Up as wide pictures that play, Latest Movies and Latest Shows as
-/// posters that open the title.
+/// Puts the hero's picks on the Apple TV home screen as a full-width
+/// carousel: each title's backdrop, overview and facts, Play to start it and
+/// Select to open it, and, where it has a trailer in its folder, a muted
+/// preview the system plays while it is highlighted.
 @MainActor
 enum TopShelfPublisher {
 
-    private static let itemLimit = 10
+    /// Melete's links last 24 hours; one younger than this is used again
+    /// rather than a new one made at every home load.
+    private static let previewKeptFor: TimeInterval = 20 * 3600
 
-    static func publish(_ home: WatchHome, client: MeleteClient) async {
+    /// `trailers` is whether the hero may play trailers: the viewer's choice
+    /// in Melete, and this Apple TV's preview clip setting.
+    static func publish(_ home: WatchHome, client: MeleteClient, trailers: Bool) async {
         guard let folder = TopShelfSnapshot.imagesFolder else {
             PlaybackDiagnostics.shared.record("topshelf", "no app group container")
             return
@@ -31,51 +36,73 @@ enum TopShelfPublisher {
             PlaybackDiagnostics.shared.record("topshelf", "cannot make the picture folder: \(error.localizedDescription)")
         }
 
-        func row(_ key: WatchHomeRow.Key) -> [WatchHomeItem] {
-            Array((home.rows.first { $0.key == key }?.items ?? []).prefix(itemLimit))
+        let previous = Dictionary(
+            (TopShelfSnapshot.load()?.features ?? []).map { ($0.id, $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        var features: [TopShelfSnapshot.Feature] = []
+        for item in home.hero {
+            let summary = TitleSummary(item)
+            let id = "\(item.kind.rawValue)-\(item.id)"
+            let trailerFile = trailers && item.trailer?.source == .folder ? item.trailer?.fileId : nil
+            let preview = await previewLink(for: trailerFile, reusing: previous[id], client: client)
+            await features.append(TopShelfSnapshot.Feature(
+                id: id,
+                title: item.title,
+                summary: item.overview,
+                genre: item.genres.first,
+                duration: item.runtimeMinutes.map { Double($0) * 60 },
+                year: item.year,
+                imageURL: save(item.textlessBackdrop ?? item.backdrop, into: folder, client: client),
+                previewURL: preview?.url,
+                previewMadeAt: preview?.madeAt,
+                previewFile: trailerFile,
+                displayURL: DeepLink.title(summary),
+                playURL: PlayTarget.known(for: summary).flatMap(DeepLink.play)
+            ))
         }
 
-        var sections: [TopShelfSnapshot.Section] = []
-        for (key, isLandscape) in [
-            (WatchHomeRow.Key.continueWatching, true),
-            (.nextUp, true),
-            (.latestMovies, false),
-            (.latestShows, false),
-        ] {
-            var items: [TopShelfSnapshot.Item] = []
-            for item in row(key) {
-                let picture = isLandscape ? item.episode?.still ?? item.textlessBackdrop ?? item.backdrop : item.poster
-                await items.append(TopShelfSnapshot.Item(
-                    id: "\(item.kind.rawValue)-\(item.id)-\(key.rawValue)",
-                    title: title(of: item),
-                    imageURL: save(picture, into: folder, client: client),
-                    displayURL: DeepLink.title(TitleSummary(item)),
-                    playURL: isLandscape ? PlayTarget.known(for: TitleSummary(item)).flatMap(DeepLink.play) : nil
-                ))
-            }
-            if !items.isEmpty {
-                sections.append(TopShelfSnapshot.Section(title: key.title, isLandscape: isLandscape, items: items))
-            }
-        }
-
-        let items = sections.flatMap(\.items)
-        PlaybackDiagnostics.shared.record("topshelf", "\(items.count(where: { $0.imageURL != nil })) of \(items.count) pictures saved")
-        TopShelfSnapshot(sections: sections, updatedAt: .now).save()
-        prune(folder, keeping: Set(sections.flatMap(\.items).compactMap(\.imageURL?.lastPathComponent)))
+        PlaybackDiagnostics.shared.record(
+            "topshelf",
+            "\(features.count(where: { $0.imageURL != nil })) of \(features.count) pictures saved, \(features.count(where: { $0.previewURL != nil })) previews"
+        )
+        TopShelfSnapshot(features: features, updatedAt: .now).save()
+        prune(folder, keeping: Set(features.compactMap(\.imageURL?.lastPathComponent)))
         TVTopShelfContentProvider.topShelfContentDidChange()
+    }
+
+    /// A stream of the trailer the system player can open: Melete's HLS
+    /// copy of it, the video as it is, or a conversion where the video
+    /// can't be copied. Melete makes nothing until it is played. The link
+    /// from last time is used again while it is young and for the same
+    /// trailer.
+    private static func previewLink(
+        for file: Int?,
+        reusing previous: TopShelfSnapshot.Feature?,
+        client: MeleteClient
+    ) async -> (url: URL, madeAt: Date)? {
+        guard let file else { return nil }
+        if let previous, previous.previewFile == file, let url = previous.previewURL, let madeAt = previous.previewMadeAt,
+           Date.now.timeIntervalSince(madeAt) < previewKeptFor
+        {
+            return (url, madeAt)
+        }
+        let copied = try? await client.transcode(file: file, TranscodeRequest(audioChannels: 2, videoCodec: "copy"))
+        let stream: TranscodeResponse? = if let copied {
+            copied
+        } else {
+            try? await client.transcode(file: file, TranscodeRequest(maxHeight: 1080, videoCodec: "h264"))
+        }
+        guard let stream, let url = client.url(for: stream.playlistUrl) else {
+            PlaybackDiagnostics.shared.record("topshelf", "no preview for trailer file \(file)")
+            return nil
+        }
+        return (url, .now)
     }
 
     static func clear() {
         TopShelfSnapshot.remove()
         TVTopShelfContentProvider.topShelfContentDidChange()
-    }
-
-    /// "The Office · S2:E4" for an episode, else the title.
-    private static func title(of item: WatchHomeItem) -> String {
-        guard let episode = item.episode, let code = Format.episodeCode(season: episode.season, episode: episode.episode) else {
-            return item.title
-        }
-        return "\(item.title) · \(code)"
     }
 
     /// The picture saved under a name made from its path, which never

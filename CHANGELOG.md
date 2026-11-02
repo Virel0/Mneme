@@ -38,6 +38,10 @@ commit.
 - Drifting light behind "Who's Watching?".
 - Pages sit on a night sky, with now and then a shooting star. It moves gently against the focus,
   and its colour follows the time of day.
+- The screen takes the colour of the title you're on.
+- Left alone on Home, Mneme shows the hero's titles full screen with their trailers.
+- A title's page plays its trailer behind the header, and the hero and spotlight drift slowly.
+- The Top Shelf shows the hero's titles as a full-width carousel with muted trailer previews.
 - The hero plays the title's trailer when its folder has one, as Melete's hero trailers setting says.
 - Tabs crossfade, and the home comes up out of the intro.
 - Two-factor sign-in: an account with it on is asked for the authenticator's code.

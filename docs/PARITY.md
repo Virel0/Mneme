@@ -27,7 +27,7 @@ What the Jellyfin fork of Mneme did, and where the Melete app stands on each:
 | Start over instead of resuming | Done | |
 | Profiles: switching and adding from the chip | Done | |
 | "Who's watching?" at launch | Done | With more than one person signed in; can be turned off |
-| Top Shelf | Done | |
+| Top Shelf | Done | Now the hero's picks as a carousel, with muted trailer previews |
 
 ## Artwork
 

@@ -9,8 +9,9 @@
 
 import TVServices
 
-/// Mneme's rows on the Apple TV home screen, from the snapshot the app last
-/// wrote.
+/// The hero's picks on the Apple TV home screen, as a full-width carousel,
+/// from the snapshot the app last wrote: a muted preview of a title's
+/// trailer plays while it is highlighted, where it has one.
 final class ContentProvider: TVTopShelfContentProvider {
 
     override func loadTopShelfContent(completionHandler: @escaping ((any TVTopShelfContent)?) -> Void) {
@@ -18,30 +19,29 @@ final class ContentProvider: TVTopShelfContentProvider {
     }
 
     private static func content(from snapshot: TopShelfSnapshot) -> (any TVTopShelfContent)? {
-
-        let sections = snapshot.sections.compactMap { section -> TVTopShelfItemCollection<TVTopShelfSectionedItem>? in
-            let items = section.items.map { item in
-                let shelfItem = TVTopShelfSectionedItem(identifier: item.id)
-                shelfItem.title = item.title
-                shelfItem.imageShape = section.isLandscape ? .hdtv : .poster
-                if let imageURL = item.imageURL {
-                    shelfItem.setImageURL(imageURL, for: [.screenScale1x, .screenScale2x])
-                }
-                if let display = item.displayURL {
-                    shelfItem.displayAction = TVTopShelfAction(url: display)
-                }
-                if let play = item.playURL ?? item.displayURL {
-                    shelfItem.playAction = TVTopShelfAction(url: play)
-                }
-                return shelfItem
+        let items = snapshot.features.map { feature in
+            let item = TVTopShelfCarouselItem(identifier: feature.id)
+            item.title = feature.title
+            item.summary = feature.summary
+            item.genre = feature.genre
+            if let duration = feature.duration {
+                item.duration = duration
             }
-            guard !items.isEmpty else { return nil }
-
-            let collection = TVTopShelfItemCollection(items: items)
-            collection.title = section.title
-            return collection
+            if let year = feature.year {
+                item.creationDate = Calendar.current.date(from: DateComponents(year: year))
+            }
+            if let imageURL = feature.imageURL {
+                item.setImageURL(imageURL, for: [.screenScale1x, .screenScale2x])
+            }
+            item.previewVideoURL = feature.previewURL
+            if let display = feature.displayURL {
+                item.displayAction = TVTopShelfAction(url: display)
+            }
+            if let play = feature.playURL ?? feature.displayURL {
+                item.playAction = TVTopShelfAction(url: play)
+            }
+            return item
         }
-
-        return sections.isEmpty ? nil : TVTopShelfSectionedContent(sections: sections)
+        return items.isEmpty ? nil : TVTopShelfCarouselContent(style: .details, items: items)
     }
 }

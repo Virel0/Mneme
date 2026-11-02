@@ -31,6 +31,8 @@ final class TitleModel {
 
     private(set) var credits: Credits?
     private(set) var extras: [Extra] = []
+    /// Whether everything on the page has been asked for, extras included.
+    private(set) var isLoaded = false
     private(set) var collection: MovieCollection?
     /// Titles in the library like this one: the AI's picks when Melete has
     /// them on, else its own.
@@ -95,6 +97,7 @@ final class TitleModel {
 
         self.credits = await credits
         self.extras = await extras ?? []
+        isLoaded = true
         self.similar = await (similar)?.items.filter { !$0.requestable && $0.id != nil } ?? []
         fileInfo = await file
         if let id = self.credits?.collection?.id {
