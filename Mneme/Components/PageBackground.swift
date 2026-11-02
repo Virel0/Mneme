@@ -7,28 +7,95 @@
 //
 
 import SwiftUI
+import UIKit
 
 /// The night the app's pages sit on: a sky of faint stars, constellations in
 /// the corners and a violet haze rising from below, with now and then a
 /// shooting star. Its dark top is the page colour, so pictures that fade into
 /// the page meet it without an edge.
+///
+/// It has depth: as focus moves, the sky eases a little the other way, as
+/// something far behind would. And it follows the hour, faintly, in its lower
+/// part. Neither moves with Reduce Motion on.
 struct PageBackground: View {
+
+    @Environment(\.accessibilityReduceMotion)
+    private var reduceMotion
+
+    /// How far the sky has eased against where focus is.
+    @State
+    private var drift = CGSize.zero
+
+    /// How much the sky moves for each point focus is off the screen's centre.
+    private static let depth: CGFloat = 0.02
 
     var body: some View {
         // On a clear view that takes the room it is offered, so the picture
         // never asks the page for more.
         Color.mnemePageBackground
             .overlay {
-                Image("NightSky")
-                    .resizable()
-                    .scaledToFill()
+                ZStack {
+                    Image("NightSky")
+                        .resizable()
+                        .scaledToFill()
+                    SkyTint()
+                    ShootingStars()
+                }
+                // A little larger than the screen, so easing never shows an edge.
+                .scaleEffect(1.04)
+                .offset(drift)
             }
             .clipped()
-            .overlay {
-                ShootingStars()
-            }
             .ignoresSafeArea()
             .allowsHitTesting(false)
+            .onReceive(NotificationCenter.default.publisher(for: UIFocusSystem.didUpdateNotification)) { note in
+                guard !reduceMotion,
+                      let context = note.userInfo?[UIFocusSystem.focusUpdateContextUserInfoKey] as? UIFocusUpdateContext,
+                      let (point, screen) = Self.centre(of: context.nextFocusedItem)
+                else { return }
+                withAnimation(.easeOut(duration: 1.2)) {
+                    drift = CGSize(width: -(point.x - screen.midX) * Self.depth, height: -(point.y - screen.midY) * Self.depth)
+                }
+            }
+    }
+
+    /// The middle of what has focus, and the screen, in the screen's points.
+    private static func centre(of item: UIFocusItem?) -> (CGPoint, CGRect)? {
+        guard let item, let space = item.parentFocusEnvironment?.focusItemContainer?.coordinateSpace,
+              let screen = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.screen
+        else { return nil }
+        let frame = space.convert(item.frame, to: screen.coordinateSpace)
+        return (CGPoint(x: frame.midX, y: frame.midY), screen.bounds)
+    }
+}
+
+/// The lower sky follows the hour: a dawn glow early in the morning, a cooler
+/// light by day, a rose dusk in the evening, and the plain night after. Only
+/// the lower part is tinted, so the top stays the page colour.
+private struct SkyTint: View {
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 300)) { context in
+            let tint = Self.tint(at: context.date)
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0.35),
+                    .init(color: tint.colour.opacity(tint.strength), location: 1),
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .animation(.easeInOut(duration: 3), value: tint.strength)
+        }
+    }
+
+    static func tint(at date: Date) -> (colour: Color, strength: Double) {
+        switch Calendar.current.component(.hour, from: date) {
+        case 5 ..< 9: (Color(red: 1.0, green: 0.55, blue: 0.4), 0.22)
+        case 9 ..< 17: (Color(red: 0.45, green: 0.7, blue: 1.0), 0.12)
+        case 17 ..< 21: (Color(red: 0.95, green: 0.4, blue: 0.65), 0.2)
+        default: (.clear, 0)
+        }
     }
 }
 
