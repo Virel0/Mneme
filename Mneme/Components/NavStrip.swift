@@ -12,10 +12,11 @@ import SwiftUI
 /// The app's tabs.
 enum AppTab: Hashable, CaseIterable {
     case home
+    case movies
     case shows
     case anime
-    case movies
     case myList
+    case requests
     case search
 
     var title: String {
@@ -25,6 +26,7 @@ enum AppTab: Hashable, CaseIterable {
         case .anime: "Anime"
         case .movies: "Movies"
         case .myList: "My List"
+        case .requests: "Requests"
         case .search: "Search"
         }
     }
@@ -36,6 +38,7 @@ enum AppTab: Hashable, CaseIterable {
         case .anime: "sparkles.tv"
         case .movies: "film"
         case .myList: "checkmark.circle"
+        case .requests: "tray.and.arrow.down"
         case .search: "magnifyingglass"
         }
     }
@@ -46,7 +49,7 @@ enum AppTab: Hashable, CaseIterable {
         case .shows: .shows
         case .anime: .anime
         case .movies: .movies
-        case .myList, .search: nil
+        case .myList, .requests, .search: nil
         }
     }
 }

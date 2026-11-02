@@ -89,7 +89,12 @@ struct TitleTile: View {
 
     var body: some View {
         Button {
-            router.pressedTile = TileZoom(picture: picturePath, frame: frameOnScreen)
+            router.pressedTile = TileZoom(
+                picture: picturePath,
+                frame: frameOnScreen,
+                backdrop: summary.backdrop,
+                backdropFocus: summary.backdropFocus
+            )
             action()
         } label: {
             VStack(alignment: .leading, spacing: 12) {
