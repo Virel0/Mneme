@@ -42,6 +42,16 @@ public extension MeleteClient {
         try await send(Endpoint(.post, "api/v1/requests", json: request))
     }
 
+    /// Takes back a request still waiting for a decision.
+    func takeBack(request id: Int) async throws(MeleteError) {
+        _ = try await send(Endpoint<NoContent>(.delete, "api/v1/requests/\(id)"))
+    }
+
+    /// Changes the season a waiting series request asks for; nil for all.
+    func changeRequest(_ id: Int, season: Int?) async throws(MeleteError) -> MediaRequest {
+        try await send(Endpoint(.put, "api/v1/requests/\(id)", json: RequestChange(season: season)))
+    }
+
     /// The viewer's own requests, newest first.
     func requests(limit: Int = 50) async throws(MeleteError) -> RequestPage {
         try await send(Endpoint(.get, "api/v1/requests", query: [URLQueryItem(name: "limit", value: String(limit))]))

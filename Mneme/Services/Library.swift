@@ -65,6 +65,17 @@ final class Library {
     /// The viewer's requests as the event stream last sent them; nil until
     /// it has.
     private(set) var requests: [MediaRequest]?
+
+    /// A request changed here, shown before the stream says so.
+    func replaceRequest(_ request: MediaRequest) {
+        requests = requests?.map { $0.id == request.id ? request : $0 }
+    }
+
+    /// A request taken back here, gone before the stream says so.
+    func removeRequest(_ id: Int) {
+        requests?.removeAll { $0.id == id }
+    }
+
     /// The viewer's playback choices kept by Melete; nil until read, and
     /// from a server older than them.
     private(set) var playbackSettings: PlaybackSettings?

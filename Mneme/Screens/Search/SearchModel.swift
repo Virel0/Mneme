@@ -123,4 +123,12 @@ final class SearchModel {
     func add(_ made: MediaRequest) {
         requests.insert(made, at: 0)
     }
+
+    func replaceRequest(_ request: MediaRequest) {
+        requests = requests.map { $0.id == request.id ? request : $0 }
+    }
+
+    func removeRequest(_ id: Int) {
+        requests.removeAll { $0.id == id }
+    }
 }

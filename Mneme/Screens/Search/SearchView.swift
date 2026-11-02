@@ -87,7 +87,7 @@ struct SearchView: View {
         // as it downloads.
         let requests = library.requests ?? model.requests
         if !requests.isEmpty {
-            RequestRow(title: "Your Requests", requests: requests)
+            RequestRow(title: "Your Requests", requests: requests, model: model)
         }
         if let trending = model.trending {
             if trending.isEmpty {

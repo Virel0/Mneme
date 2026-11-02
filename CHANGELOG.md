@@ -42,6 +42,9 @@ commit.
 - "Melete converts surround sound" in Settings, for TrueHD and DTS soundtracks.
 - Playing the next episode, and its countdown, follow your choice in Melete on every device.
 - A request being copied home shows how far it has got.
+- Each request has its own page: who decided, every step it has been through, Melete's latest word,
+  and a series season by season. A waiting request can be taken back or changed, and a series can be
+  asked for one season.
 
 ### Not yet back
 - The iPhone and iPad app.
