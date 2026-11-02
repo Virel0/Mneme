@@ -7,6 +7,7 @@
 // Copyright (c) 2026 Mneme contributors
 //
 
+import MeleteKit
 import Observation
 import SwiftUI
 
@@ -71,9 +72,12 @@ final class Router {
     private static let curtainFall: TimeInterval = 0.35
 }
 
-/// A tile's picture and where it sat on the screen, to grow from.
+/// A tile's picture and where it sat on the screen, to grow from, and the
+/// backdrop of the page it opens, to grow into.
 struct TileZoom: Equatable {
     let id = UUID()
     let picture: String?
     let frame: CGRect
+    let backdrop: String?
+    let backdropFocus: Focus?
 }
