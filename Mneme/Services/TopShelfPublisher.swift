@@ -10,11 +10,13 @@
 import CryptoKit
 import Foundation
 import MeleteKit
+import Nuke
 import TVServices
+import UIKit
 
 /// Puts the hero's picks on the Apple TV home screen as a full-width
-/// carousel: each title's backdrop, overview and facts, Play to start it and
-/// Select to open it, and, where it has a trailer in its folder, a muted
+/// carousel: each title's backdrop with its logo, facts and overview drawn
+/// on (see `TopShelfCard`), Play to start it and Select to open it, and, where it has a trailer in its folder, a muted
 /// preview the system plays while it is highlighted.
 @MainActor
 enum TopShelfPublisher {
@@ -53,7 +55,7 @@ enum TopShelfPublisher {
                 genre: item.genres.first,
                 duration: item.runtimeMinutes.map { Double($0) * 60 },
                 year: item.year,
-                imageURL: save(item.textlessBackdrop ?? item.backdrop, into: folder, client: client),
+                imageURL: card(for: item, facts: summary.facts, into: folder, client: client),
                 previewURL: preview?.url,
                 previewMadeAt: preview?.madeAt,
                 previewFile: trailerFile,
@@ -105,25 +107,30 @@ enum TopShelfPublisher {
         TVTopShelfContentProvider.topShelfContentDidChange()
     }
 
-    /// The picture saved under a name made from its path, which never
-    /// changes meaning: a picture already saved is not fetched again.
-    private static func save(_ path: String?, into folder: URL, client: MeleteClient) async -> URL? {
-        guard let path, let url = client.url(for: path) else { return nil }
-        let name = SHA256.hash(data: Data(path.utf8)).prefix(12).map { String(format: "%02x", $0) }.joined() + ".jpg"
+    /// The title's picture drawn and saved under a name made from everything
+    /// drawn on it, whose paths never change meaning: a picture already saved
+    /// is not drawn again.
+    private static func card(for item: WatchHomeItem, facts: String, into folder: URL, client: MeleteClient) async -> URL? {
+        guard let backdropPath = item.textlessBackdrop ?? item.backdrop else { return nil }
+        let drawn = ["\(TopShelfCard.version)", backdropPath, item.logo ?? "", item.title, facts, item.overview ?? ""]
+            .joined(separator: "\n")
+        let name = SHA256.hash(data: Data(drawn.utf8)).prefix(12).map { String(format: "%02x", $0) }.joined() + ".jpg"
         let file = folder.appending(path: name)
         if FileManager.default.fileExists(atPath: file.path()) {
             return file
         }
 
-        var request = URLRequest(url: url)
-        if let header = client.authorizationHeader {
-            request.setValue(header.value, forHTTPHeaderField: header.name)
-        }
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
-              (response as? HTTPURLResponse)?.statusCode == 200,
+        guard let backdrop = await image(backdropPath, client: client) else { return nil }
+        let logo = await image(item.logo, client: client)
+        guard let data = TopShelfCard.render(backdrop: backdrop, logo: logo, title: item.title, facts: facts, overview: item.overview),
               (try? data.write(to: file, options: .atomic)) != nil
         else { return nil }
         return file
+    }
+
+    private static func image(_ path: String?, client: MeleteClient) async -> UIImage? {
+        guard let request = client.artworkRequest(path) else { return nil }
+        return try? await ImagePipeline.shared.image(for: request)
     }
 
     private static func prune(_ folder: URL, keeping names: Set<String>) {
