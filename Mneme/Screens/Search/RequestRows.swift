@@ -33,18 +33,28 @@ struct DiscoverRow: View {
     }
 }
 
-/// The viewer's requests and how each is getting on.
+/// The viewer's requests and how each is getting on; each opens its page.
 struct RequestRow: View {
 
     let title: String
     let requests: [MediaRequest]
+    /// Search's model, for the request page to tell of changes.
+    var model: SearchModel?
+
+    @State
+    private var opened: MediaRequest?
 
     var body: some View {
         PosterStrip(title: title, items: requests) { request in
-            Button {} label: {
+            Button {
+                opened = request
+            } label: {
                 PosterCard(poster: request.poster, title: request.title, caption: Self.status(of: request))
             }
             .buttonStyle(PosterCardStyle())
+        }
+        .fullScreenCover(item: $opened) { request in
+            RequestDetailView(request: request, model: model)
         }
     }
 

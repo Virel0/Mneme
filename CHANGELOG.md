@@ -22,8 +22,8 @@ commit.
 - Skip Intro and Next Episode are buttons that take focus when they appear.
 - A quality limit, chapters, playback speed, subtitle size, and resuming a few seconds early.
 - Cast and crew with a page per person, extras, collections and file details on a title's page.
-- Because You Watched on Home, sorting and genres on Shows, Anime and Movies, and a quiet clip of
-  the title in the hero and the spotlight on the home network.
+- Because You Watched on Home, sorting and genres on Shows, Anime and Movies, and a clip of the
+  title in the hero and the spotlight on the home network, at full quality and with its sound.
 - Find by Description on Search, when the server has AI on.
 - Audio and subtitle languages kept by Melete, approving another device's Quick Connect code, and
   Who's Watching at launch.
@@ -35,6 +35,8 @@ commit.
 - Pictures of the Muses in neon line on the sign-in screen, an empty My List, a failed load, a file
   that can't be played and a search with no matches, and in the Top Shelf.
 - Drifting light behind "Who's Watching?".
+- Pages sit on a night sky, with now and then a shooting star. It moves gently against the focus,
+  and its colour follows the time of day.
 - The hero plays the title's trailer when its folder has one, as Melete's hero trailers setting says.
 - Tabs crossfade, and the home comes up out of the intro.
 - Two-factor sign-in: an account with it on is asked for the authenticator's code.
@@ -42,6 +44,9 @@ commit.
 - "Melete converts surround sound" in Settings, for TrueHD and DTS soundtracks.
 - Playing the next episode, and its countdown, follow your choice in Melete on every device.
 - A request being copied home shows how far it has got.
+- Each request has its own page: who decided, every step it has been through, Melete's latest word,
+  and a series season by season. A waiting request can be taken back or changed, and a series can be
+  asked for one season.
 
 ### Not yet back
 - The iPhone and iPad app.

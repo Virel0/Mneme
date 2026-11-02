@@ -65,7 +65,7 @@ struct MainView: View {
                     openProfile: { showsProfiles = true }
                 )
             }
-            .background(Color.mnemePageBackground.ignoresSafeArea())
+            .background(PageBackground())
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case let .title(summary):

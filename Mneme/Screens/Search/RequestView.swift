@@ -27,6 +27,8 @@ struct RequestView: View {
 
     @State
     private var state: RequestState = .idle
+    @State
+    private var choosesSeason = false
 
     private enum RequestState: Equatable {
         case idle
@@ -41,7 +43,7 @@ struct RequestView: View {
 
     var body: some View {
         ZStack {
-            Color.mnemePageBackground.ignoresSafeArea()
+            PageBackground()
 
             HStack(alignment: .top, spacing: 70) {
                 PosterCard(poster: item.poster, title: item.title, caption: nil, showsLabel: false)
@@ -69,6 +71,9 @@ struct RequestView: View {
             }
             .padding(100)
         }
+        .confirmationDialog("Which season?", isPresented: $choosesSeason) {
+            SeasonChoices { season in send(season: season) }
+        }
     }
 
     @ViewBuilder
@@ -78,12 +83,19 @@ struct RequestView: View {
             Label("Already Requested", systemImage: "checkmark.circle")
                 .foregroundStyle(.secondary)
         case .idle:
-            HeroActionButton(
-                title: item.kind == .series ? "Request All Seasons" : "Request",
-                systemImage: "plus.circle",
-                isProminent: true,
-                action: send
-            )
+            HStack(spacing: 18) {
+                HeroActionButton(
+                    title: item.kind == .series ? "Request All Seasons" : "Request",
+                    systemImage: "plus.circle",
+                    isProminent: true
+                ) { send(season: nil) }
+                if item.kind == .series {
+                    HeroActionButton(title: "Request One Season", systemImage: "list.number", isProminent: false) {
+                        choosesSeason = true
+                    }
+                }
+            }
+            .focusSection()
         case .sending:
             ProgressView()
         case let .sent(status):
@@ -92,16 +104,16 @@ struct RequestView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text(message)
                     .foregroundStyle(.red)
-                HeroActionButton(title: "Try Again", systemImage: "arrow.clockwise", isProminent: false, action: send)
+                HeroActionButton(title: "Try Again", systemImage: "arrow.clockwise", isProminent: false) { send(season: nil) }
             }
         }
     }
 
-    private func send() {
+    private func send(season: Int?) {
         state = .sending
         Task {
             do {
-                let made = try await library.client.request(NewRequest(kind: item.kind, tmdbId: item.tmdbId))
+                let made = try await library.client.request(NewRequest(kind: item.kind, tmdbId: item.tmdbId, season: season))
                 model?.add(made)
                 state = .sent(made.state == "approved" ? "Requested and on its way" : "Requested: waiting for approval")
             } catch {

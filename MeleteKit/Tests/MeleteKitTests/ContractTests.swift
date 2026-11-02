@@ -122,15 +122,16 @@ struct ContractTests {
         ("QuickConnectApproveRequest", QuickConnectApproveRequest.self, []),
         ("QuickConnectLookup", QuickConnectLookup.self, []),
         ("QuickConnectApproved", QuickConnectApproved.self, []),
-        ("WantedProgress", WantedProgress.self, ["kind", "wanted_id", "title", "download_id", "source", "updated_at"]),
+        ("WantedProgress", WantedProgress.self, ["kind", "wanted_id", "title", "download_id"]),
+        ("RequestSeason", RequestSeason.self, []),
+        ("RequestChange", RequestChange.self, []),
         (
             "Request",
             MediaRequest.self,
             [
-                "user_id", "username", "service", "mb_artist_id", "mb_release_group_id", "mb_recording_id",
-                "artist", "decided_at", "decided_by", "wanted_id", "seasons", "search_started",
+                "user_id", "service", "mb_artist_id", "mb_release_group_id", "mb_recording_id",
+                "wanted_id", "search_started",
                 "progress.kind", "progress.wanted_id", "progress.title", "progress.download_id",
-                "progress.source", "progress.updated_at",
             ]
         ),
     ]

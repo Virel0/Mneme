@@ -84,6 +84,11 @@ public struct WantedProgress: Codable, Hashable, Sendable {
     /// While it is being copied home: how far that has got. Nil otherwise,
     /// and from a server older than the field.
     public let copied: Copying?
+    /// Where it is coming from: `torrent` or `soulseek`.
+    public let source: String?
+    /// When the download last changed, in Unix seconds; nil for a step
+    /// worked out from the library.
+    public let updatedAt: Int?
 
     public struct Copying: Codable, Hashable, Sendable {
         public let bytes: Int
@@ -108,6 +113,46 @@ public struct MediaRequest: Codable, Hashable, Sendable, Identifiable {
     public let reason: String?
     public let createdAt: Int
     public let progress: WantedProgress?
+    /// Who asked.
+    public let username: String?
+    /// For music: the artist.
+    public let artist: String?
+    /// When it was approved or declined, in Unix seconds.
+    public let decidedAt: Int?
+    /// Who decided; nil when it was approved as it was made.
+    public let decidedBy: String?
+    /// For an approved series: each of its seasons and how it is getting on.
+    public let seasons: [RequestSeason]?
+}
+
+/// A season of an approved series request.
+public struct RequestSeason: Codable, Hashable, Sendable {
+    /// 0 is specials.
+    public let season: Int
+    /// Whether it is looked for, whoever asked for it.
+    public let monitored: Bool
+    /// Episodes TMDB lists that have aired; nil when not known.
+    public let episodes: Int?
+    /// Episodes in the library.
+    public let inLibrary: Int
+    /// The same steps as a request's progress.
+    public let step: String
+    public let percent: Double?
+}
+
+/// The season a waiting series request asks for: one, or nil for all of it.
+public struct RequestChange: Codable, Sendable {
+    public let season: Int?
+
+    public init(season: Int?) {
+        self.season = season
+    }
+
+    /// Nil is sent as null: Melete needs the key either way.
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(season, forKey: .season)
+    }
 }
 
 public struct RequestPage: Codable, Sendable {
