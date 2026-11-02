@@ -28,6 +28,8 @@ struct SettingsView: View {
     private var subtitleSize = 46.0
     @AppStorage(PlaybackPreferences.meleteConvertsAudioKey)
     private var meleteConvertsAudio = false
+    @AppStorage(PlaybackPreferences.previewSoundKey)
+    private var previewSound = true
     @AppStorage(PlaybackPreferences.previewClipsKey)
     private var previewClips = true
     @AppStorage(SessionStore.asksWhoIsWatchingKey)
@@ -70,6 +72,8 @@ struct SettingsView: View {
                         Text("Extra Large").tag(68.0)
                     }
                     Toggle("Preview clips on Home", isOn: $previewClips)
+                    Toggle("Sound in preview clips", isOn: $previewSound)
+                        .disabled(!previewClips)
                     Toggle("Melete converts surround sound", isOn: $meleteConvertsAudio)
                 } header: {
                     Text("Playback")

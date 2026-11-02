@@ -11,7 +11,7 @@ What the Jellyfin fork of Mneme did, and where the Melete app stands on each:
 | Feature | Melete app | Note |
 |---|---|---|
 | Hero: logo, facts, Play that says what it does, More Info, My List, stepping and rotation | Done | |
-| A quiet clip of the title in the hero and the spotlight | Done | Melete's 720p conversion of the title itself, on the home network only |
+| A clip of the title in the hero and the spotlight | Done | The file itself with its sound, or the hero pick's trailer, on the home network only |
 | Continue Watching, Next Up, My List, latest per library | Done | From `/home` |
 | Because You Watched | Done | Melete's rows, one for each finished title; Mneme's own for a server before 0.2.0 |
 | Featured for You (picks by a language model) | Done | Melete's row, when an admin has AI picks on |

@@ -21,6 +21,7 @@ enum PlaybackPreferences {
     static let subtitleSizeKey = "subtitleSize"
     static let previewClipsKey = "previewClips"
     static let meleteConvertsAudioKey = "meleteConvertsAudio"
+    static let previewSoundKey = "previewSound"
 
     /// Start the next episode when the credits have counted down. On unless
     /// turned off.
@@ -39,6 +40,12 @@ enum PlaybackPreferences {
     static var maxBitrate: Int? {
         let value = UserDefaults.standard.integer(forKey: maxBitrateKey)
         return value > 0 ? value : nil
+    }
+
+    /// Play preview clips and hero trailers with their sound, at a lower
+    /// volume. On unless turned off.
+    static var previewSound: Bool {
+        UserDefaults.standard.object(forKey: previewSoundKey) as? Bool ?? true
     }
 
     /// Have Melete convert a soundtrack the Apple TV can't play itself

@@ -15,10 +15,12 @@ import Observation
 /// spotlight once focus has rested there a moment.
 ///
 /// In the hero, the title's trailer when its folder has one. Otherwise the
-/// title itself, from where the viewer left it or a little way in. Either
-/// goes through Melete's conversion at 720p: small enough to start at once
-/// and to leave the network to the film being watched. Played only on the
-/// home network, muted, and nothing about it is reported as watched.
+/// title itself, from where the viewer left it or a little way in. Either is
+/// the file itself, as the player opens it: full quality, with its sound
+/// faded up to a lower volume unless Settings turns it off, and the
+/// television left in the mode it is in, so an HDR clip doesn't blank the
+/// screen to switch. Played only on the home network, and nothing about it
+/// is reported as watched.
 /// Trailers online are YouTube's web player, which an Apple TV app cannot
 /// show, so those titles get the clip of themselves.
 @MainActor
@@ -34,6 +36,8 @@ final class PreviewClip {
     /// Long enough that sweeping across titles starts nothing.
     private static let delay: Duration = .milliseconds(900)
     private static let length: Duration = .seconds(40)
+    /// Below the film's own level: it plays unasked while someone browses.
+    private static let volume: Float = 0.6
     /// Enough for nearly any trailer to finish.
     private static let trailerLength: Duration = .seconds(150)
 
@@ -83,18 +87,15 @@ final class PreviewClip {
             return
         }
 
-        let converted: TranscodeResponse
+        let play: PlayResponse
         do {
-            converted = try await client.transcode(
-                file: source.file,
-                TranscodeRequest(maxHeight: 720, maxBitrate: 3_000_000, videoCodec: "h264")
-            )
+            play = try await client.play(file: source.file)
         } catch {
-            diagnostics.record("clip", "file \(source.file) · conversion refused: \(error.localizedDescription)")
+            diagnostics.record("clip", "file \(source.file) · no stream: \(error.localizedDescription)")
             return
         }
-        guard let url = client.url(for: converted.playlistUrl) else {
-            diagnostics.record("clip", "file \(source.file) · no address for the conversion")
+        guard let url = client.url(for: play.streamUrl) else {
+            diagnostics.record("clip", "file \(source.file) · no address for the stream")
             return
         }
         guard !Task.isCancelled else { return }
@@ -107,7 +108,7 @@ final class PreviewClip {
         }
 
         var options = LoadOptions()
-        options.nativeRemoteHLS = true
+        options.displayCriteriaOwner = .host
         engine.volume = 0
         do {
             try await engine.load(url: url, startPosition: source.start, options: options)
@@ -124,6 +125,13 @@ final class PreviewClip {
         engine.play()
         self.engine = engine
         isPlaying = true
+        if PlaybackPreferences.previewSound {
+            for step in 1 ... 10 {
+                try? await Task.sleep(for: .milliseconds(120))
+                guard !Task.isCancelled, self.engine === engine else { return }
+                engine.volume = Self.volume * Float(step) / 10
+            }
+        }
         diagnostics.record("clip", "file \(source.file) · playing the \(source.what) from \(Int(source.start))s")
 
         try? await Task.sleep(for: source.length)

@@ -22,8 +22,8 @@ commit.
 - Skip Intro and Next Episode are buttons that take focus when they appear.
 - A quality limit, chapters, playback speed, subtitle size, and resuming a few seconds early.
 - Cast and crew with a page per person, extras, collections and file details on a title's page.
-- Because You Watched on Home, sorting and genres on Shows, Anime and Movies, and a quiet clip of
-  the title in the hero and the spotlight on the home network.
+- Because You Watched on Home, sorting and genres on Shows, Anime and Movies, and a clip of the
+  title in the hero and the spotlight on the home network, at full quality and with its sound.
 - Find by Description on Search, when the server has AI on.
 - Audio and subtitle languages kept by Melete, approving another device's Quick Connect code, and
   Who's Watching at launch.
