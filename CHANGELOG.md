@@ -8,6 +8,8 @@ commit.
 
 ## [Unreleased]
 
+## [1.0 build 11] - 2026-11-02
+
 ### Changed
 - Mneme is now under the GNU General Public License, version 3 or later, as Melete is.
 - Mneme is now the app for Melete. It signs in to a Melete server (Quick Connect, or a
@@ -56,4 +58,5 @@ commit.
 ### Not yet back
 - The iPhone and iPad app.
 
-[Unreleased]: https://github.com/Virel0/Mneme/commits/main
+[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.11...main
+[1.0 build 11]: https://github.com/Virel0/Mneme/commits/v1.0-build.11
