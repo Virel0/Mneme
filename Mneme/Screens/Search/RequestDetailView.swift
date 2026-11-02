@@ -42,7 +42,7 @@ struct RequestDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.mnemePageBackground.ignoresSafeArea()
+            PageBackground()
 
             HStack(alignment: .top, spacing: 70) {
                 PosterCard(poster: current.poster, title: current.title, caption: nil, showsLabel: false)

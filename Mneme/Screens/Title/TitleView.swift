@@ -25,7 +25,7 @@ struct TitleView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color.mnemePageBackground.ignoresSafeArea()
+            PageBackground()
 
             if let model {
                 if let error = model.error {

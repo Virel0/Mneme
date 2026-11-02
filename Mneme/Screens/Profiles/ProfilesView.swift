@@ -26,7 +26,7 @@ struct ProfilesView: View {
 
     var body: some View {
         ZStack {
-            Color.mnemePageBackground.ignoresSafeArea()
+            PageBackground()
 
             VStack(spacing: 60) {
                 Text("Who's watching?")

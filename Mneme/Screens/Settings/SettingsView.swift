@@ -119,7 +119,7 @@ struct SettingsView: View {
             .navigationTitle("Settings")
         }
         // A full-screen cover is see-through on tvOS without a ground of its own.
-        .background(Color.mnemePageBackground.ignoresSafeArea())
+        .background(PageBackground())
     }
 
     @ViewBuilder

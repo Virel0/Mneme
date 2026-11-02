@@ -68,7 +68,7 @@ struct PersonView: View {
                     .frame(maxWidth: .infinity, minHeight: 600)
             }
         }
-        .background(Color.mnemePageBackground.ignoresSafeArea())
+        .background(PageBackground())
         .task {
             person = try? await library.client.person(id)
         }
