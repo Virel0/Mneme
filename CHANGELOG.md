@@ -9,6 +9,7 @@ commit.
 ## [Unreleased]
 
 ### Changed
+- Mneme is now under the GNU General Public License, version 3 or later, as Melete is.
 - Mneme is now the app for Melete. It signs in to a Melete server (Quick Connect, or a
   password) instead of Jellyfin, and everyone signs in again once.
 - Artwork, AI search and requests come from Melete: nothing to set up on the Apple TV.
