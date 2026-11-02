@@ -206,6 +206,8 @@ struct MainView: View {
         switch selected {
         case .myList:
             MyListView()
+        case .requests:
+            RequestsView()
         case .search:
             SearchView()
         default:
