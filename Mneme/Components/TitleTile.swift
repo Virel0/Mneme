@@ -48,6 +48,8 @@ struct TitleTile: View {
     private var library
     @Environment(Router.self)
     private var router
+    @Environment(ArtworkColours.self)
+    private var colours: ArtworkColours?
 
     @FocusState
     private var isFocused: Bool
@@ -213,6 +215,9 @@ struct TitleTile: View {
                 .stroke(.white.opacity(isFocused ? 0.9 : 0), lineWidth: 4)
         }
         .shadow(color: .black.opacity(isFocused ? 0.6 : 0), radius: 20, y: 10)
+        // A halo in the picture's own colour while focused; worked out for the
+        // focused tile only, so a scroll doesn't work out every poster's.
+        .shadow(color: (isFocused ? colours?.colour(for: picturePath) : nil)?.opacity(0.6) ?? .clear, radius: 28)
     }
 }
 

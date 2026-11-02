@@ -96,6 +96,8 @@ private struct HeroCard: View {
     private var client
     @Environment(Library.self)
     private var library
+    @Environment(ArtworkColours.self)
+    private var colours: ArtworkColours?
 
     @FocusState
     private var focusedAction: Action?
@@ -129,10 +131,11 @@ private struct HeroCard: View {
         focusedAction != nil
     }
 
-    /// The pick's trailer, unless the viewer turned the hero's trailers off
-    /// in Melete.
-    private var trailer: WatchHomeItem.Trailer? {
-        library.heroTrailers ? pick.trailer : nil
+    /// The pick's trailer from its folder, unless the viewer turned the hero's
+    /// trailers off in Melete; Melete's online ones can't play on Apple TV.
+    private var trailerFile: Int? {
+        guard library.heroTrailers, let trailer = pick.trailer, trailer.source == .folder else { return nil }
+        return trailer.fileId
     }
 
     var body: some View {
@@ -156,11 +159,16 @@ private struct HeroCard: View {
                     .allowsHitTesting(false)
             }
             .clipShape(RoundedRectangle(cornerRadius: HeroLayout.radius, style: .continuous))
+            // A halo in the title's own colour while it has focus.
+            .shadow(color: (isFocused ? colours?.colour(for: pick.backdrop) : nil)?.opacity(0.55) ?? .clear, radius: 40)
             .animation(.easeOut(duration: 0.2), value: isFocused)
             .onChange(of: isFocused) {
                 onFocusChange(isFocused)
+                if isFocused {
+                    colours?.focus(on: pick.backdrop)
+                }
                 if isFocused, let client {
-                    clip.start(for: pick, client: client, trailer: trailer)
+                    clip.start(for: pick, client: client, trailerFile: trailerFile)
                 } else {
                     clip.stop()
                 }
@@ -175,7 +183,7 @@ private struct HeroCard: View {
                 // A step changes the title under a focused card; its clip
                 // follows.
                 if isFocused, let client {
-                    clip.start(for: pick, client: client, trailer: trailer)
+                    clip.start(for: pick, client: client, trailerFile: trailerFile)
                 }
                 target = PlayTarget.known(for: pick)
                 guard target == nil, let client else { return }
@@ -188,33 +196,34 @@ private struct HeroCard: View {
     @ViewBuilder
     private var artwork: some View {
         FocusedBackdrop(path: pick.backdrop, focus: pick.backdropFocus)
+            .modifier(SlowDrift(focus: pick.backdropFocus))
             // Keyed on the title, so a step is a crossfade of the picture alone.
-                .id(pick.ref)
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.5), value: pick.ref)
-                .overlay {
-                    // Over the still once it plays, so a clip that is slow to
-                    // start never shows an empty card.
-                    if let engine = clip.engine, clip.isPlaying {
-                        AetherPlayerSurface(engine: engine)
-                            .transition(.opacity)
-                    }
+            .id(pick.ref)
+            .transition(.opacity)
+            .animation(.easeInOut(duration: 0.5), value: pick.ref)
+            .overlay {
+                // Over the still once it plays, so a clip that is slow to
+                // start never shows an empty card.
+                if let engine = clip.engine, clip.isPlaying {
+                    AetherPlayerSurface(engine: engine)
+                        .transition(.opacity)
                 }
-                .animation(.easeInOut(duration: 0.6), value: clip.isPlaying)
-                .overlay {
-                    // Two ramps, opaque at the corner the text sits in, so the
-                    // logo and facts never read against whatever the picture does.
-                    LinearGradient(
-                        colors: [.black.opacity(0.85), .black.opacity(0.45), .clear],
-                        startPoint: .leading,
-                        endPoint: .init(x: 0.6, y: 0.5)
-                    )
-                    LinearGradient(
-                        colors: [.clear, .black.opacity(0.35), .black.opacity(0.9)],
-                        startPoint: .init(x: 0.5, y: 0.45),
-                        endPoint: .bottom
-                    )
-                }
+            }
+            .animation(.easeInOut(duration: 0.6), value: clip.isPlaying)
+            .overlay {
+                // Two ramps, opaque at the corner the text sits in, so the
+                // logo and facts never read against whatever the picture does.
+                LinearGradient(
+                    colors: [.black.opacity(0.85), .black.opacity(0.45), .clear],
+                    startPoint: .leading,
+                    endPoint: .init(x: 0.6, y: 0.5)
+                )
+                LinearGradient(
+                    colors: [.clear, .black.opacity(0.35), .black.opacity(0.9)],
+                    startPoint: .init(x: 0.5, y: 0.45),
+                    endPoint: .bottom
+                )
+            }
     }
 
     @ViewBuilder

@@ -18,6 +18,8 @@ struct MainView: View {
     @State
     private var library: Library
     @State
+    private var colours: ArtworkColours
+    @State
     private var router = Router()
     @State
     private var selected: AppTab = .home
@@ -29,6 +31,17 @@ struct MainView: View {
 
     @Environment(\.isEnabled)
     private var isEnabled
+    @Environment(\.scenePhase)
+    private var scenePhase
+
+    /// Home left alone long enough shows the hero's picks full screen.
+    @State
+    private var isCinematic = false
+    @State
+    private var lastActivity = Date.now
+    @State
+    private var cinematicSince = Date.distantPast
+    private static let idleAfter: TimeInterval = 45
 
     /// Raised each time focus arrives in the strip from the page, which
     /// scrolls the page back to its top under it.
@@ -38,6 +51,7 @@ struct MainView: View {
     init(session: Session, library: Library) {
         self.session = session
         _library = State(initialValue: library)
+        _colours = State(initialValue: ArtworkColours(client: library.client))
     }
 
     var body: some View {
@@ -75,6 +89,30 @@ struct MainView: View {
                     PlayerView(target: target)
                 case let .person(id):
                     PersonView(id: id)
+                }
+            }
+        }
+        // Switched off while cinematic, so the press that wakes the screen
+        // reaches nothing under it.
+        .disabled(isCinematic)
+        .overlay {
+            if isCinematic {
+                CinematicView(picks: heroPicks)
+                    .transition(.opacity)
+            }
+        }
+        .background {
+            IdleWatcher(catchesMenu: isCinematic, onActivity: noticeActivity)
+        }
+        .task(id: mayGoCinematic) {
+            guard mayGoCinematic else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(5))
+                if !isCinematic, scenePhase != .background, !heroPicks.isEmpty,
+                   Date.now.timeIntervalSince(lastActivity) >= Self.idleAfter
+                {
+                    cinematicSince = .now
+                    withAnimation(.easeInOut(duration: 1.2)) { isCinematic = true }
                 }
             }
         }
@@ -128,8 +166,28 @@ struct MainView: View {
         // Outermost, so what is presented from here — the profiles — has them
         // too; a cover attached outside these crashed for want of the library.
         .environment(library)
+        .environment(colours)
         .environment(router)
         .environment(\.melete, library.client)
+    }
+
+    /// Only on Home, with nothing open over it.
+    private var mayGoCinematic: Bool {
+        selected == .home && router.path.isEmpty && !showsProfiles
+    }
+
+    private var heroPicks: [TitleSummary] {
+        guard case let .loaded(home) = library.home else { return [] }
+        return home.hero.map(TitleSummary.init)
+    }
+
+    /// A press, a swipe or focus moving. It ends cinematic mode, except in
+    /// the moment after it starts, when switching the page off moves focus.
+    private func noticeActivity() {
+        lastActivity = .now
+        guard isCinematic, Date.now.timeIntervalSince(cinematicSince) > 1.5 else { return }
+        withAnimation(.easeInOut(duration: 0.6)) { isCinematic = false }
+        focusStripSoon()
     }
 
     /// Start the remote on the current tab. tvOS hands first focus to the

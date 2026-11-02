@@ -22,6 +22,8 @@ struct PageBackground: View {
 
     @Environment(\.accessibilityReduceMotion)
     private var reduceMotion
+    @Environment(ArtworkColours.self)
+    private var colours: ArtworkColours?
 
     /// How far the sky has eased against where focus is.
     @State
@@ -40,9 +42,20 @@ struct PageBackground: View {
                         .resizable()
                         .scaledToFill()
                     SkyTint()
+                    // The colour of the title with focus, glowing up from below.
+                    if let glow = colours?.current {
+                        RadialGradient(
+                            colors: [glow.opacity(0.3), glow.opacity(0.08), .clear],
+                            center: UnitPoint(x: 0.5, y: 1.1),
+                            startRadius: 0,
+                            endRadius: 1200
+                        )
+                        .transition(.opacity)
+                    }
                     ShootingStars()
                 }
                 // A little larger than the screen, so easing never shows an edge.
+                .animation(.easeInOut(duration: 1.2), value: colours?.current)
                 .scaleEffect(1.04)
                 .offset(drift)
             }

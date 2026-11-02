@@ -136,7 +136,8 @@ final class Library {
             self.home = .loaded(home)
             saveHome(home)
             let client = client
-            Task { await TopShelfPublisher.publish(home, client: client) }
+            let trailers = heroTrailers && PlaybackPreferences.previewClips
+            Task { await TopShelfPublisher.publish(home, client: client, trailers: trailers) }
             if home.rows.contains(where: { $0.key == .becauseYouWatched }) {
                 becauseYouWatched = nil
             } else {
