@@ -33,6 +33,9 @@ final class TitleModel {
     private(set) var extras: [Extra] = []
     /// Whether everything on the page has been asked for, extras included.
     private(set) var isLoaded = false
+    /// The trailer to play behind the header, chosen as Melete chooses the
+    /// hero's; nil for a clip of the title instead.
+    private(set) var headerTrailer: Int?
     private(set) var collection: MovieCollection?
     /// Titles in the library like this one: the AI's picks when Melete has
     /// them on, else its own.
@@ -97,12 +100,41 @@ final class TitleModel {
 
         self.credits = await credits
         self.extras = await extras ?? []
+        fileInfo = await file
+        headerTrailer = await sharpTrailer()
         isLoaded = true
         self.similar = await (similar)?.items.filter { !$0.requestable && $0.id != nil } ?? []
-        fileInfo = await file
         if let id = self.credits?.collection?.id {
             collection = try? await client.collection(id)
         }
+    }
+
+    /// The title's trailer when it is sharp enough to stand in for the title,
+    /// by Melete's rule for the hero: at least 1080 lines tall, or as tall as
+    /// the title's own tallest file where that is lower. A trailer not
+    /// measured yet counts. For a series, the episode a clip would play is
+    /// the title's file.
+    private func sharpTrailer() async -> Int? {
+        guard let trailer = extras.first(where: { $0.kind == "trailer" }) else { return nil }
+        guard let trailerHeight = await Self.height(of: try? client.fileInfo(trailer.id)) else { return trailer.id }
+
+        var titleHeights: [Int] = []
+        if let movie {
+            for file in movie.files {
+                let info = file.id == movie.files.first?.id ? fileInfo : try? await client.fileInfo(file.id)
+                if let height = Self.height(of: info) {
+                    titleHeights.append(height)
+                }
+            }
+        } else if let file = target?.fileID, let height = await Self.height(of: try? client.fileInfo(file)) {
+            titleHeights.append(height)
+        }
+        let needed = min(1080, titleHeights.max() ?? 1080)
+        return trailerHeight >= needed ? trailer.id : nil
+    }
+
+    private static func height(of info: FileInfo?) -> Int? {
+        info?.media?.video.compactMap(\.height).max()
     }
 
     /// Start over from the beginning, offered beside a Resume.

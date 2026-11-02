@@ -64,7 +64,7 @@ struct TitleView: View {
             clip.start(
                 for: model.summary,
                 client: library.client,
-                trailerFile: model.extras.first { $0.kind == "trailer" }?.id
+                trailerFile: model.headerTrailer
             )
         }
         .task {
