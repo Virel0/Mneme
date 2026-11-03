@@ -18,6 +18,9 @@ public struct User: Codable, Hashable, Sendable {
     public let id: Int
     public let username: String
     public let isAdmin: Bool
+    /// Where their profile picture is fetched from; nil without one, and
+    /// from a server older than profile pictures.
+    public let avatarUrl: String?
 }
 
 public struct LoginRequest: Codable, Sendable {
