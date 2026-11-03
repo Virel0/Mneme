@@ -73,6 +73,9 @@ final class PlayerSession {
     var tasks: [Task<Void, Never>] = []
     @ObservationIgnored
     private var countdownTask: Task<Void, Never>?
+    /// Looks, once a subtitle is chosen, at whether it came.
+    @ObservationIgnored
+    var subtitleCheck: Task<Void, Never>?
 
     /// How far ahead to buffer, in segments of about four seconds. The
     /// engine stops early at its own budget, a quarter of the free space, so

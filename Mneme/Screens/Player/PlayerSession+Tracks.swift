@@ -48,8 +48,26 @@ extension PlayerSession {
             // Re-selecting the track already up restarts its decoder.
             guard engine.activeSubtitleTrackIndex != index else { return }
             engine.selectSubtitleTrack(index: index)
+            recordSubtitle(track, way: "embedded")
         } else {
             engine.selectSidecarSubtitle(url: client.subtitleURL(stream: stream, track: track))
+            recordSubtitle(track, way: "Melete WebVTT")
+        }
+    }
+
+    /// Which track went which way, and a few seconds on, whether any of it
+    /// came: subtitles that don't show leave no other trace.
+    private func recordSubtitle(_ track: String, way: String) {
+        guard let engine else { return }
+        PlaybackDiagnostics.shared.record("subtitles", "\(track) · \(way) · route \(engine.videoRoute.rawValue)")
+        subtitleCheck?.cancel()
+        subtitleCheck = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(8))
+            guard !Task.isCancelled, let self, let engine = self.engine, self.subtitleTrack == track else { return }
+            PlaybackDiagnostics.shared.record(
+                "subtitles.status",
+                "\(track) · \(engine.subtitleCues.count) cues · \(engine.isLoadingSubtitles ? "still loading" : "loaded") · route \(engine.videoRoute.rawValue)"
+            )
         }
     }
 

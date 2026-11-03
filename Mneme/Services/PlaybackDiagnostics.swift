@@ -35,6 +35,28 @@ final class PlaybackDiagnostics {
         return formatter
     }()
 
+    /// The engine's own word on subtitles it couldn't load, which it says
+    /// only to its log.
+    private init() {
+        EngineLog.handler = { line in
+            guard let line = Self.subtitleFailure(in: line) else { return }
+            Task { @MainActor in PlaybackDiagnostics.shared.record("engine", line) }
+        }
+    }
+
+    /// A line of the engine's about a subtitle failing, with any address
+    /// taken out: Melete's stream links carry their token. Nil for any other
+    /// line.
+    nonisolated static func subtitleFailure(in line: String) -> String? {
+        let lowered = line.lowercased()
+        guard lowered.contains("subtitle") || lowered.contains("sidecar"),
+              lowered.contains("fail") || lowered.contains("error") || lowered.contains("refus")
+        else { return nil }
+        return line
+            .replacingOccurrences(of: "[AetherEngine] ", with: "")
+            .replacingOccurrences(of: #"[a-z]+://\S+"#, with: "<address>", options: .regularExpression)
+    }
+
     func record(_ event: String, _ detail: String = "", seconds: Double? = nil) {
         let at = seconds.map { " @\(Int($0))s" } ?? ""
         let line = "\(clock.string(from: .now)) \(event)\(at) \(detail)"
