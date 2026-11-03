@@ -11,6 +11,7 @@ import AetherEngine
 import Foundation
 import MeleteKit
 import Observation
+import UIKit
 
 /// One sitting of playback: a file, then whatever plays after it.
 ///
@@ -172,6 +173,7 @@ final class PlayerSession {
             applyRate()
             isPaused = false
             phase = .playing
+            recordDisplay()
 
             Task { await loadExtras(for: target, stream: url) }
         } catch let error as MeleteError {
@@ -179,6 +181,19 @@ final class PlayerSession {
         } catch {
             fail(error.localizedDescription)
         }
+    }
+
+    /// The film's frame rate against the television's: a film at 24 frames
+    /// on a television left at 60 stutters, however well it plays. Whether
+    /// the television follows the film is Match Content, in the Apple TV's
+    /// settings.
+    private func recordDisplay() {
+        guard let engine else { return }
+        let window = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first
+        let matching = window.map { $0.avDisplayManager.isDisplayCriteriaMatchingEnabled ? "on" : "off" } ?? "unknown"
+        let screen = window.map { "\($0.screen.maximumFramesPerSecond) Hz" } ?? "unknown"
+        let film = engine.sourceVideoFrameRate.map { String(format: "%.3f fps", $0) } ?? "unknown"
+        PlaybackDiagnostics.shared.record("display", "film \(film) · Match Content \(matching) · screen \(screen)")
     }
 
     /// Where to open: where it was left, backed up by the resume offset so

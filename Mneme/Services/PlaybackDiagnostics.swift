@@ -35,13 +35,21 @@ final class PlaybackDiagnostics {
         return formatter
     }()
 
-    /// The engine's own word on subtitles it couldn't load, which it says
-    /// only to its log.
+    /// The engine's own word on subtitles it couldn't load, and on the
+    /// television's mode, which it says only to its log.
     private init() {
         EngineLog.handler = { line in
-            guard let line = Self.subtitleFailure(in: line) else { return }
+            guard let line = Self.subtitleFailure(in: line) ?? Self.displayMode(in: line) else { return }
             Task { @MainActor in PlaybackDiagnostics.shared.record("engine", line) }
         }
+    }
+
+    /// A line of the engine's about the television's mode: whether it was
+    /// asked to match the film's frame rate and range, and what it did. Nil
+    /// for any other line.
+    nonisolated static func displayMode(in line: String) -> String? {
+        guard line.hasPrefix("[DisplayCriteria]") else { return nil }
+        return line
     }
 
     /// A line of the engine's about a subtitle failing, with any address
