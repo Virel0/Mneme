@@ -1,0 +1,7 @@
+module Libass {
+    header "ass/ass.h"
+    link "c++"
+    link framework "CoreText"
+    link framework "CoreFoundation"
+    export *
+}

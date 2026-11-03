@@ -55,6 +55,12 @@ jobs:
           MELETE_OPENAPI: ${{ github.workspace }}/melete/src/api/openapi.json
         run: swift test
 
+      # libass and its libraries, as built by Packages/Libass/build.sh,
+      # drawing a line of subtitles.
+      - name: Libass tests
+        working-directory: Packages/Libass
+        run: swift test
+
       - name: Size report
         run: python3 scripts/size_report.py .
 
