@@ -1,0 +1,27 @@
+# Libass build record
+
+Written by build.sh.
+
+Xcode    Xcode 26.6 Build version 17F113 
+clang    Apple clang version 21.0.0 (clang-2100.1.1.101)
+SDK      appletvos 26.5
+SDK      appletvsimulator 26.5
+SDK      macosx 26.5
+build.sh sha256 e5eb16baceb586c92269cef5a1d40be21e2b3b02814a63cc5f1432017e33a30c
+
+## Sources
+libass 0.17.5  https://github.com/libass/libass/releases/download/0.17.5/libass-0.17.5.tar.xz  sha256 2dca25c0e0c837ddf00b52011b3f82cac1e4ddd3ad018227806b0c2288864acc
+freetype 2.15.0  https://download.savannah.gnu.org/releases/freetype/freetype-2.15.0.tar.xz  sha256 93cd47eb719c325107f2d3cf087d06299e944c3b48a40b55537302304dea1dd5
+harfbuzz 15.0.0  https://github.com/harfbuzz/harfbuzz/releases/download/15.0.0/harfbuzz-15.0.0.tar.xz  sha256 968536e9abd782f07f7954044c0c4020199fcdd39b41d221ec42d2a3be4a44df
+fribidi 1.0.18  https://github.com/fribidi/fribidi/releases/download/v1.0.18/fribidi-1.0.18.tar.xz  sha256 1de5e8073d035388b71d0b2d452b1da1f8caeea8a7702997b401fe1b6250727f
+
+## Configuration
+libass   CoreText font provider; no Fontconfig, libpng, iconv or libunibreak; ARM assembly on arm64
+FreeType drivers: TrueType, CFF, SFNT, autofit, PostScript hinting, smooth renderer; bundled zlib for WOFF
+HarfBuzz single-file build, without FreeType or CoreText integration
+Flags    -O2 -DNDEBUG -fvisibility=hidden -Wno-everything
+
+## Output
+tvos  arm64  sha256 81100f3e6d7672a0182727ad6e3d430db0017b4dcb7e4013e88c4a8d258d9162
+tvos-sim  x86_64 arm64  sha256 fbf9e75b992e5c2c6b2a21c357059a2b83ed138c7c6bf75f54403733cf83094c
+macos  x86_64 arm64  sha256 793cf86fd781656a21d067be2f974fe3bb62cc3f63b5a9398061055603d9f987
