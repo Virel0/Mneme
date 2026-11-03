@@ -8,6 +8,14 @@ commit.
 
 ## [Unreleased]
 
+## [1.0 build 13] - 2026-11-03
+
+### Fixed
+- Subtitles drawn as pictures, as on most Blu-ray copies, show with "Melete converts surround
+  sound" on: the film plays as it is for them, and switching to one mid-film carries on from the
+  same place.
+- Clips in the hero fill it, without black bars at the sides.
+
 ## [1.0 build 12] - 2026-11-02
 
 Build 11 was never uploaded, so its changes are listed here too.
@@ -72,5 +80,6 @@ Build 11 was never uploaded, so its changes are listed here too.
 ### Not yet back
 - The iPhone and iPad app.
 
-[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.12...main
+[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.13...main
+[1.0 build 13]: https://github.com/Virel0/Mneme/commits/v1.0-build.13
 [1.0 build 12]: https://github.com/Virel0/Mneme/commits/v1.0-build.12
