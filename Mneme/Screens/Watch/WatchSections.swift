@@ -11,9 +11,10 @@ import MeleteKit
 
 /// The hero's picks and the rows of one Watch page, from the home.
 ///
-/// The home is one answer for everything; Shows, Anime and Movies are that
-/// answer narrowed to their kind, as Melete's web pages narrow it. A movie
-/// is a movie, and a series is anime when the anime list has it.
+/// Shows, Anime and Movies each have their own home from Melete, its hero and
+/// rows kept to their kind. Each is still narrowed here, for a server that
+/// answers every page with the whole home: a movie is a movie, and a series
+/// is anime when the anime list has it.
 struct WatchSections {
 
     struct Row: Identifiable {
@@ -53,15 +54,15 @@ struct WatchSections {
             // Mneme's own, from a server that doesn't send any: after what is
             // being watched, before what is new.
             if let because = becauseYouWatched, !rows.contains(where: { $0.key == .becauseYouWatched }) {
-                let after = rows.lastIndex { $0.key == .continueWatching || $0.key == .nextUp }.map { $0 + 1 } ?? 0
+                let after = rows.lastIndex { $0.key.isWatching }.map { $0 + 1 } ?? 0
                 rows.insert(Row(key: .becauseYouWatched, title: "Because You Watched \(because.title)", items: because.items), at: after)
             }
             self.rows = rows
             return
         }
 
-        func mine(_ key: WatchHomeRow.Key) -> [TitleSummary] {
-            (home.rows.first { $0.key == key }?.items ?? [])
+        func mine(_ key: WatchHomeRow.Key, in row: WatchHomeRow? = nil) -> [TitleSummary] {
+            ((row ?? home.rows.first { $0.key == key })?.items ?? [])
                 .map(TitleSummary.init)
                 .filter { kindOf($0.ref) == kind }
         }
@@ -73,13 +74,19 @@ struct WatchSections {
             .prefix(Self.heroCount)
             .map(\.self)
 
-        rows = [
-            Row(key: .continueWatching, title: "Continue Watching", items: mine(.continueWatching)),
-            Row(key: .nextUp, title: "Next Up", items: mine(.nextUp)),
-            Row(key: .favourites, title: "On My List", items: mine(.favourites)),
-            Row(key: latest, title: latest.title, items: mine(latest)),
-        ]
-            .filter { !$0.items.isEmpty }
+        rows = home.rows
+            // A Because You Watched row for a title of another kind holds
+            // nothing of this one.
+                .filter { row in row.seed.map { kindOf(TitleRef(kind: $0.kind, id: $0.id)) == kind } ?? true }
+                .map { row in
+                    Row(
+                        key: row.key,
+                        title: row.key == .favourites ? "On My List" : row.title,
+                        items: mine(row.key, in: row),
+                        seed: row.seed
+                    )
+                }
+                .filter { !$0.items.isEmpty }
     }
 }
 
@@ -120,8 +127,12 @@ extension WatchHomeRow.Key {
         case .latestShows: "Latest Shows"
         case .latestAnime: "Latest Anime"
         case .latestMovies: "Latest Movies"
+        case .newEpisodes: "New Episodes"
         case .featuredForYou: "Featured for You"
         case .becauseYouWatched: "Because You Watched"
+        case .nextInCollection: "Next in the Collection"
+        case .highlyRated: "Highly Rated, Not Seen Yet"
+        case .watchAgain: "Watch Again"
         default: rawValue.replacingOccurrences(of: "_", with: " ").capitalized
         }
     }
@@ -129,6 +140,25 @@ extension WatchHomeRow.Key {
     /// Rows of things to play now show wide tiles; rows of titles to open
     /// show posters.
     var isLandscape: Bool {
-        self == .continueWatching || self == .nextUp
+        isWatching
+    }
+
+    /// The rows of what is being watched, each entry with the episode or
+    /// point to play from. New Episodes holds shows taken out of Next Up.
+    var isWatching: Bool {
+        self == .continueWatching || self == .nextUp || self == .newEpisodes
+    }
+}
+
+extension WatchKind {
+
+    /// The page's own home from Melete; nil for the whole home.
+    var homePage: HomePage? {
+        switch self {
+        case .home: nil
+        case .shows: .shows
+        case .anime: .anime
+        case .movies: .movies
+        }
     }
 }

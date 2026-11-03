@@ -49,10 +49,14 @@ final class Library {
     private let homeCache: URL?
 
     private(set) var home: HomeState = .loading
+    /// Shows', Anime's and Movies' own homes, once each page has asked; the
+    /// page shows the whole home narrowed until then.
+    private(set) var pageHomes: [WatchKind: WatchHome] = [:]
     /// Every anime series' id; nil until known.
     private(set) var animeIDs: Set<Int>?
     private(set) var favourites: Set<TitleRef> = []
-    /// The series in Continue Watching or Next Up: the ones being watched.
+    /// The series in Continue Watching, Next Up or New Episodes: the ones
+    /// being watched.
     private(set) var watching: Set<TitleRef> = []
     /// Raised by every change to My List, so its page knows to reload.
     private(set) var favouritesVersion = 0
@@ -146,7 +150,7 @@ final class Library {
             Task { await loadPlaybackSettings() }
             watching = Set(
                 home.rows
-                    .filter { $0.key == .continueWatching || $0.key == .nextUp }
+                    .filter(\.key.isWatching)
                     .flatMap(\.items)
                     .filter { $0.kind == .series }
                     .map { TitleRef(kind: $0.kind, id: $0.id) }
@@ -159,6 +163,11 @@ final class Library {
                 self.home = .failed(error as? MeleteError ?? .transport(error.localizedDescription))
             }
         }
+        // Pages already shown follow the home, as on a change in the library
+        // or after playing.
+        for kind in pageHomes.keys {
+            Task { await loadPage(kind) }
+        }
         // The pages work without these, so a failure leaves them as they were.
         if let anime = try? await anime {
             animeIDs = anime
@@ -166,6 +175,12 @@ final class Library {
         if let favourites = try? await favourites {
             self.favourites = Set(favourites.items.map { TitleRef(kind: $0.kind, id: $0.id) })
         }
+    }
+
+    /// A page's own home. A failure leaves what the page had.
+    func loadPage(_ kind: WatchKind) async {
+        guard let page = kind.homePage, let home = try? await client.home(page: page) else { return }
+        pageHomes[kind] = home
     }
 
     func kind(of ref: TitleRef) -> WatchKind {
@@ -176,11 +191,11 @@ final class Library {
     }
 
     /// The home's word on a title being watched: its entry in Continue
-    /// Watching or Next Up, which says the episode to play and how far
+    /// Watching, Next Up or New Episodes, which says the episode to play and how far
     /// through it is.
     func watchingEntry(for ref: TitleRef) -> TitleSummary? {
         guard case let .loaded(home) = home else { return nil }
-        for key in [WatchHomeRow.Key.continueWatching, .nextUp] {
+        for key in [WatchHomeRow.Key.continueWatching, .nextUp, .newEpisodes] {
             if let item = home.rows.first(where: { $0.key == key })?.items.first(where: { $0.kind == ref.kind && $0.id == ref.id }) {
                 return TitleSummary(item)
             }
@@ -207,7 +222,7 @@ final class Library {
 
     private func loadBecauseYouWatched(from home: WatchHome) async {
         let watched = home.rows
-            .filter { $0.key == .continueWatching || $0.key == .nextUp }
+            .filter(\.key.isWatching)
             .flatMap(\.items)
             .max { ($0.progress?.updatedAt ?? 0) < ($1.progress?.updatedAt ?? 0) }
         guard let watched else { return }
