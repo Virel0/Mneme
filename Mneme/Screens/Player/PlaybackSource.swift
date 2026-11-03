@@ -73,7 +73,9 @@ struct PlaybackSource {
     @MainActor
     private static func audioConverted(fileID: Int, play: PlayResponse, media: MediaInfo?, client: MeleteClient) async -> PlaybackSource? {
         guard let streams = media?.audio, let track = streams.first(where: { $0.index == play.tracks?.audio }) ?? streams.first,
-              !audioCodecs.contains(track.codec.lowercased())
+              !audioCodecs.contains(track.codec.lowercased()),
+              // Its video can't be copied; Melete would refuse.
+              media?.video.contains(where: { $0.parameterSetsInStreamOnly == true }) != true
         else { return nil }
 
         guard let converted = try? await client.transcode(file: fileID, TranscodeRequest(

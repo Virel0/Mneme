@@ -19,6 +19,10 @@ public struct VideoStream: Codable, Hashable, Sendable {
     public let frameRate: Double?
     /// `Dolby Vision`, `HDR10`, `HLG`, or nil for SDR.
     public let hdr: String?
+    /// HEVC whose parameter sets are only in the stream: Melete refuses to
+    /// copy its video into a stream, as Apple's players may refuse the
+    /// result. Nil from a server older than the field.
+    public let parameterSetsInStreamOnly: Bool?
 }
 
 public struct AudioStream: Codable, Hashable, Sendable {
