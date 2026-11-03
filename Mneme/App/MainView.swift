@@ -29,6 +29,8 @@ struct MainView: View {
     @FocusState
     private var stripFocus: NavStripFocus?
 
+    @Environment(SessionStore.self)
+    private var sessions
     @Environment(\.isEnabled)
     private var isEnabled
     @Environment(\.scenePhase)
@@ -76,6 +78,7 @@ struct MainView: View {
                     focused: $stripFocus,
                     selected: selected,
                     userInitial: String(session.user.username.prefix(1)).uppercased(),
+                    avatar: session.user.avatarUrl,
                     select: { selected = $0 },
                     openProfile: { showsProfiles = true }
                 )
@@ -121,6 +124,12 @@ struct MainView: View {
         }
         .task {
             await library.listen()
+        }
+        // The user as signed in may have a new name or profile picture since.
+        .task {
+            if let user = try? await library.client.me() {
+                sessions.refresh(session, with: user)
+            }
         }
         .onAppear(perform: focusStripSoon)
         // Behind the launch intro the page cannot take focus, so it is given

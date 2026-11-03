@@ -74,6 +74,18 @@ final class SessionStore {
         save()
     }
 
+    /// The user as the server has them now: a new name or profile picture
+    /// since signing in.
+    func refresh(_ session: Session, with user: User) {
+        guard session.user != user, let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
+        let refreshed = Session(server: session.server, user: user)
+        sessions[index] = refreshed
+        if current?.id == session.id {
+            current = refreshed
+        }
+        save()
+    }
+
     func switchTo(_ session: Session) {
         current = session
         save()

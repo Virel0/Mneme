@@ -95,6 +95,9 @@ struct ProfilesView: View {
 
 struct ProfileButton: View {
 
+    @Environment(SessionStore.self)
+    private var sessions
+
     let session: Session
     let isCurrent: Bool
     let action: () -> Void
@@ -102,10 +105,17 @@ struct ProfileButton: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 16) {
-                Text(String(session.user.username.prefix(1)).uppercased())
-                    .font(.system(size: 80, weight: .bold))
-                    .frame(width: 180, height: 180)
-                    .background(Color(white: isCurrent ? 0.28 : 0.15), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                // Their profile picture, fetched as them: each profile can be
+                // on another server. The initial while it loads, and without one.
+                ArtworkImage(path: session.user.avatarUrl) {
+                    Text(String(session.user.username.prefix(1)).uppercased())
+                        .font(.system(size: 80, weight: .bold))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(white: isCurrent ? 0.28 : 0.15))
+                }
+                .environment(\.melete, sessions.client(for: session))
+                .frame(width: 180, height: 180)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 Text(session.user.username)
                 Text(session.server.host() ?? "")
                     .font(.caption)

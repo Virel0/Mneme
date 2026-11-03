@@ -81,6 +81,8 @@ struct NavStrip: View {
 
     let selected: AppTab
     let userInitial: String
+    /// The user's profile picture, shown in place of the initial.
+    let avatar: String?
     let select: (AppTab) -> Void
     let openProfile: () -> Void
 
@@ -188,11 +190,16 @@ struct NavStrip: View {
 
         Button(action: openProfile) {
             HStack(spacing: 10) {
-                Text(userInitial)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(.white)
-                    .frame(width: Self.avatarEdge, height: Self.avatarEdge)
-                    .background(Color(white: 0.18), in: .rect(cornerRadius: 8))
+                // The initial while the picture loads, and without one.
+                ArtworkImage(path: avatar) {
+                    Text(userInitial)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(white: 0.18))
+                }
+                .frame(width: Self.avatarEdge, height: Self.avatarEdge)
+                .clipShape(.rect(cornerRadius: 8))
 
                 Image(systemName: "chevron.down")
                     .font(.system(size: 20, weight: .semibold))
