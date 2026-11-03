@@ -85,9 +85,20 @@ extension PlayerSession {
             guard !Task.isCancelled, let self, let engine = self.engine, self.subtitleTrack == track else { return }
             PlaybackDiagnostics.shared.record(
                 "subtitles.status",
-                "\(track) · \(engine.subtitleCues.count) cues · \(engine.isLoadingSubtitles ? "still loading" : "loaded") · route \(engine.videoRoute.rawValue)"
+                "\(track) · \(engine.subtitleCues.count) cues · \(engine.isLoadingSubtitles ? "still loading" : "loaded") · route \(engine.videoRoute.rawValue) · \(Self.describe(engine.subtitleCues.first))"
             )
         }
+    }
+
+    /// What a cue is, for a report: a picture's size on its canvas says
+    /// whether it will be drawn the size it was authored.
+    private static func describe(_ cue: SubtitleCue?) -> String {
+        guard let cue else { return "no cue" }
+        guard case let .image(image) = cue.body else { return "text" }
+        return String(
+            format: "picture %.2f×%.2f of a %.0f×%.0f canvas",
+            image.position.width, image.position.height, image.canvasSize.width, image.canvasSize.height
+        )
     }
 
     /// A choice made by hand in an episode carries to the series' next

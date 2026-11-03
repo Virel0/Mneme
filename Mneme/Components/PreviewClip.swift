@@ -109,6 +109,10 @@ final class PreviewClip {
             return
         }
 
+        // Filling the frame, as the pictures behind do: fitted, a 16:9 clip
+        // in the hero's wider card had black bars at both sides.
+        engine.videoGravity = .resizeAspectFill
+
         var options = LoadOptions()
         options.displayCriteriaOwner = .host
         engine.volume = 0
