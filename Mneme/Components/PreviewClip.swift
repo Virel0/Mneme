@@ -115,7 +115,10 @@ final class PreviewClip {
         do {
             try await engine.load(url: url, startPosition: source.start, options: options)
         } catch {
-            diagnostics.record("clip", "file \(source.file) · didn't load: \(error.localizedDescription)")
+            // Stopped because focus moved on: not a failure worth a line.
+            if !(error is CancellationError) {
+                diagnostics.record("clip", "file \(source.file) · didn't load: \(error.localizedDescription)")
+            }
             engine.stop()
             return
         }

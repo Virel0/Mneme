@@ -29,16 +29,35 @@ extension PlayerSession {
 
     func selectSubtitle(_ track: SubtitleTrack?) {
         guard let play, let url = client.url(for: play.streamUrl) else { return }
-        applySubtitle(track?.track, stream: url)
         rememberChoice(audioLanguage: audioTracks.first { $0.id == activeAudio }?.language)
+        // A picture track over a conversion that hasn't drawn it in, or a
+        // change from the one it has: the stream has to be chosen again.
+        let picture = pictureTrack(track?.track)
+        if (isConverted && picture != nil && picture != burnedSubtitle) || (burnedSubtitle != nil && burnedSubtitle != track?.track) {
+            PlaybackDiagnostics.shared.record("subtitles", "\(track?.track ?? "off") · reopening, the stream playing can't show it")
+            reload(showing: track?.track)
+            return
+        }
+        applySubtitle(track?.track, stream: url)
+    }
+
+    /// The track, when it is a picture track (PGS, VobSub): one Melete can't
+    /// serve as WebVTT.
+    func pictureTrack(_ track: String?) -> String? {
+        guard let track, let listed = subtitles.first(where: { $0.track == track }), !listed.text else { return nil }
+        return track
     }
 
     func applySubtitle(_ track: String?, stream: URL) {
         guard let engine else { return }
         subtitleTrack = track
 
-        guard let track else {
+        // Off, or drawn into the picture by the conversion.
+        guard let track, track != burnedSubtitle else {
             engine.clearSubtitle()
+            if let track {
+                recordSubtitle(track, way: "drawn into the picture by Melete")
+            }
             return
         }
         // An embedded track is `s` and its stream index, which is the
