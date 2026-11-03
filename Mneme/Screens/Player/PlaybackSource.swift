@@ -18,6 +18,8 @@ struct PlaybackSource {
     /// An HLS conversion rather than the file. It carries one audio track
     /// and no subtitles of its own.
     let isConverted: Bool
+    /// The picture track a conversion has drawn into its picture.
+    var burnedSubtitle: String?
 
     /// The audio formats the Apple TV plays itself. Anything else (TrueHD,
     /// DTS, PCM) has to be converted, on the Apple TV or by Melete.
@@ -28,8 +30,17 @@ struct PlaybackSource {
     /// refuses a stream over it) or the one chosen in Settings. Over either,
     /// Melete converts it to fit. Within it, with the setting on, Melete
     /// converts a soundtrack the Apple TV can't play itself.
+    ///
+    /// `pictureSubtitle` is a picture track (PGS, VobSub) to show. Melete
+    /// can't serve one as WebVTT, so it rules out converting only the audio,
+    /// and a conversion over the limit draws it into the picture.
     @MainActor
-    static func choose(for fileID: Int, play: PlayResponse, client: MeleteClient) async throws(MeleteError) -> PlaybackSource {
+    static func choose(
+        for fileID: Int,
+        play: PlayResponse,
+        pictureSubtitle: String?,
+        client: MeleteClient
+    ) async throws(MeleteError) -> PlaybackSource {
         guard let direct = client.url(for: play.streamUrl) else {
             throw .transport("Melete gave an address the player cannot open.")
         }
@@ -40,7 +51,7 @@ struct PlaybackSource {
         // those through a limited way in too.
         let bitrate = info?.media?.bitRate
         guard let limit, bitrate.map({ $0 > limit }) ?? true else {
-            if PlaybackPreferences.meleteConvertsAudio,
+            if PlaybackPreferences.meleteConvertsAudio, pictureSubtitle == nil,
                let copied = await audioConverted(fileID: fileID, play: play, media: info?.media, client: client)
             {
                 return copied
@@ -52,7 +63,8 @@ struct PlaybackSource {
             maxBitrate: limit,
             audioStream: play.tracks?.audio,
             // HEVC keeps HDR; only where the Apple TV decodes it in hardware.
-            videoCodec: VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC) ? "hevc" : "h264"
+            videoCodec: VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC) ? "hevc" : "h264",
+            burnSubtitle: pictureSubtitle
         ))
         guard let url = client.url(for: converted.playlistUrl) else {
             throw .transport("Melete gave an address the player cannot open.")
@@ -61,7 +73,7 @@ struct PlaybackSource {
             "play.converted",
             "file \(fileID) · \(bitrate.map { "\($0 / 1_000_000) Mbps" } ?? "bitrate unknown") over the \(limit / 1_000_000) Mbps limit"
         )
-        return PlaybackSource(url: url, isConverted: true)
+        return PlaybackSource(url: url, isConverted: true, burnedSubtitle: pictureSubtitle)
     }
 
     /// Melete's stream of the file with the video unchanged and only the

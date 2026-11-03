@@ -82,6 +82,12 @@ public struct SubtitleTrack: Codable, Hashable, Sendable, Identifiable {
     public let hearingImpaired: Bool
     /// Only text tracks can be fetched as WebVTT.
     public let text: Bool
+    /// An ASS/SSA track, which can be fetched as it is, styling and all.
+    /// Nil from a server older than the field.
+    public let ass: Bool?
+    /// Where the ASS/SSA track is as it is, relative to the stream URL;
+    /// nil for other tracks.
+    public let assUrl: String?
     public let file: String?
     public let encoding: String?
 

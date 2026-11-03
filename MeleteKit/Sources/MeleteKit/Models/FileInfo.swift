@@ -85,6 +85,9 @@ public struct TranscodeRequest: Codable, Sendable {
     /// With `copy`: whether the player shows Dolby Vision, so the file's is
     /// kept rather than labelled HDR10.
     public let dolbyVision: Bool?
+    /// A subtitle track to draw into the picture: how a picture track (PGS,
+    /// VobSub) shows in a conversion, which carries no subtitles of its own.
+    public let burnSubtitle: String?
 
     public init(
         maxHeight: Int? = nil,
@@ -93,7 +96,8 @@ public struct TranscodeRequest: Codable, Sendable {
         audioChannels: Int? = nil,
         videoCodec: String? = nil,
         audioCodecs: [String]? = nil,
-        dolbyVision: Bool? = nil
+        dolbyVision: Bool? = nil,
+        burnSubtitle: String? = nil
     ) {
         self.maxHeight = maxHeight
         self.maxBitrate = maxBitrate
@@ -102,6 +106,7 @@ public struct TranscodeRequest: Codable, Sendable {
         self.videoCodec = videoCodec
         self.audioCodecs = audioCodecs
         self.dolbyVision = dolbyVision
+        self.burnSubtitle = burnSubtitle
     }
 }
 

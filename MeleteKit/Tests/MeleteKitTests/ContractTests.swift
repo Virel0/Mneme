@@ -114,7 +114,7 @@ struct ContractTests {
             FileInfo.self,
             ["modified_at", "segments", "trickplay", "subtitle_search", "offline", "media.subtitles", "media.video[].dolby_vision"]
         ),
-        ("TranscodeRequest", TranscodeRequest.self, ["audio_mode", "burn_subtitle"]),
+        ("TranscodeRequest", TranscodeRequest.self, ["audio_mode"]),
         ("TranscodeResponse", TranscodeResponse.self, []),
         ("Languages", Languages.self, []),
         ("PlaybackPreferences", PlaybackSettings.self, []),

@@ -73,6 +73,11 @@ final class PlayerSession {
     var tasks: [Task<Void, Never>] = []
     @ObservationIgnored
     private var countdownTask: Task<Void, Never>?
+    /// The picture track the conversion playing has drawn into its picture.
+    private(set) var burnedSubtitle: String?
+    /// Looks, once a subtitle is chosen, at whether it came.
+    @ObservationIgnored
+    var subtitleCheck: Task<Void, Never>?
 
     /// How far ahead to buffer, in segments of about four seconds. The
     /// engine stops early at its own budget, a quarter of the free space, so
@@ -106,7 +111,9 @@ final class PlayerSession {
         await load(target)
     }
 
-    private func load(_ target: PlayTarget) async {
+    /// `reloading` opens the same title again where it is, with a subtitle
+    /// the stream playing couldn't show.
+    private func load(_ target: PlayTarget, reloading: (at: Double, subtitle: String?)? = nil) async {
         guard let engine else { return }
         phase = .loading
         next = nil
@@ -114,6 +121,10 @@ final class PlayerSession {
         isNextDismissed = false
         autoSkipped = []
         lastReport = nil
+
+        // Asked for beside the play link; the stream chosen waits on it only
+        // when a subtitle is on.
+        async let listed = client.subtitles(file: target.fileID)
 
         do {
             let play = try await client.play(file: target.fileID)
@@ -124,8 +135,18 @@ final class PlayerSession {
             self.play = play
             PlaybackDiagnostics.shared.record("play", "file \(target.fileID) · \(target.label) · resume \(Int(play.resumeSeconds))s")
 
-            let source = try await PlaybackSource.choose(for: target.fileID, play: play, client: client)
+            let subtitle = reloading.map(\.subtitle) ?? play.tracks?.subtitle
+            if subtitle != nil {
+                subtitles = await (try? listed) ?? []
+            }
+            let source = try await PlaybackSource.choose(
+                for: target.fileID,
+                play: play,
+                pictureSubtitle: pictureTrack(subtitle),
+                client: client
+            )
             isConverted = source.isConverted
+            burnedSubtitle = source.burnedSubtitle
 
             var options = LoadOptions()
             options.forwardBufferSegments = Self.forwardBufferSegments
@@ -134,17 +155,19 @@ final class PlayerSession {
 
             try await engine.load(
                 url: source.url,
-                startPosition: startPosition(resume: play.resumeSeconds, restarts: target.restarts),
+                startPosition: reloading?.at ?? startPosition(resume: play.resumeSeconds, restarts: target.restarts),
                 options: options,
                 // The chosen audio from the first frame, rather than a switch
                 // a second in. A conversion already carries only that one.
                 audioSourceStreamIndex: source.isConverted ? nil : play.tracks?.audio.map(Int32.init)
             )
 
-            subtitles = await (try? client.subtitles(file: target.fileID)) ?? []
-            // Subtitles always come from the stream link, which serves the
-            // file's text tracks whichever way the picture is delivered.
-            applySubtitle(play.tracks?.subtitle, stream: url)
+            if subtitle == nil {
+                subtitles = await (try? listed) ?? []
+            }
+            // Text tracks come from the stream link, which serves them
+            // whichever way the picture is delivered.
+            applySubtitle(subtitle, stream: url)
             engine.play()
             applyRate()
             isPaused = false
@@ -296,6 +319,15 @@ final class PlayerSession {
         countdownTask?.cancel()
         nextCountdown = nil
         isNextDismissed = true
+    }
+
+    /// Opens the title again where it is, for a subtitle the stream playing
+    /// can't show.
+    func reload(showing track: String?) {
+        Task {
+            await report(force: true)
+            await load(target, reloading: (position, track))
+        }
     }
 
     func playNext() {

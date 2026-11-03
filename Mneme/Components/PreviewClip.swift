@@ -109,13 +109,20 @@ final class PreviewClip {
             return
         }
 
+        // Filling the frame, as the pictures behind do: fitted, a 16:9 clip
+        // in the hero's wider card had black bars at both sides.
+        engine.videoGravity = .resizeAspectFill
+
         var options = LoadOptions()
         options.displayCriteriaOwner = .host
         engine.volume = 0
         do {
             try await engine.load(url: url, startPosition: source.start, options: options)
         } catch {
-            diagnostics.record("clip", "file \(source.file) · didn't load: \(error.localizedDescription)")
+            // Stopped because focus moved on: not a failure worth a line.
+            if !(error is CancellationError) {
+                diagnostics.record("clip", "file \(source.file) · didn't load: \(error.localizedDescription)")
+            }
             engine.stop()
             return
         }

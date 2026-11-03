@@ -29,16 +29,35 @@ extension PlayerSession {
 
     func selectSubtitle(_ track: SubtitleTrack?) {
         guard let play, let url = client.url(for: play.streamUrl) else { return }
-        applySubtitle(track?.track, stream: url)
         rememberChoice(audioLanguage: audioTracks.first { $0.id == activeAudio }?.language)
+        // A picture track over a conversion that hasn't drawn it in, or a
+        // change from the one it has: the stream has to be chosen again.
+        let picture = pictureTrack(track?.track)
+        if (isConverted && picture != nil && picture != burnedSubtitle) || (burnedSubtitle != nil && burnedSubtitle != track?.track) {
+            PlaybackDiagnostics.shared.record("subtitles", "\(track?.track ?? "off") · reopening, the stream playing can't show it")
+            reload(showing: track?.track)
+            return
+        }
+        applySubtitle(track?.track, stream: url)
+    }
+
+    /// The track, when it is a picture track (PGS, VobSub): one Melete can't
+    /// serve as WebVTT.
+    func pictureTrack(_ track: String?) -> String? {
+        guard let track, let listed = subtitles.first(where: { $0.track == track }), !listed.text else { return nil }
+        return track
     }
 
     func applySubtitle(_ track: String?, stream: URL) {
         guard let engine else { return }
         subtitleTrack = track
 
-        guard let track else {
+        // Off, or drawn into the picture by the conversion.
+        guard let track, track != burnedSubtitle else {
             engine.clearSubtitle()
+            if let track {
+                recordSubtitle(track, way: "drawn into the picture by Melete")
+            }
             return
         }
         // An embedded track is `s` and its stream index, which is the
@@ -48,9 +67,38 @@ extension PlayerSession {
             // Re-selecting the track already up restarts its decoder.
             guard engine.activeSubtitleTrackIndex != index else { return }
             engine.selectSubtitleTrack(index: index)
+            recordSubtitle(track, way: "embedded")
         } else {
             engine.selectSidecarSubtitle(url: client.subtitleURL(stream: stream, track: track))
+            recordSubtitle(track, way: "Melete WebVTT")
         }
+    }
+
+    /// Which track went which way, and a few seconds on, whether any of it
+    /// came: subtitles that don't show leave no other trace.
+    private func recordSubtitle(_ track: String, way: String) {
+        guard let engine else { return }
+        PlaybackDiagnostics.shared.record("subtitles", "\(track) · \(way) · route \(engine.videoRoute.rawValue)")
+        subtitleCheck?.cancel()
+        subtitleCheck = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(8))
+            guard !Task.isCancelled, let self, let engine = self.engine, self.subtitleTrack == track else { return }
+            PlaybackDiagnostics.shared.record(
+                "subtitles.status",
+                "\(track) · \(engine.subtitleCues.count) cues · \(engine.isLoadingSubtitles ? "still loading" : "loaded") · route \(engine.videoRoute.rawValue) · \(Self.describe(engine.subtitleCues.first))"
+            )
+        }
+    }
+
+    /// What a cue is, for a report: a picture's size on its canvas says
+    /// whether it will be drawn the size it was authored.
+    private static func describe(_ cue: SubtitleCue?) -> String {
+        guard let cue else { return "no cue" }
+        guard case let .image(image) = cue.body else { return "text" }
+        return String(
+            format: "picture %.2f×%.2f of a %.0f×%.0f canvas",
+            image.position.width, image.position.height, image.canvasSize.width, image.canvasSize.height
+        )
     }
 
     /// A choice made by hand in an episode carries to the series' next
