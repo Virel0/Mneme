@@ -43,10 +43,16 @@ public struct WatchHomeRow: Codable, Sendable, Identifiable {
 
         public static let continueWatching = Key(rawValue: "continue_watching")
         public static let nextUp = Key(rawValue: "next_up")
+        /// Shows from Next Up whose next episode came in lately; each is in
+        /// this row instead of Next Up, with the episode to play.
+        public static let newEpisodes = Key(rawValue: "new_episodes")
         public static let favourites = Key(rawValue: "favourites")
         public static let latestShows = Key(rawValue: "latest_shows")
         public static let latestAnime = Key(rawValue: "latest_anime")
         public static let latestMovies = Key(rawValue: "latest_movies")
+        public static let nextInCollection = Key(rawValue: "next_in_collection")
+        public static let highlyRated = Key(rawValue: "highly_rated")
+        public static let watchAgain = Key(rawValue: "watch_again")
     }
 }
 
@@ -127,9 +133,20 @@ public struct WatchHomeItem: Codable, Hashable, Sendable, Identifiable {
     }
 }
 
+/// One Watch page's home, as `/home?kind=` gives it.
+public enum HomePage: String, Sendable {
+    case movies
+    case shows
+    case anime
+}
+
 public extension MeleteClient {
 
-    func home() async throws(MeleteError) -> WatchHome {
-        try await send(Endpoint(.get, "api/v1/home"))
+    /// The whole home, or with `page`, one Watch page's: its hero and every
+    /// row kept to that kind. A server older than `kind` ignores it and
+    /// answers with the whole home.
+    func home(page: HomePage? = nil) async throws(MeleteError) -> WatchHome {
+        let query = page.map { [URLQueryItem(name: "kind", value: $0.rawValue)] } ?? []
+        return try await send(Endpoint(.get, "api/v1/home", query: query))
     }
 }

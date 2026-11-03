@@ -12,6 +12,9 @@ commit.
 - A Requests tab: every film and series you've asked for, by where it has got to, each opening
   its progress.
 - Top Shelf shows each title's logo, details and overview on its picture.
+- Shows, Anime and Movies have their own rows from Melete, Because You Watched included, and
+  Home gains New Episodes, Next in the Collection, Highly Rated and Watch Again, when the server
+  has them.
 
 ### Changed
 - The tabs run Home, Movies, Shows, Anime, My List, Requests, Search.
