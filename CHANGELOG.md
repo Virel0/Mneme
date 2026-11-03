@@ -8,26 +8,9 @@ commit.
 
 ## [Unreleased]
 
-### Added
-- A Requests tab: every film and series you've asked for, by where it has got to, each opening
-  its progress.
-- Top Shelf shows each title's logo, details and overview on its picture.
-- Shows, Anime and Movies have their own rows from Melete, Because You Watched included, and
-  Home gains New Episodes, Next in the Collection, Highly Rated and Watch Again, when the server
-  has them.
-- Your Melete profile picture on the profile button and on Who's Watching, when the server has
-  profile pictures.
+## [1.0 build 12] - 2026-11-02
 
-### Changed
-- The tabs run Home, Movies, Shows, Anime, My List, Requests, Search.
-- The playback engine is AetherEngine 7.54.0, up from 7.42.0.
-
-### Fixed
-- Opening a title no longer flashes a stretched poster over the page.
-- A title's page plays its trailer only when it's sharp enough for the film (1080p, or as sharp
-  as the film itself); otherwise a clip of the film.
-
-## [1.0 build 11] - 2026-11-02
+Build 11 was never uploaded, so its changes are listed here too.
 
 ### Changed
 - Mneme is now under the GNU General Public License, version 3 or later, as Melete is.
@@ -35,8 +18,17 @@ commit.
   password) instead of Jellyfin, and everyone signs in again once.
 - Artwork, AI search and requests come from Melete: nothing to set up on the Apple TV.
 - Requests are Melete's own, from Search, and show how each is getting on as it downloads.
+- The tabs run Home, Movies, Shows, Anime, My List, Requests, Search.
+- The playback engine is AetherEngine 7.54.0.
 
 ### Added
+- A Requests tab: every film and series you've asked for, by where it has got to, each opening
+  its progress.
+- Shows, Anime and Movies have their own rows from Melete, Because You Watched included, and
+  Home gains New Episodes, Next in the Collection, Highly Rated and Watch Again, when the server
+  has them.
+- Your Melete profile picture on the profile button and on Who's Watching, when the server has
+  profile pictures.
 - Play says what it will do: "Resume S2:E4 · 23m left", "Play S3:E1", "Play Again", and From
   the Start beside Resume.
 - A click on the remote's edge jumps ten seconds; a swipe scrubs over seek-bar previews; a tap
@@ -61,8 +53,11 @@ commit.
   and its colour follows the time of day.
 - The screen takes the colour of the title you're on.
 - Left alone on Home, Mneme shows the hero's titles full screen with their trailers.
-- A title's page plays its trailer behind the header, and the hero and spotlight drift slowly.
-- The Top Shelf shows the hero's titles as a full-width carousel with muted trailer previews.
+- A title's page plays its trailer behind the header when it's sharp enough for the film (1080p,
+  or as sharp as the film itself), otherwise a clip of the film, and the hero and spotlight drift
+  slowly.
+- The Top Shelf shows the hero's titles as a full-width carousel with muted trailer previews, each
+  picture carrying the title's logo, details and overview.
 - The hero plays the title's trailer when its folder has one, as Melete's hero trailers setting says.
 - Tabs crossfade, and the home comes up out of the intro.
 - Two-factor sign-in: an account with it on is asked for the authenticator's code.
@@ -77,5 +72,5 @@ commit.
 ### Not yet back
 - The iPhone and iPad app.
 
-[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.11...main
-[1.0 build 11]: https://github.com/Virel0/Mneme/commits/v1.0-build.11
+[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.12...main
+[1.0 build 12]: https://github.com/Virel0/Mneme/commits/v1.0-build.12
