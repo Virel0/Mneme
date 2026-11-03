@@ -15,6 +15,8 @@ commit.
 - Shows, Anime and Movies have their own rows from Melete, Because You Watched included, and
   Home gains New Episodes, Next in the Collection, Highly Rated and Watch Again, when the server
   has them.
+- Your Melete profile picture on the profile button and on Who's Watching, when the server has
+  profile pictures.
 
 ### Changed
 - The tabs run Home, Movies, Shows, Anime, My List, Requests, Search.
