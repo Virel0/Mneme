@@ -56,6 +56,38 @@ public extension MeleteClient {
         streamURL.appending(path: "subtitles/\(track).vtt")
     }
 
+    /// An ASS/SSA track of the stream link's file as it is, styling and all,
+    /// and the encoding its Content-Type names: an embedded track comes in
+    /// UTF-8, a file beside the video byte for byte.
+    func assScript(stream streamURL: URL, track: SubtitleTrack) async throws(MeleteError) -> String {
+        guard let path = track.assUrl else { throw .transport("\(track.track) isn't an ASS track.") }
+        let (data, response) = try await fetch(streamURL.appending(path: path))
+        let encoding = response.textEncodingName
+            .map { CFStringConvertIANACharSetNameToEncoding($0 as CFString) }
+            .flatMap { $0 == kCFStringEncodingInvalidId ? nil : String.Encoding(rawValue: CFStringConvertEncodingToNSStringEncoding($0)) }
+        guard let script = String(data: data, encoding: encoding ?? .utf8) ?? String(data: data, encoding: .isoLatin1) else {
+            throw .decoding("\(track.track)'s ASS file isn't text.")
+        }
+        return script
+    }
+
+    /// The fonts attached to the stream link's file, for drawing its ASS
+    /// tracks as made.
+    func attachedFonts(stream streamURL: URL) async throws(MeleteError) -> [AttachedFont] {
+        let (data, _) = try await fetch(streamURL.appending(path: "fonts"))
+        do {
+            return try JSONDecoder.melete.decode([AttachedFont].self, from: data)
+        } catch {
+            throw .decoding(String(describing: error))
+        }
+    }
+
+    /// One attached font's bytes.
+    func fontData(_ font: AttachedFont) async throws(MeleteError) -> Data {
+        guard let url = url(for: font.url) else { throw .transport("Not a valid address: \(font.url)") }
+        return try await fetch(url).data
+    }
+
     /// One sheet of seek-bar previews for the stream link's file.
     func trickplaySheetURL(stream streamURL: URL, sheet: Int) -> URL {
         streamURL.appending(path: "trickplay/\(sheet).jpg")

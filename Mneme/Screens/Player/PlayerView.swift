@@ -139,6 +139,10 @@ struct PlayerView: View {
             .ignoresSafeArea()
             SubtitleOverlay(engine: engine)
                 .ignoresSafeArea()
+            if let renderer = session.assRenderer {
+                AssSubtitleOverlay(renderer: renderer, engine: engine)
+                    .ignoresSafeArea()
+            }
             ActivitySpinner(engine: engine)
         }
 

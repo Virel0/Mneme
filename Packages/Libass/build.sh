@@ -191,11 +191,13 @@ xcodebuild -create-xcframework \
     -library "$work/lib/macos/libLibass.a" -headers "$headers" \
     -output "$here/Libass.xcframework" >/dev/null
 
-mkdir -p "$here/LICENSES"
-cp "$src_ass/COPYING" "$here/LICENSES/libass-ISC.txt"
-cp "$src_ft/docs/FTL.TXT" "$here/LICENSES/freetype-FTL.txt"
-cp "$src_hb/COPYING" "$here/LICENSES/harfbuzz-MIT.txt"
-cp "$src_fb/COPYING" "$here/LICENSES/fribidi-LGPL-2.1.txt"
+# Shipped with the app, which shows them under Acknowledgements.
+licenses="$here/Sources/AssRendering/Licenses"
+mkdir -p "$licenses"
+cp "$src_ass/COPYING" "$licenses/libass-ISC.txt"
+cp "$src_ft/docs/FTL.TXT" "$licenses/freetype-FTL.txt"
+cp "$src_hb/COPYING" "$licenses/harfbuzz-MIT.txt"
+cp "$src_fb/COPYING" "$licenses/fribidi-LGPL-2.1.txt"
 
 {
     echo "# Libass build record"
