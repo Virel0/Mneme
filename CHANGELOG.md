@@ -8,6 +8,12 @@ commit.
 
 ## [Unreleased]
 
+### Fixed
+- Going on to the next episode at the credits no longer skips straight past it to the one after.
+- The seek bar keeps its size while scrubbing, instead of swelling into a large white bar over
+  the controls.
+- Swiping down on the remote moves to the buttons under the seek bar without scrubbing the film.
+
 ## [1.0 build 13] - 2026-11-03
 
 ### Fixed

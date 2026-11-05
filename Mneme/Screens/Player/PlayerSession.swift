@@ -118,6 +118,9 @@ final class PlayerSession {
         guard let engine else { return }
         phase = .loading
         next = nil
+        // A countdown still running would play whatever comes after this
+        // file the moment it is known.
+        countdownTask?.cancel()
         nextCountdown = nil
         isNextDismissed = false
         autoSkipped = []
@@ -349,6 +352,12 @@ final class PlayerSession {
         guard let next else { return }
         countdownTask?.cancel()
         nextCountdown = nil
+        // Let go of at once: while the last position is sent, the credits
+        // would start the countdown again and the end of the file would
+        // play it again, and the stray countdown then skipped the episode
+        // just opened.
+        self.next = nil
+        phase = .loading
         Task {
             await report(force: true)
             target = next
@@ -381,6 +390,8 @@ final class PlayerSession {
 
     func ended() {
         PlaybackDiagnostics.shared.record("ended", "file \(target.fileID)")
+        // The next file is already on its way.
+        guard phase == .playing else { return }
         if next != nil, library.autoplayNext, !isNextDismissed {
             playNext()
         } else {

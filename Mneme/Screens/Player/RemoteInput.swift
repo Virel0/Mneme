@@ -117,17 +117,32 @@ struct RemoteInput: UIViewRepresentable {
             input?.onClick(.right)
         }
 
+        /// Whether the swipe going on goes sideways, once it has gone far
+        /// enough to tell.
+        private var isSideways: Bool?
+
+        /// How far a swipe goes before its direction is settled.
+        private static let directionDistance: CGFloat = 30
+
         @objc
         private func swipe(_ pan: UIPanGestureRecognizer) {
             let translation = pan.translation(in: pan.view)
             switch pan.state {
             case .began:
+                isSideways = nil
                 input?.onSwipeBegan()
             case .changed:
-                // Mostly sideways only: an up or down swipe moves focus.
-                guard abs(translation.x) > abs(translation.y) else { return }
+                // Settled once, from the swipe so far: a thumb going down
+                // often starts a little sideways, and taken step by step it
+                // scrubbed before it moved focus.
+                if isSideways == nil, hypot(translation.x, translation.y) >= Self.directionDistance {
+                    isSideways = abs(translation.x) > abs(translation.y)
+                }
+                // Sideways only: an up or down swipe moves focus.
+                guard isSideways == true else { return }
                 input?.onSwipeChanged(translation.x / Self.surfaceWidth)
             case .ended, .cancelled, .failed:
+                isSideways = nil
                 input?.onSwipeEnded()
             default:
                 break
