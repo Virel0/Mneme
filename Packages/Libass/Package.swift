@@ -14,9 +14,13 @@ let package = Package(
     ],
     products: [
         .library(name: "Libass", targets: ["Libass"]),
+        .library(name: "AssRendering", targets: ["AssRendering"]),
     ],
     targets: [
         .binaryTarget(name: "Libass", path: "Libass.xcframework"),
+        // A script and its fonts in, pictures out, and the licences to show.
+        .target(name: "AssRendering", dependencies: ["Libass"], resources: [.copy("Licenses")]),
         .testTarget(name: "LibassTests", dependencies: ["Libass"]),
+        .testTarget(name: "AssRenderingTests", dependencies: ["AssRendering"]),
     ]
 )

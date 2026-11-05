@@ -37,6 +37,19 @@ public struct MovieDetail: Codable, Hashable, Sendable, Identifiable {
     /// `matched`, `unmatched`, `ambiguous`, or nil until matching has run.
     public let matchStatus: String?
     public let files: [MediaFile]
+    /// Set when the film's copy plays at 48 frames a second or more, which
+    /// may stutter. Nil otherwise, and from a server older than the field.
+    public let highFrameRate: HighFrameRate?
+}
+
+/// A film whose copy plays at a high frame rate.
+public struct HighFrameRate: Codable, Hashable, Sendable {
+    /// The highest frame rate of the film's files.
+    public let fps: Double
+    /// Whether high frame rate copies are wanted for this film. False: most
+    /// likely made up from the film's own 24, so another copy is worth
+    /// looking for.
+    public let allowed: Bool
 }
 
 public struct SeriesDetail: Codable, Hashable, Sendable, Identifiable {

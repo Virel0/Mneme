@@ -84,6 +84,7 @@ struct ContractTests {
         ("PlayResponse", PlayResponse.self, []),
         ("ProgressReport", ProgressReport.self, []),
         ("SubtitleTrack", SubtitleTrack.self, []),
+        ("AttachedFont", AttachedFont.self, []),
         ("TrackChoice", TrackChoice.self, []),
         ("Trickplay", Trickplay.self, []),
         ("DiagnosticsKept", DiagnosticsKept.self, []),

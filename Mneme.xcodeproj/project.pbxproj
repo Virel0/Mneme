@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		B10000000000000000000001 /* MeleteKit in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000001 /* MeleteKit */; };
 		B10000000000000000000006 /* Libass in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000005 /* Libass */; };
+		B10000000000000000000007 /* AssRendering in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000006 /* AssRendering */; };
 		B10000000000000000000002 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000002 /* Nuke */; };
 		B10000000000000000000003 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000003 /* NukeUI */; };
 		B10000000000000000000004 /* AetherEngine in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000004 /* AetherEngine */; };
@@ -107,6 +108,7 @@
 				B10000000000000000000003 /* NukeUI in Frameworks */,
 				B10000000000000000000004 /* AetherEngine in Frameworks */,
 				B10000000000000000000006 /* Libass in Frameworks */,
+				B10000000000000000000007 /* AssRendering in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -171,6 +173,7 @@
 				D10000000000000000000003 /* NukeUI */,
 				D10000000000000000000004 /* AetherEngine */,
 				D10000000000000000000005 /* Libass */,
+				D10000000000000000000006 /* AssRendering */,
 			);
 			productName = Mneme;
 			productReference = F10000000000000000000001 /* Mneme.app */;
@@ -485,6 +488,10 @@
 		D10000000000000000000005 /* Libass */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Libass;
+		};
+		D10000000000000000000006 /* AssRendering */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AssRendering;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

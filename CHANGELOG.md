@@ -8,6 +8,11 @@ commit.
 
 ## [Unreleased]
 
+### Added
+- Styled subtitles, as anime releases carry, drawn as they were made: signs where they were put,
+  in the video's own fonts, with karaoke, when the server serves them.
+- Settings lists the libraries built into Mneme, with their licences.
+
 ## [1.0 build 13] - 2026-11-03
 
 ### Fixed

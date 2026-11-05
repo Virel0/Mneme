@@ -67,6 +67,19 @@ public struct ProgressReport: Codable, Sendable {
     }
 }
 
+/// A font the video carries, for drawing its ASS/SSA tracks as made.
+public struct AttachedFont: Codable, Hashable, Sendable, Identifiable {
+    /// Its stream index in the file.
+    public let id: Int
+    /// The name stored with it, without folders: what a script's font
+    /// lookups match.
+    public let fileName: String
+    public let mimeType: String
+    public let size: Int
+    /// Where its bytes are, under the same stream link.
+    public let url: String
+}
+
 public struct SubtitleTrack: Codable, Hashable, Sendable, Identifiable {
     /// `s{index}` for an embedded stream, `x` and 8 hex digits for a file
     /// beside the video, `o` and 8 hex digits for one fetched from

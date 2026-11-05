@@ -8,6 +8,7 @@
 //
 
 import AetherEngine
+import AssRendering
 import Foundation
 import MeleteKit
 
@@ -51,6 +52,11 @@ extension PlayerSession {
     func applySubtitle(_ track: String?, stream: URL) {
         guard let engine else { return }
         subtitleTrack = track
+        if track != assTrack {
+            assLoad?.cancel()
+            assTrack = nil
+            assRenderer = nil
+        }
 
         // Off, or drawn into the picture by the conversion.
         guard let track, track != burnedSubtitle else {
@@ -58,6 +64,16 @@ extension PlayerSession {
             if let track {
                 recordSubtitle(track, way: "drawn into the picture by Melete")
             }
+            return
+        }
+        // A styled track is drawn as made once its script and fonts are in;
+        // until then, and if that fails, its plain version shows.
+        if let listed = subtitles.first(where: { $0.track == track }), listed.ass == true, listed.assUrl != nil, assTrack != track {
+            assTrack = track
+            assLoad = Task { await loadAss(listed, stream: stream) }
+        }
+        // Drawn as made already: its plain version would show under it.
+        if assRenderer != nil, assTrack == track {
             return
         }
         // An embedded track is `s` and its stream index, which is the
@@ -83,11 +99,53 @@ extension PlayerSession {
         subtitleCheck = Task { [weak self] in
             try? await Task.sleep(for: .seconds(8))
             guard !Task.isCancelled, let self, let engine = self.engine, self.subtitleTrack == track else { return }
+            if let renderer = self.assRenderer {
+                PlaybackDiagnostics.shared.record("subtitles.status", "\(track) · drawn as made · \(renderer.eventCount) lines")
+                return
+            }
             PlaybackDiagnostics.shared.record(
                 "subtitles.status",
                 "\(track) · \(engine.subtitleCues.count) cues · \(engine.isLoadingSubtitles ? "still loading" : "loaded") · route \(engine.videoRoute.rawValue) · \(Self.describe(engine.subtitleCues.first))"
             )
         }
+    }
+
+    /// The fonts a styled track may bring, together: anime releases carry a
+    /// few megabytes, a whole Japanese family tens.
+    private static let fontBudget = 96 * 1024 * 1024
+
+    /// A styled track's script and the video's fonts, and the renderer made
+    /// from them; the plain version gives way once it is ready.
+    private func loadAss(_ track: SubtitleTrack, stream: URL) async {
+        async let listed = client.attachedFonts(stream: stream)
+        let script: String
+        do {
+            script = try await client.assScript(stream: stream, track: track)
+        } catch {
+            PlaybackDiagnostics.shared.record(
+                "subtitles",
+                "\(track.track) · styled version didn't load, plain instead: \(error.localizedDescription)"
+            )
+            return
+        }
+        var fonts: [AssRenderer.Font] = []
+        var total = 0
+        for font in await (try? listed) ?? [] where total + font.size <= Self.fontBudget {
+            guard !Task.isCancelled else { return }
+            if let data = try? await client.fontData(font) {
+                fonts.append(AssRenderer.Font(name: font.fileName, data: data))
+                total += data.count
+            }
+        }
+        let made = await Task.detached(priority: .userInitiated) { [fonts] in AssRenderer(script: script, fonts: fonts) }.value
+        guard !Task.isCancelled, assTrack == track.track else { return }
+        guard let made else {
+            PlaybackDiagnostics.shared.record("subtitles", "\(track.track) · libass couldn't read the styled version, plain instead")
+            return
+        }
+        engine?.clearSubtitle()
+        assRenderer = made
+        PlaybackDiagnostics.shared.record("subtitles", "\(track.track) · drawn as made · \(made.eventCount) lines · \(fonts.count) fonts")
     }
 
     /// What a cue is, for a report: a picture's size on its canvas says

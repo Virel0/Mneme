@@ -8,6 +8,7 @@
 //
 
 import AetherEngine
+import AssRendering
 import Foundation
 import MeleteKit
 import Observation
@@ -76,6 +77,14 @@ final class PlayerSession {
     private var countdownTask: Task<Void, Never>?
     /// The picture track the conversion playing has drawn into its picture.
     private(set) var burnedSubtitle: String?
+    /// The ASS/SSA track showing, drawn by Mneme as it was made; nil while
+    /// it loads, and for every other kind of track.
+    var assRenderer: AssRenderer?
+    /// The ASS track loading or drawn, and its load.
+    @ObservationIgnored
+    var assTrack: String?
+    @ObservationIgnored
+    var assLoad: Task<Void, Never>?
     /// Looks, once a subtitle is chosen, at whether it came.
     @ObservationIgnored
     var subtitleCheck: Task<Void, Never>?
@@ -125,6 +134,13 @@ final class PlayerSession {
         isNextDismissed = false
         autoSkipped = []
         lastReport = nil
+        // Another title's styled track, even under the same id, is another
+        // script; reopening the same title keeps the one drawn.
+        if reloading == nil {
+            assLoad?.cancel()
+            assTrack = nil
+            assRenderer = nil
+        }
 
         // Asked for beside the play link; the stream chosen waits on it only
         // when a subtitle is on.
