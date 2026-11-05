@@ -44,6 +44,8 @@ struct TitleSummary: Hashable, Identifiable, Sendable {
     let isComplete: Bool
     /// The hero's picks only: the trailer Melete offers for the title.
     var trailer: WatchHomeItem.Trailer?
+    /// The hero's picks only: where Melete would play a clip of the title.
+    var clip: WatchHomeItem.Clip?
 
     var id: TitleRef {
         ref
@@ -75,6 +77,7 @@ extension TitleSummary {
         progress = item.progress
         isComplete = true
         trailer = item.trailer
+        clip = item.clip
     }
 
     init(_ item: ListItem, kind: TitleKind) {

@@ -12,6 +12,15 @@ commit.
 - Styled subtitles, as anime releases carry, drawn as they were made: signs where they were put,
   in the video's own fonts, with karaoke, when the server serves them.
 - Settings lists the libraries built into Mneme, with their licences.
+- Trailers Melete downloads play in the hero, as trailers in a title's folder do.
+- A film whose copy plays at 48 fps or more says so under About the File, and when the extra
+  frames were most likely made up, that it may stutter.
+
+### Changed
+- Posters, backdrops, episode pictures, logos and people's pictures are sharp on a 4K television:
+  each is fetched at the size it is drawn at, and the Top Shelf's pictures are drawn again.
+- The hero's clip of a title starts where Melete chooses, without asking the server first.
+- No clips or trailers play while the Apple TV is set to reduce motion.
 
 ### Fixed
 - Going on to the next episode at the credits no longer skips straight past it to the one after.

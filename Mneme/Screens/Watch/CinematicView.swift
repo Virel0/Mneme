@@ -88,7 +88,7 @@ struct CinematicView: View {
     }
 
     private static func trailerFile(of pick: TitleSummary, library: Library) -> Int? {
-        guard library.heroTrailers, let trailer = pick.trailer, trailer.source == .folder else { return nil }
-        return trailer.fileId
+        guard library.heroTrailers else { return nil }
+        return pick.trailer?.playableFile
     }
 }

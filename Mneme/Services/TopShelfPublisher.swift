@@ -120,16 +120,17 @@ enum TopShelfPublisher {
             return file
         }
 
-        guard let backdrop = await image(backdropPath, client: client) else { return nil }
-        let logo = await image(item.logo, client: client)
+        // As wide as the card draws them, at its scale of 2.
+        guard let backdrop = await image(ArtworkSlot(path: backdropPath, kind: .backdrop, width: 1920), client: client) else { return nil }
+        let logo = await image(ArtworkSlot(path: item.logo, kind: .logo, width: 600), client: client)
         guard let data = TopShelfCard.render(backdrop: backdrop, logo: logo, title: item.title, facts: facts, overview: item.overview),
               (try? data.write(to: file, options: .atomic)) != nil
         else { return nil }
         return file
     }
 
-    private static func image(_ path: String?, client: MeleteClient) async -> UIImage? {
-        guard let request = client.artworkRequest(path) else { return nil }
+    private static func image(_ slot: ArtworkSlot, client: MeleteClient) async -> UIImage? {
+        guard let request = client.artworkRequest(slot) else { return nil }
         return try? await ImagePipeline.shared.image(for: request)
     }
 

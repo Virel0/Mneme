@@ -33,6 +33,35 @@ extension MeleteClient {
         }
         return ImageRequest(urlRequest: request)
     }
+
+    /// A Nuke request for a picture at the size it is drawn at, in this
+    /// screen's pixels.
+    func artworkRequest(_ slot: ArtworkSlot) -> ImageRequest? {
+        guard let path = slot.path else { return nil }
+        guard let kind = slot.kind else { return artworkRequest(path) }
+        let pixels = slot.width * UIScreen.main.scale
+        let sized = kind.path(path, filling: pixels)
+        guard var request = artworkRequest(sized.path) else { return nil }
+        // The image as uploaded can be 3840 wide for a tile a fifth of that;
+        // decoded at the size it is drawn, a row of them doesn't fill memory.
+        if sized.isOriginal {
+            request.thumbnail = ImageRequest.ThumbnailOptions(maxPixelSize: Float(pixels))
+        }
+        return request
+    }
+}
+
+/// One of Melete's pictures as a screen draws it: what kind of picture it is
+/// and how many points wide, so the size asked for is sharp there.
+///
+/// Prefetching and drawing a picture go through the same slot, so they ask
+/// for the same file and decode it the same way.
+struct ArtworkSlot: Hashable {
+    let path: String?
+    /// Nil asks for the path as the server gave it: a title not in the
+    /// library has only that size.
+    var kind: ArtworkKind?
+    var width: CGFloat = 0
 }
 
 /// A picture from the server's artwork, filling its frame.
@@ -41,18 +70,22 @@ struct ArtworkImage<Placeholder: View>: View {
     @Environment(\.melete)
     private var client
 
-    let path: String?
+    let slot: ArtworkSlot
     var contentMode: ContentMode = .fill
     let placeholder: () -> Placeholder
 
-    init(path: String?, contentMode: ContentMode = .fill, @ViewBuilder placeholder: @escaping () -> Placeholder) {
-        self.path = path
+    init(_ slot: ArtworkSlot, contentMode: ContentMode = .fill, @ViewBuilder placeholder: @escaping () -> Placeholder) {
+        self.slot = slot
         self.contentMode = contentMode
         self.placeholder = placeholder
     }
 
+    init(path: String?, contentMode: ContentMode = .fill, @ViewBuilder placeholder: @escaping () -> Placeholder) {
+        self.init(ArtworkSlot(path: path), contentMode: contentMode, placeholder: placeholder)
+    }
+
     var body: some View {
-        LazyImage(request: client?.artworkRequest(path)) { state in
+        LazyImage(request: client?.artworkRequest(slot)) { state in
             if let image = state.image {
                 image
                     .resizable()
@@ -66,8 +99,12 @@ struct ArtworkImage<Placeholder: View>: View {
 
 extension ArtworkImage where Placeholder == Color {
 
+    init(_ slot: ArtworkSlot, contentMode: ContentMode = .fill) {
+        self.init(slot, contentMode: contentMode) { Color.white.opacity(0.06) }
+    }
+
     init(path: String?, contentMode: ContentMode = .fill) {
-        self.init(path: path, contentMode: contentMode) { Color.white.opacity(0.06) }
+        self.init(ArtworkSlot(path: path), contentMode: contentMode)
     }
 }
 
@@ -82,6 +119,12 @@ struct FocusedBackdrop: View {
     let path: String?
     let focus: Focus?
 
+    /// Backdrops are drawn the width of the screen, or close to it, wherever
+    /// they are: the hero, a title's page, the spotlight, a tile opening.
+    static func slot(_ path: String?) -> ArtworkSlot {
+        ArtworkSlot(path: path, kind: .backdrop, width: UIScreen.main.bounds.width)
+    }
+
     var body: some View {
         GeometryReader { geometry in
             let width = geometry.size.width
@@ -92,7 +135,7 @@ struct FocusedBackdrop: View {
             // picture without a focus is held.
             let offset = (0.5 - (focus?.y ?? 0.35)) * overflow
 
-            ArtworkImage(path: path) { Color.mnemePageBackground }
+            ArtworkImage(Self.slot(path)) { Color.mnemePageBackground }
                 .frame(width: width, height: imageHeight)
                 .offset(y: offset)
                 .frame(width: width, height: height)

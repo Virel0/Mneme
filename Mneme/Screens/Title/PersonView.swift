@@ -34,7 +34,7 @@ struct PersonView: View {
             if let person {
                 VStack(alignment: .leading, spacing: 48) {
                     HStack(spacing: 40) {
-                        ArtworkImage(path: person.profile) { Color(white: 0.15) }
+                        ArtworkImage(ArtworkSlot(path: person.profile, kind: .profile, width: 220)) { Color(white: 0.15) }
                             .frame(width: 220, height: 220)
                             .clipShape(Circle())
                         VStack(alignment: .leading, spacing: 8) {

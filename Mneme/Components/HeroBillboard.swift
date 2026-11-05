@@ -71,7 +71,7 @@ struct HeroBillboard: View {
                 // Every pick's backdrop before anybody steps to it: the hero
                 // is the largest picture in the app.
                 guard let client else { return }
-                prefetcher.startPrefetching(with: picks.compactMap { client.artworkRequest($0.backdrop) })
+                prefetcher.startPrefetching(with: picks.compactMap { client.artworkRequest(FocusedBackdrop.slot($0.backdrop)) })
             }
             .task(id: picks.count) {
                 guard picks.count > 1 else { return }
@@ -131,11 +131,11 @@ private struct HeroCard: View {
         focusedAction != nil
     }
 
-    /// The pick's trailer from its folder, unless the viewer turned the hero's
-    /// trailers off in Melete; Melete's online ones can't play on Apple TV.
+    /// The pick's trailer, from its folder or downloaded by Melete, unless the
+    /// viewer turned the hero's trailers off in Melete.
     private var trailerFile: Int? {
-        guard library.heroTrailers, let trailer = pick.trailer, trailer.source == .folder else { return nil }
-        return trailer.fileId
+        guard library.heroTrailers else { return nil }
+        return pick.trailer?.playableFile
     }
 
     var body: some View {

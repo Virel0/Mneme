@@ -11,19 +11,20 @@ import AetherEngine
 import Foundation
 import MeleteKit
 import Observation
+import UIKit
 
 /// A quiet clip of a title, played over its backdrop in the hero or the
 /// spotlight once focus has rested there a moment.
 ///
-/// In the hero, the title's trailer when its folder has one. Otherwise the
-/// title itself, from where the viewer left it or a little way in. Either is
+/// In the hero, the title's trailer when Melete has one, from its folder or
+/// downloaded. Otherwise the title itself, from where the viewer left it or a
+/// little way in, as Melete chose for the hero's picks. Either is
 /// the file itself, as the player opens it: full quality, with its sound
 /// faded up to a lower volume unless Settings turns it off, and the
 /// television left in the mode it is in, so an HDR clip doesn't blank the
 /// screen to switch. Played only on the home network, and nothing about it
-/// is reported as watched.
-/// Trailers online are YouTube's web player, which an Apple TV app cannot
-/// show, so those titles get the clip of themselves.
+/// is reported as watched, and nothing plays when the Apple TV is set to
+/// reduce motion.
 @MainActor
 @Observable
 final class PreviewClip {
@@ -49,7 +50,7 @@ final class PreviewClip {
     /// Plays the trailer file when given one, else a clip of the title.
     func start(for summary: TitleSummary, client: MeleteClient, trailerFile: Int? = nil) {
         stop()
-        guard PlaybackPreferences.previewClips else { return }
+        guard PlaybackPreferences.previewClips, !UIAccessibility.isReduceMotionEnabled else { return }
         guard client.baseURL.isOnHomeNetwork else {
             if !Self.saidOffNetwork {
                 Self.saidOffNetwork = true
@@ -80,6 +81,8 @@ final class PreviewClip {
         let source: (file: Int, start: Double, length: Duration, what: String)
         if let file = trailerFile {
             source = (file, 0, Self.trailerLength, "trailer")
+        } else if let clip = summary.clip {
+            source = (clip.fileId, clip.startSeconds, .seconds(clip.durationSeconds), "clip")
         } else if let target = try? await PlayTarget.lookUp(for: summary, client: client),
                   let start = await Self.startPoint(for: summary, target: target, client: client)
         {

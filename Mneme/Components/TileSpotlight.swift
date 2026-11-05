@@ -321,7 +321,7 @@ struct TitleLogo: View {
     var body: some View {
         Group {
             if entry.logo != nil {
-                ArtworkImage(path: entry.logo, contentMode: .fit) { Color.clear }
+                ArtworkImage(ArtworkSlot(path: entry.logo, kind: .logo, width: maxWidth), contentMode: .fit) { Color.clear }
             } else {
                 Text(entry.title)
                     .font(.system(size: fontSize, weight: .heavy))
