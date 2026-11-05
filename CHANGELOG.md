@@ -8,6 +8,8 @@ commit.
 
 ## [Unreleased]
 
+## [1.0 build 14] - 2026-11-05
+
 ### Added
 - Styled subtitles, as anime releases carry, drawn as they were made: signs where they were put,
   in the video's own fonts, with karaoke, when the server serves them.
@@ -100,6 +102,7 @@ Build 11 was never uploaded, so its changes are listed here too.
 ### Not yet back
 - The iPhone and iPad app.
 
-[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.13...main
+[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.14...main
+[1.0 build 14]: https://github.com/Virel0/Mneme/commits/v1.0-build.14
 [1.0 build 13]: https://github.com/Virel0/Mneme/commits/v1.0-build.13
 [1.0 build 12]: https://github.com/Virel0/Mneme/commits/v1.0-build.12
