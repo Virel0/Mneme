@@ -88,6 +88,11 @@ public struct TranscodeRequest: Codable, Sendable {
     /// A subtitle track to draw into the picture: how a picture track (PGS,
     /// VobSub) shows in a conversion, which carries no subtitles of its own.
     public let burnSubtitle: String?
+    /// The subtitle track the viewer chose, if any. With `rendersAss` false,
+    /// a styled ASS/SSA track is drawn into the picture.
+    public let subtitle: String?
+    /// Whether the player draws ASS/SSA itself, from the track's `assUrl`.
+    public let rendersAss: Bool?
 
     public init(
         maxHeight: Int? = nil,
@@ -97,7 +102,9 @@ public struct TranscodeRequest: Codable, Sendable {
         videoCodec: String? = nil,
         audioCodecs: [String]? = nil,
         dolbyVision: Bool? = nil,
-        burnSubtitle: String? = nil
+        burnSubtitle: String? = nil,
+        subtitle: String? = nil,
+        rendersAss: Bool? = nil
     ) {
         self.maxHeight = maxHeight
         self.maxBitrate = maxBitrate
@@ -107,6 +114,8 @@ public struct TranscodeRequest: Codable, Sendable {
         self.audioCodecs = audioCodecs
         self.dolbyVision = dolbyVision
         self.burnSubtitle = burnSubtitle
+        self.subtitle = subtitle
+        self.rendersAss = rendersAss
     }
 }
 
@@ -119,6 +128,12 @@ public struct TranscodeResponse: Codable, Sendable {
     public let watched: Bool
     public let segments: FileSegments
     public let maxBitrate: Int?
+    /// The subtitle track drawn into the picture, not to be shown again.
+    /// Nil for none, and from a server older than the field.
+    public let burnedSubtitle: String?
+    /// Why a subtitle is or isn't drawn in: `asked`, `styled_ass`,
+    /// `copy_kept`, or nil.
+    public let burnReason: String?
 }
 
 public struct Languages: Codable, Hashable, Sendable {

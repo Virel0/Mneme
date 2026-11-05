@@ -71,6 +71,21 @@ public struct MeleteClient: Sendable {
         return (data, status)
     }
 
+    /// A file under a stream link, which carries its own token: no headers.
+    func fetch(_ url: URL) async throws(MeleteError) -> (data: Data, response: HTTPURLResponse) {
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(from: url)
+        } catch {
+            throw .transport(error.localizedDescription)
+        }
+        guard let http = response as? HTTPURLResponse, (200 ..< 300).contains(http.statusCode) else {
+            throw MeleteError(status: (response as? HTTPURLResponse)?.statusCode ?? 0, data: data)
+        }
+        return (data, http)
+    }
+
     /// The answer and its status, whatever the status: for the few calls
     /// that read a refusal's body.
     func perform(_ endpoint: Endpoint<some Decodable & Sendable>) async throws(MeleteError) -> (Data, Int) {

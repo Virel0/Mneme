@@ -117,6 +117,7 @@ struct SettingsView: View {
                         LabeledContent("Server", value: session.server.host() ?? session.server.absoluteString)
                         LabeledContent("Signed in as", value: session.user.username)
                     }
+                    NavigationLink("Acknowledgements") { AcknowledgementsView() }
                 } header: {
                     Text("About")
                 }

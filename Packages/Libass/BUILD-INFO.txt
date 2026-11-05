@@ -7,7 +7,7 @@ clang    Apple clang version 21.0.0 (clang-2100.1.1.101)
 SDK      appletvos 26.5
 SDK      appletvsimulator 26.5
 SDK      macosx 26.5
-build.sh sha256 e5eb16baceb586c92269cef5a1d40be21e2b3b02814a63cc5f1432017e33a30c
+build.sh sha256 87a63a5692bbb88385707b341ceb0f294c0c1a205cbcb3a04447c9b6897b7ab4
 
 ## Sources
 libass 0.17.5  https://github.com/libass/libass/releases/download/0.17.5/libass-0.17.5.tar.xz  sha256 2dca25c0e0c837ddf00b52011b3f82cac1e4ddd3ad018227806b0c2288864acc
