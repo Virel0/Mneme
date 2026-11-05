@@ -90,7 +90,7 @@ struct TitleTile: View {
     var body: some View {
         Button {
             router.pressedTile = TileZoom(
-                picture: picturePath,
+                picture: pictureSlot,
                 frame: frameOnScreen,
                 backdrop: summary.backdrop,
                 backdropFocus: summary.backdropFocus
@@ -181,16 +181,31 @@ struct TitleTile: View {
 
     // MARK: - Picture
 
-    private var picturePath: String? {
+    private var pictureSlot: ArtworkSlot {
+        Self.picture(of: summary, in: slot)
+    }
+
+    /// The tile's picture, at its width lifted: the row prefetches the same.
+    static func picture(of summary: TitleSummary, in slot: TileSlot) -> ArtworkSlot {
+        let width = slot.width * liftScale
         switch slot.shape {
-        case .landscape: summary.episode?.still ?? summary.backdrop ?? summary.poster
-        case .portrait: summary.poster
+        case .landscape:
+            if let still = summary.episode?.still {
+                return ArtworkSlot(path: still, kind: .still, width: width)
+            }
+            if let backdrop = summary.backdrop {
+                return ArtworkSlot(path: backdrop, kind: .backdrop, width: width)
+            }
+            // Filling the wide frame, the poster is as wide as the tile.
+            return ArtworkSlot(path: summary.poster, kind: .poster, width: width)
+        case .portrait:
+            return ArtworkSlot(path: summary.poster, kind: .poster, width: width)
         }
     }
 
     @ViewBuilder
     private var picture: some View {
-        ArtworkImage(path: picturePath) {
+        ArtworkImage(pictureSlot) {
             ZStack {
                 Color(white: 0.12)
                 Text(summary.title)
@@ -222,7 +237,7 @@ struct TitleTile: View {
         .shadow(color: .black.opacity(isFocused ? 0.6 : 0), radius: 20, y: 10)
         // A halo in the picture's own colour while focused; worked out for the
         // focused tile only, so a scroll doesn't work out every poster's.
-        .shadow(color: (isFocused ? colours?.colour(for: picturePath) : nil)?.opacity(0.6) ?? .clear, radius: 28)
+        .shadow(color: (isFocused ? colours?.colour(for: pictureSlot.path) : nil)?.opacity(0.6) ?? .clear, radius: 28)
     }
 }
 

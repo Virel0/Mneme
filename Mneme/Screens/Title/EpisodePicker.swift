@@ -210,7 +210,7 @@ private struct EpisodeRow: View {
 
     @ViewBuilder
     private var still: some View {
-        ArtworkImage(path: episode.still) {
+        ArtworkImage(ArtworkSlot(path: episode.still, kind: .still, width: Self.still.width)) {
             ZStack {
                 Color(white: 0.12)
                 Image(systemName: "film").font(.title).foregroundStyle(.secondary)

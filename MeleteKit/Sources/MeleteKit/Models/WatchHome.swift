@@ -95,13 +95,22 @@ public struct WatchHomeItem: Codable, Hashable, Sendable, Identifiable {
     /// On the hero's picks only: a trailer to play muted. Nil when there is
     /// none, and from a server older than the field.
     public let trailer: Trailer?
+    /// On the hero's picks only: a clip of the title itself, for when there
+    /// is no trailer. Nil when the title has no file, and from a server older
+    /// than the field.
+    public let clip: Clip?
 
     public struct Trailer: Codable, Hashable, Sendable {
         public let source: Source
-        /// For a trailer in the title's folder: the file to play.
+        /// The trailer's file. Optional for servers before 0.5, whose online
+        /// trailers had none.
         public let fileId: Int?
-        /// For TMDB's: the address of YouTube's privacy-enhanced player.
-        public let embedUrl: String?
+
+        /// The file to play, for the sources this app knows; a source it
+        /// doesn't know counts as no trailer, as Melete asks.
+        public var playableFile: Int? {
+            [Source.folder, .downloaded].contains(source) ? fileId : nil
+        }
 
         /// Kept open like row keys, so a source a newer server adds does not
         /// fail the whole home.
@@ -111,9 +120,19 @@ public struct WatchHomeItem: Codable, Hashable, Sendable, Identifiable {
                 self.rawValue = rawValue
             }
 
+            /// A trailer in the title's folder.
             public static let folder = Source(rawValue: "folder")
-            public static let online = Source(rawValue: "online")
+            /// One Melete downloaded for the title.
+            public static let downloaded = Source(rawValue: "downloaded")
         }
+    }
+
+    /// Where in which file a clip of the title starts, and for how long.
+    public struct Clip: Codable, Hashable, Sendable {
+        public let fileId: Int
+        /// Where the viewer left the file, else an eighth of the way in.
+        public let startSeconds: Double
+        public let durationSeconds: Double
     }
 
     public struct Episode: Codable, Hashable, Sendable {
