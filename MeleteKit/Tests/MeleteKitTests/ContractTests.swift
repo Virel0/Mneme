@@ -62,6 +62,7 @@ struct ContractTests {
         ("WatchHome", WatchHome.self, []),
         ("WatchHomeRow", WatchHomeRow.self, []),
         ("WatchHomeItem", WatchHomeItem.self, []),
+        ("WatchHomeHeroItem", WatchHomeItem.self, []),
         ("File", MediaFile.self, []),
         ("MovieDetail", MovieDetail.self, []),
         ("SeriesDetail", SeriesDetail.self, []),

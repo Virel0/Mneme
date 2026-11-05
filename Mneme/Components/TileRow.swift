@@ -104,7 +104,7 @@ struct TileRow: View {
     private func prefetch() {
         guard let client else { return }
         let requests = items.compactMap { item in
-            client.artworkRequest(shape == .landscape ? item.episode?.still ?? item.backdrop : item.poster)
+            client.artworkRequest(TitleTile.picture(of: item, in: slot))
         }
         guard !requests.isEmpty else { return }
         if prefetcher == nil {

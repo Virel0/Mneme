@@ -76,7 +76,7 @@ final class Router {
 /// backdrop of the page it opens, to grow into.
 struct TileZoom: Equatable {
     let id = UUID()
-    let picture: String?
+    let picture: ArtworkSlot
     let frame: CGRect
     let backdrop: String?
     let backdropFocus: Focus?

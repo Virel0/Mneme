@@ -40,7 +40,7 @@ struct TileZoomView: View {
             // to the poster and the backdrop with it.
             FocusedBackdrop(path: zoom.backdrop, focus: zoom.backdropFocus)
                 .overlay {
-                    ArtworkImage(path: zoom.picture)
+                    ArtworkImage(zoom.picture)
                         .opacity(isTurned ? 0 : 1)
                 }
                 .frame(width: frame.width, height: frame.height)

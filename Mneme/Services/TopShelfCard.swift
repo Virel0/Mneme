@@ -24,7 +24,8 @@ enum TopShelfCard {
 
     /// Raised when the drawing changes, so pictures already saved are drawn
     /// again.
-    static let version = 1
+    /// 2: the backdrop and logo at the sizes a 4K television needs.
+    static let version = 2
 
     /// The picture as a JPEG at 3840 by 2160, the size tvOS draws the shelf
     /// at on a 4K television.

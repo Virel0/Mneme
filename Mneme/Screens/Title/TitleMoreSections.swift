@@ -84,7 +84,7 @@ struct TitleMoreSections: View {
             }
 
             if let media = model.fileInfo?.media {
-                FileDetails(media: media, size: model.fileInfo?.size)
+                FileDetails(media: media, size: model.fileInfo?.size, highFrameRate: model.movie?.highFrameRate)
             }
         }
         .fullScreenCover(item: $requesting) { item in
@@ -144,7 +144,7 @@ private struct PersonCard: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 12) {
-                ArtworkImage(path: picture) {
+                ArtworkImage(ArtworkSlot(path: picture, kind: .profile, width: 180)) {
                     ZStack {
                         Color(white: 0.15)
                         Text(String(name.prefix(1)))
@@ -212,12 +212,20 @@ private struct FileDetails: View {
 
     let media: MediaInfo
     let size: Int?
+    /// Melete's note on a movie copy at 48 fps or more.
+    let highFrameRate: HighFrameRate?
 
     private var lines: [(String, String)] {
         var lines: [(String, String)] = []
         if let video = media.video.first {
             let resolution = video.height.map { "\($0)p" }
             lines.append(("Video", [video.codec.uppercased(), resolution, video.hdr].compactMap(\.self).joined(separator: " · ")))
+        }
+        if let highFrameRate {
+            let fps = "\(highFrameRate.fps.formatted(.number.precision(.fractionLength(0 ... 2)))) fps"
+            // Not a film made at a high frame rate: the extra frames were most
+            // likely made up from its 24, which can stutter.
+            lines.append(("Frame Rate", highFrameRate.allowed ? fps : "\(fps) · likely converted from 24, so it may stutter"))
         }
         for audio in media.audio.prefix(4) {
             let language = audio.language.flatMap { Locale.current.localizedString(forLanguageCode: $0) }
