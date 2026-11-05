@@ -111,11 +111,20 @@ private struct SeekBar: View {
                                 .frame(width: 3, height: 10)
                                 .offset(x: width * fraction(chapter.startSeconds) - 1.5)
                         }
+                    }
+                    // Over the bar rather than in it: in the stack, the
+                    // marker and the preview made it as tall as they are,
+                    // and the bar's capsules grew to fill it.
+                    .overlay(alignment: .leading) {
                         if let scrubTarget {
                             Capsule()
                                 .fill(.white)
                                 .frame(width: 4, height: 28)
                                 .offset(x: width * fraction(scrubTarget) - 2)
+                        }
+                    }
+                    .overlay(alignment: .topLeading) {
+                        if let scrubTarget {
                             preview(at: scrubTarget)
                                 .offset(
                                     x: min(max(0, width * fraction(scrubTarget) - Self.previewWidth / 2), width - Self.previewWidth),
