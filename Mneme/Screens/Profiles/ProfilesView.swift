@@ -24,6 +24,8 @@ struct ProfilesView: View {
     private var isAddingProfile = false
     @State
     private var showsSettings = false
+    @State
+    private var choosesPicture = false
 
     var body: some View {
         ZStack {
@@ -61,6 +63,10 @@ struct ProfilesView: View {
                     }
 
                     if let current = sessions.current {
+                        HeroActionButton(title: "Change Picture", systemImage: "person.crop.square", isProminent: false) {
+                            choosesPicture = true
+                        }
+
                         HeroActionButton(
                             title: "Sign Out of \(current.user.username)",
                             systemImage: "rectangle.portrait.and.arrow.right",
@@ -77,6 +83,11 @@ struct ProfilesView: View {
         }
         .fullScreenCover(isPresented: $showsSettings) {
             SettingsView()
+        }
+        .fullScreenCover(isPresented: $choosesPicture) {
+            if let current = sessions.current, let client = sessions.client(for: current) {
+                AvatarPickerView(session: current, client: client)
+            }
         }
     }
 
