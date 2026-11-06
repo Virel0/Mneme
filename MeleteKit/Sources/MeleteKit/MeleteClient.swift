@@ -108,7 +108,7 @@ public struct MeleteClient: Sendable {
         }
         if let body = endpoint.body {
             request.httpBody = body
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue(endpoint.contentType, forHTTPHeaderField: "Content-Type")
         }
 
         let data: Data
