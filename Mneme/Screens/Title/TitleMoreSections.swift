@@ -34,7 +34,7 @@ struct TitleMoreSections: View {
 
             if let credits = model.credits, !credits.cast.isEmpty || !credits.crew.isEmpty {
                 section("Cast & Crew") {
-                    ForEach(people(credits), id: \.key) { person in
+                    ForEach(Self.people(credits), id: \.key) { person in
                         PersonCard(name: person.name, role: person.role, picture: person.picture) {
                             router.person(person.id)
                         }
@@ -92,7 +92,7 @@ struct TitleMoreSections: View {
         }
     }
 
-    private struct Entry {
+    struct Entry {
         let key: String
         let id: Int
         let name: String
@@ -102,7 +102,7 @@ struct TitleMoreSections: View {
 
     /// The cast in billing order, then the crew who made it: directors,
     /// writers and creators first.
-    private func people(_ credits: Credits) -> [Entry] {
+    static func people(_ credits: Credits) -> [Entry] {
         let cast = credits.cast.prefix(20).map {
             Entry(key: "cast-\($0.personId)", id: $0.personId, name: $0.name, role: $0.character, picture: $0.profile)
         }
@@ -208,14 +208,14 @@ private struct ExtraCard: View {
 }
 
 /// What the file is: container, picture, sound and size.
-private struct FileDetails: View {
+struct FileDetails: View {
 
     let media: MediaInfo
     let size: Int?
     /// Melete's note on a movie copy at 48 fps or more.
     let highFrameRate: HighFrameRate?
 
-    private var lines: [(String, String)] {
+    var lines: [(String, String)] {
         var lines: [(String, String)] = []
         if let video = media.video.first {
             let resolution = video.height.map { "\($0)p" }
