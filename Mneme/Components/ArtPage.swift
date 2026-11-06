@@ -23,24 +23,57 @@ struct ArtPage<Actions: View>: View {
     let actions: () -> Actions
 
     var body: some View {
+        #if os(tvOS)
         ZStack(alignment: .leading) {
             ArtBackdrop(art: art)
+            words
+                .frame(maxWidth: 760, alignment: .leading)
+                .padding(.leading, RowLayout.edge)
+                .focusSection()
+        }
+        #else
+        // A phone held upright crops the wide picture to its middle, where
+        // the drawing is, so the words go to the foot of the page instead,
+        // over a fade of their own.
+        ZStack(alignment: .bottomLeading) {
+            ArtBackdrop(art: art)
+            LinearGradient(
+                colors: [.clear, Color.mnemePageBackground.opacity(0.9), Color.mnemePageBackground],
+                startPoint: .init(x: 0.5, y: 0.45),
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+            words
+                .frame(maxWidth: 560, alignment: .leading)
+                .padding(.horizontal, TouchLayout.edge * 1.5)
+                .padding(.bottom, 40)
+        }
+        #endif
+    }
 
-            VStack(alignment: .leading, spacing: 20) {
-                Text(title)
-                    .font(.title2.bold())
-                if let message {
-                    Text(message)
-                        .foregroundStyle(.secondary)
-                }
-                actions()
-                    .padding(.top, 20)
+    private var words: some View {
+        VStack(alignment: .leading, spacing: Self.spacing) {
+            Text(title)
+                .font(.title2.bold())
+            if let message {
+                Text(message)
+                    .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: 760, alignment: .leading)
-            .padding(.leading, RowLayout.edge)
-            .focusSection()
+            actions()
+                .padding(.top, Self.spacing)
         }
     }
+
+    #if os(tvOS)
+    private static var spacing: CGFloat {
+        20
+    }
+    #else
+    private static var spacing: CGFloat {
+        10
+    }
+    #endif
 }
 
 /// One of the app's pictures filling the screen, darkened on the left where
