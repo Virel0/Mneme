@@ -145,15 +145,10 @@ struct RequestDetailView: View {
         isWorking = true
         error = nil
         Task {
-            do throws(MeleteError) {
-                try await library.client.takeBack(request: current.id)
-                library.removeRequest(current.id)
-                model?.removeRequest(current.id)
+            if let failure = await Self.takeBack(current.id, library: library, model: model) {
+                error = failure
+            } else {
                 dismiss()
-            } catch .server(status: 409, _) {
-                error = "It has already been decided, so it can't be taken back."
-            } catch {
-                self.error = error.localizedDescription
             }
             isWorking = false
         }
@@ -163,16 +158,38 @@ struct RequestDetailView: View {
         isWorking = true
         error = nil
         Task {
-            do throws(MeleteError) {
-                let changed = try await library.client.changeRequest(current.id, season: season)
-                library.replaceRequest(changed)
-                model?.replaceRequest(changed)
-            } catch .server(status: 409, _) {
-                error = "It has already been decided, so it can't be changed."
-            } catch {
-                self.error = error.localizedDescription
-            }
+            error = await Self.change(current.id, to: season, library: library, model: model)
             isWorking = false
+        }
+    }
+
+    /// Takes a waiting request back, and out of the lists that show it.
+    /// Returns what to say when it can't be.
+    static func takeBack(_ id: Int, library: Library, model: SearchModel?) async -> String? {
+        do throws(MeleteError) {
+            try await library.client.takeBack(request: id)
+            library.removeRequest(id)
+            model?.removeRequest(id)
+            return nil
+        } catch .server(status: 409, _) {
+            return "It has already been decided, so it can't be taken back."
+        } catch {
+            return error.localizedDescription
+        }
+    }
+
+    /// Changes which season a waiting series request asks for, in the lists
+    /// that show it too. Returns what to say when it can't be.
+    static func change(_ id: Int, to season: Int?, library: Library, model: SearchModel?) async -> String? {
+        do throws(MeleteError) {
+            let changed = try await library.client.changeRequest(id, season: season)
+            library.replaceRequest(changed)
+            model?.replaceRequest(changed)
+            return nil
+        } catch .server(status: 409, _) {
+            return "It has already been decided, so it can't be changed."
+        } catch {
+            return error.localizedDescription
         }
     }
 

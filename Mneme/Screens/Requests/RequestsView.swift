@@ -77,7 +77,7 @@ struct RequestsView: View {
     }
 
     /// Where a request has got to, in the order the page shows them.
-    private enum Stage: CaseIterable {
+    enum Stage: CaseIterable {
         case onTheWay
         case waiting
         case arrived
