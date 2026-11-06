@@ -77,6 +77,8 @@ struct TitleTile: View {
 
     let summary: TitleSummary
     let slot: TileSlot
+    /// Said in the spotlight while this tile has focus.
+    var hint: String?
     let action: () -> Void
 
     /// Enough to read as "this one" from across the room; small enough that
@@ -145,7 +147,7 @@ struct TitleTile: View {
         .onChange(of: isFocused) {
             guard let spotlight else { return }
             if isFocused {
-                shown = spotlight.show(summary)
+                shown = spotlight.show(summary, hint: hint)
             } else if let shown {
                 spotlight.leave(shown)
             }
