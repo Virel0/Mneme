@@ -29,7 +29,10 @@ struct TouchTitleView: View {
     let summary: TitleSummary
 
     var body: some View {
-        Group {
+        // A ZStack, not a Group: an empty Group is no view at all, so before
+        // the model existed nothing carried the task that makes it, and the
+        // page stayed blank.
+        ZStack {
             if let model {
                 if let error = model.error {
                     FailureView(title: "Couldn't load \(summary.title)", error: error) {
@@ -38,6 +41,8 @@ struct TouchTitleView: View {
                 } else {
                     page(model)
                 }
+            } else {
+                LoadingMark()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
