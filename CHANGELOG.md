@@ -11,6 +11,11 @@ commit.
 ### Added
 - Change Picture on Who's Watching: a new profile picture from the server's gallery, or none.
 
+### Fixed
+- Search no longer lists requests for music, which Mneme doesn't play.
+- Changing the order or genre of All Movies, All Shows or All Anime while titles are loading no
+  longer mixes in titles from the old choice.
+
 ## [1.0 build 15] - 2026-11-06
 
 ### Added
