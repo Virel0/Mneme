@@ -27,7 +27,7 @@ struct TouchRequestsView: View {
     /// Music asked for elsewhere is left out, as on the Apple TV: nothing
     /// here plays it.
     private var requests: [MediaRequest]? {
-        (library.requests ?? loaded)?.filter { $0.kind == "movie" || $0.kind == "series" }
+        (library.requests ?? loaded)?.filter(\.isVideo)
     }
 
     var body: some View {

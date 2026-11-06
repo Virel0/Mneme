@@ -160,3 +160,12 @@ public struct RequestPage: Codable, Sendable {
     public let total: Int
     public let items: [MediaRequest]
 }
+
+public extension MediaRequest {
+
+    /// A film or a series: what Mneme plays. Melete also takes requests for
+    /// music, which Mneme neither plays nor shows.
+    var isVideo: Bool {
+        kind == "movie" || kind == "series"
+    }
+}

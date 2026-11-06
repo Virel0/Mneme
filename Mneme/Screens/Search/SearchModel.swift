@@ -56,7 +56,7 @@ final class SearchModel {
         async let trending = try? client.trending()
 
         aiEnabled = await ai?.enabled ?? false
-        self.requests = await requests?.items ?? []
+        self.requests = await (requests?.items ?? []).filter(\.isVideo)
         // Refused unless discovery is on in Melete; then the row is left out.
         self.trending = await (trending ?? []).filter { $0.state != .playable }
     }

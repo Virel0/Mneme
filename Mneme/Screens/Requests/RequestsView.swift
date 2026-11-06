@@ -26,7 +26,7 @@ struct RequestsView: View {
     private var loaded: [MediaRequest]?
 
     private var requests: [MediaRequest]? {
-        (library.requests ?? loaded)?.filter { $0.kind == "movie" || $0.kind == "series" }
+        (library.requests ?? loaded)?.filter(\.isVideo)
     }
 
     var body: some View {
