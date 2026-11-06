@@ -48,7 +48,7 @@ struct TouchMainView: View {
             }
 
             Tab("My List", systemImage: "checkmark.circle", value: TouchTab.myList) {
-                TouchStack { MyListView() }
+                TouchStack { TouchMyListView() }
             }
 
             Tab("Requests", systemImage: "tray.and.arrow.down", value: TouchTab.requests) {
@@ -113,7 +113,7 @@ private struct TouchStack<Root: View>: View {
                     case let .play(target):
                         PlayerView(target: target)
                     case let .person(id):
-                        PersonView(id: id)
+                        TouchPersonView(id: id)
                     }
                 }
         }
