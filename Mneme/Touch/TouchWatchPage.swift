@@ -13,7 +13,8 @@ import SwiftUI
 
 /// Home on a touch screen: Home, Movies, Shows or Anime chosen at the top,
 /// then the hero's picks to swipe through, then the rows. The same sections
-/// as the Apple TV's pages (`WatchSections`), laid out for a hand.
+/// as the Apple TV's pages (`WatchSections`), laid out for a hand, and under
+/// Movies, Shows and Anime every title of the kind after the rows.
 struct TouchWatchPage: View {
 
     @Environment(Library.self)
@@ -91,6 +92,12 @@ struct TouchWatchPage: View {
                     open: { select($0, in: row) },
                     goToTitle: row.shape == .landscape ? { router.open($0) } : nil
                 )
+            }
+
+            if kind != .home {
+                // One grid per kind: its titles, order and genre are its own.
+                TouchAllTitlesGrid(kind: kind)
+                    .id(kind)
             }
         }
     }

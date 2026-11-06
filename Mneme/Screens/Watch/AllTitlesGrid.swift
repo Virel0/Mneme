@@ -35,7 +35,6 @@ struct AllTitlesGrid: View {
     @State
     private var genres: [String] = []
 
-    private static let pageSize = 100
     private static let columns: CGFloat = 7
 
     private var tileWidth: CGFloat {
@@ -45,7 +44,7 @@ struct AllTitlesGrid: View {
     var body: some View {
         VStack(alignment: .leading, spacing: RowLayout.headingSpacing) {
             HStack(spacing: 24) {
-                Text(heading)
+                Text(Self.heading(for: kind, total: total))
                     .font(.title3.weight(.semibold))
                 Spacer()
                 Menu {
@@ -55,7 +54,7 @@ struct AllTitlesGrid: View {
                         Text("Recently Added").tag(ListSort.recent)
                     }
                 } label: {
-                    Label(sortName, systemImage: "arrow.up.arrow.down")
+                    Label(Self.name(of: sort), systemImage: "arrow.up.arrow.down")
                 }
                 Menu {
                     Picker("Genre", selection: $genre) {
@@ -101,13 +100,62 @@ struct AllTitlesGrid: View {
             await loadMore()
         }
         .task {
-            genres = await (try? library.client.genres())?
-                .filter { kind == .movies ? $0.movies > 0 : $0.series > 0 }
-                .map(\.name) ?? []
+            genres = await Self.genres(of: kind, from: library.client)
         }
     }
 
-    private var heading: String {
+    private func loadMore() async {
+        guard !isLoading, total.map({ items.count < $0 }) ?? true else { return }
+        isLoading = true
+        defer { isLoading = false }
+
+        guard let page = await Self.page(of: kind, from: library.client, genre: genre, sort: sort, offset: items.count)
+        else { return }
+        items += page.items
+        total = page.total
+    }
+
+    private struct Reload: Equatable {
+        let version: Int
+        let sort: ListSort
+        let genre: String?
+    }
+}
+
+// The touch layout's grid shares these, so both ask for the same titles and
+// name them the same way.
+extension AllTitlesGrid {
+
+    private static let pageSize = 100
+
+    /// A page of the kind's titles from `offset`; nil when it couldn't be
+    /// fetched.
+    static func page(
+        of kind: WatchKind,
+        from client: MeleteClient,
+        genre: String?,
+        sort: ListSort,
+        offset: Int
+    ) async -> (items: [TitleSummary], total: Int)? {
+        let page: Page<ListItem>? = switch kind {
+        case .movies: try? await client.movies(genre: genre, sort: sort, limit: pageSize, offset: offset)
+        case .anime: try? await client.series(genre: genre, anime: .only, sort: sort, limit: pageSize, offset: offset)
+        case .home, .shows: try? await client.series(genre: genre, anime: .exclude, sort: sort, limit: pageSize, offset: offset)
+        }
+        guard let page else { return nil }
+
+        let titleKind: TitleKind = kind == .movies ? .movie : .series
+        return (page.items.map { TitleSummary($0, kind: titleKind) }, page.total)
+    }
+
+    /// The genres that have titles of the kind.
+    static func genres(of kind: WatchKind, from client: MeleteClient) async -> [String] {
+        await (try? client.genres())?
+            .filter { kind == .movies ? $0.movies > 0 : $0.series > 0 }
+            .map(\.name) ?? []
+    }
+
+    static func heading(for kind: WatchKind, total: Int?) -> String {
         let name = switch kind {
         case .home, .shows: "All Shows"
         case .anime: "All Anime"
@@ -116,35 +164,11 @@ struct AllTitlesGrid: View {
         return total.map { "\(name) · \($0)" } ?? name
     }
 
-    private func loadMore() async {
-        guard !isLoading, total.map({ items.count < $0 }) ?? true else { return }
-        isLoading = true
-        defer { isLoading = false }
-
-        let client = library.client
-        let page: Page<ListItem>? = switch kind {
-        case .movies: try? await client.movies(genre: genre, sort: sort, limit: Self.pageSize, offset: items.count)
-        case .anime: try? await client.series(genre: genre, anime: .only, sort: sort, limit: Self.pageSize, offset: items.count)
-        case .home, .shows: try? await client.series(genre: genre, anime: .exclude, sort: sort, limit: Self.pageSize, offset: items.count)
-        }
-        guard let page else { return }
-
-        let titleKind: TitleKind = kind == .movies ? .movie : .series
-        items += page.items.map { TitleSummary($0, kind: titleKind) }
-        total = page.total
-    }
-
-    private var sortName: String {
+    static func name(of sort: ListSort) -> String {
         switch sort {
         case .title: "A to Z"
         case .year: "Newest"
         case .recent: "Recently Added"
         }
-    }
-
-    private struct Reload: Equatable {
-        let version: Int
-        let sort: ListSort
-        let genre: String?
     }
 }
