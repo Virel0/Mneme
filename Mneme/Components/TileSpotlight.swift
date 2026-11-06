@@ -23,6 +23,12 @@ final class TileSpotlight {
 
     private(set) var entry: TitleSummary?
 
+    /// What the focused tile does besides its press, such as the long-press
+    /// menu of a tile that plays, said under the title. It belongs to the
+    /// tile, not the title: the same show can sit in a row that plays and in
+    /// one that opens.
+    private(set) var hint: String?
+
     /// Counts each tile gaining focus. A departure clears only the showing
     /// it began: the same title can sit in two rows (Continue Watching and
     /// Next Up), and matching by title let leaving one clear the other.
@@ -75,7 +81,7 @@ final class TileSpotlight {
 
     /// Shows a title; returns the showing, for `leave`.
     @discardableResult
-    func show(_ entry: TitleSummary) -> Int {
+    func show(_ entry: TitleSummary, hint: String? = nil) -> Int {
         pendingClear?.cancel()
         pendingShow?.cancel()
         isHeld = false
@@ -85,6 +91,7 @@ final class TileSpotlight {
         // screen to protect from churn.
         guard self.entry != nil else {
             self.entry = entry
+            self.hint = hint
             return showing
         }
 
@@ -92,6 +99,7 @@ final class TileSpotlight {
             try? await Task.sleep(for: Self.followDelay)
             guard !Task.isCancelled else { return }
             self?.entry = entry
+            self?.hint = hint
             self?.pendingShow = nil
         }
         return showing
@@ -106,6 +114,7 @@ final class TileSpotlight {
             guard !Task.isCancelled, let self else { return }
             guard showing == shown, pendingShow == nil, !isHeld else { return }
             entry = nil
+            hint = nil
         }
     }
 
@@ -202,7 +211,7 @@ struct TileSpotlightView: View {
                     .id(entry.ref)
                     .transition(.opacity)
 
-                lockup(for: entry)
+                lockup(for: entry, hint: spotlight.hint)
                     .id(entry.ref)
                     .padding(.leading, RowLayout.edge)
                     .padding(.top, TileSpotlightLayout.infoTop)
@@ -290,7 +299,7 @@ struct TileSpotlightView: View {
     }
 
     @ViewBuilder
-    private func lockup(for entry: TitleSummary) -> some View {
+    private func lockup(for entry: TitleSummary, hint: String?) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             TitleLogo(entry: entry, maxWidth: TileSpotlightLayout.logoMaxWidth, maxHeight: TileSpotlightLayout.logoMaxHeight)
 
@@ -304,7 +313,15 @@ struct TileSpotlightView: View {
                     .foregroundStyle(.white.opacity(0.8))
                     .lineLimit(2)
             }
+
+            if let hint {
+                Label(hint, systemImage: "appletvremote.gen4.fill")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .transition(.opacity)
+            }
         }
+        .animation(.easeInOut(duration: 0.25), value: hint)
         .frame(width: TileSpotlightLayout.infoWidth, alignment: .leading)
         .shadow(color: .black.opacity(0.5), radius: 12)
     }

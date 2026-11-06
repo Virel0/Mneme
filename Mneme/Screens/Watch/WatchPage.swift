@@ -61,9 +61,13 @@ struct WatchPage: View {
                 }
 
                 ForEach(sections.rows) { row in
-                    TileRow(title: row.title, items: row.items, shape: row.shape) { item in
-                        select(item, in: row)
-                    }
+                    TileRow(
+                        title: row.title,
+                        items: row.items,
+                        shape: row.shape,
+                        open: { select($0, in: row) },
+                        goToTitle: row.shape == .landscape ? { router.open($0) } : nil
+                    )
                 }
 
                 if kind != .home {

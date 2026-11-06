@@ -25,6 +25,9 @@ struct TileRow: View {
     let items: [TitleSummary]
     let shape: TileShape
     let open: (TitleSummary) -> Void
+    /// For a row whose tiles play when selected: opens the title instead,
+    /// from the tile's long-press menu.
+    var goToTitle: ((TitleSummary) -> Void)?
 
     /// Seeded with the screen width so the first frame is already right.
     @State
@@ -61,13 +64,11 @@ struct TileRow: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: RowLayout.spacing) {
                     ForEach(items) { item in
-                        TitleTile(summary: item, slot: slot) {
-                            open(item)
-                        }
                         // The lifted tile over its neighbours: here, on the
                         // stack's own child, is the only place it means anything.
-                        .zIndex(focusedTile == item.ref ? 1 : 0)
-                        .focused($focusedTile, equals: item.ref)
+                        tile(item)
+                            .zIndex(focusedTile == item.ref ? 1 : 0)
+                            .focused($focusedTile, equals: item.ref)
                     }
                 }
                 .padding(.vertical, RowLayout.verticalPadding)
@@ -96,6 +97,27 @@ struct TileRow: View {
         }
         .onDisappear {
             prefetcher?.stopPrefetching()
+        }
+    }
+
+    /// A row without `goToTitle` gets no menu at all, so a long press on
+    /// its tiles does nothing.
+    @ViewBuilder
+    private func tile(_ item: TitleSummary) -> some View {
+        if let goToTitle {
+            let place = item.kind == .series ? "Show" : "Movie"
+            TitleTile(summary: item, slot: slot, hint: "Hold Select to go to the \(place.lowercased())") {
+                open(item)
+            }
+            .contextMenu {
+                Button("Go to \(place)", systemImage: "info.circle") {
+                    goToTitle(item)
+                }
+            }
+        } else {
+            TitleTile(summary: item, slot: slot) {
+                open(item)
+            }
         }
     }
 
