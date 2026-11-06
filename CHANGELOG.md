@@ -8,6 +8,9 @@ commit.
 
 ## [Unreleased]
 
+### Added
+- Change Picture on Who's Watching: a new profile picture from the server's gallery, or none.
+
 ## [1.0 build 15] - 2026-11-06
 
 ### Added
