@@ -33,8 +33,16 @@ struct RootView: View {
     @State
     private var hasChosen = false
 
+    /// A phone or tablet opens without the intro: it plays with sound, and a
+    /// phone is often opened where sound is not wanted.
     @State
-    private var introIsOver = false
+    private var introIsOver = Self.skipsIntro
+
+    #if os(tvOS)
+    private static let skipsIntro = false
+    #else
+    private static let skipsIntro = true
+    #endif
 
     var body: some View {
         ZStack {
@@ -63,8 +71,13 @@ struct RootView: View {
         } else if let session = sessions.current, let client = sessions.client(for: session) {
             // Keyed on the session, so switching profiles starts the app afresh
             // for the new person rather than showing them someone else's pages.
+            #if os(tvOS)
             MainView(session: session, library: Library(client: client, sessionID: session.id))
                 .id(session.id)
+            #else
+            TouchMainView(session: session, library: Library(client: client, sessionID: session.id))
+                .id(session.id)
+            #endif
         } else {
             SignInFlow()
         }
