@@ -23,6 +23,10 @@ struct TouchTitleMore: View {
 
     let model: TitleModel
 
+    /// A film of the collection not in the library, being asked for.
+    @State
+    private var requesting: DiscoverItem?
+
     /// The widths of `TouchTileRow`'s posters, so these rows match Home's.
     private var posterWidth: CGFloat {
         sizeClass == .regular ? 150 : 112
@@ -93,11 +97,13 @@ struct TouchTitleMore: View {
                 )
             }
         }
+        .sheet(item: $requesting) { item in
+            TouchRequestView(item: item, model: nil)
+        }
     }
 
-    /// A film of the collection in the library opens; one that is not is
-    /// shown so the set reads whole, but has nothing to open. Asking for it
-    /// is Search's to offer.
+    /// A film of the collection in the library opens; one that is not can
+    /// be asked for, as on the Apple TV.
     @ViewBuilder
     private func collectionItem(_ item: DiscoverItem) -> some View {
         let card = TouchPosterCard(
@@ -114,8 +120,14 @@ struct TouchTitleMore: View {
             }
             .buttonStyle(.plain)
         } else {
-            card
-                .opacity(0.6)
+            Button {
+                requesting = item
+            } label: {
+                card
+                    .opacity(0.6)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Asks for it")
         }
     }
 }
