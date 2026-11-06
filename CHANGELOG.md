@@ -17,6 +17,9 @@ commit.
 - Trailers Melete downloads play in the hero, as trailers in a title's folder do.
 - A film whose copy plays at 48 fps or more says so under About the File, and when the extra
   frames were most likely made up, that it may stutter.
+- Holding Select on a tile in Continue Watching, Next Up or New Episodes offers Go to Show (or
+  Go to Movie), which opens the title instead of playing. A line under the title says so while
+  such a tile has focus.
 
 ### Changed
 - Posters, backdrops, episode pictures, logos and people's pictures are sharp on a 4K television:
