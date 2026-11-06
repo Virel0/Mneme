@@ -127,18 +127,6 @@ struct PlayerView: View {
             session?.togglePause()
         }
         .onExitCommand(perform: exit)
-        #if os(iOS)
-        // Until the player has touch controls of its own: a touch screen
-        // has no Menu button to leave by.
-        .overlay(alignment: .topLeading) {
-            Button("Close", systemImage: "xmark", action: leave)
-                .labelStyle(.iconOnly)
-                .font(.title3.weight(.semibold))
-                .padding(12)
-                .background(.black.opacity(0.6), in: Circle())
-                .padding(16)
-        }
-        #endif
         .toolbar(.hidden, for: .navigationBar)
     }
 
@@ -408,7 +396,7 @@ extension PlayerFocus? {
 /// A spinner for as long as the engine has no picture to give: opening a 4K
 /// file over Wi-Fi is seconds of black, and a frozen frame with nothing on it
 /// reads as a crash.
-private struct ActivitySpinner: View {
+struct ActivitySpinner: View {
 
     @ObservedObject
     var engine: AetherEngine
@@ -425,7 +413,7 @@ private struct ActivitySpinner: View {
 
 /// The picture comes up out of black the first time playback starts, the
 /// other half of the fade that brought the player in.
-private struct PictureFadeIn<Picture: View>: View {
+struct PictureFadeIn<Picture: View>: View {
 
     @ObservedObject
     var engine: AetherEngine
@@ -446,7 +434,7 @@ private struct PictureFadeIn<Picture: View>: View {
     }
 }
 
-private struct PlaybackFailure: View {
+struct PlaybackFailure: View {
 
     let message: String
     let leave: () -> Void
