@@ -27,8 +27,18 @@ struct TouchAllTitlesGrid: View {
     private var items: [TitleSummary] = []
     @State
     private var total: Int?
+    /// Which reset of the grid a page is being fetched for, while one is.
     @State
-    private var isLoading = false
+    private var loading: Int?
+    /// Counts the grid's resets. A page asked for before the latest one
+    /// belongs to another order or genre, and is dropped when it comes.
+    @State
+    private var generation = 0
+
+    private var isLoading: Bool {
+        loading != nil
+    }
+
     @State
     private var sort: ListSort = .title
     /// Nil for every genre.
@@ -80,6 +90,7 @@ struct TouchAllTitlesGrid: View {
         // Again from the start when titles come or go, or the order or
         // genre changes.
         .task(id: Reload(version: library.libraryVersion, sort: sort, genre: genre)) {
+            generation += 1
             items = []
             total = nil
             await loadMore()
@@ -135,11 +146,19 @@ struct TouchAllTitlesGrid: View {
     }
 
     private func loadMore() async {
-        guard !isLoading, total.map({ items.count < $0 }) ?? true else { return }
-        isLoading = true
-        defer { isLoading = false }
+        let asked = generation
+        // Busy only for this reset: a page still coming for the last one
+        // mustn't keep the new order's first page from being asked for.
+        guard loading != asked, total.map({ items.count < $0 }) ?? true else { return }
+        loading = asked
+        defer {
+            if loading == asked {
+                loading = nil
+            }
+        }
 
-        guard let page = await AllTitlesGrid.page(of: kind, from: library.client, genre: genre, sort: sort, offset: items.count)
+        guard let page = await AllTitlesGrid.page(of: kind, from: library.client, genre: genre, sort: sort, offset: items.count),
+              asked == generation
         else { return }
         items += page.items
         total = page.total
