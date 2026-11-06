@@ -136,7 +136,7 @@ private struct SeekBar: View {
                 .frame(height: 10)
 
                 HStack {
-                    Text(Self.clock(shown))
+                    Text(PlaybackTime.text(shown))
                     if let title = session.chapter(at: shown)?.title, !title.isEmpty {
                         Text("· \(title)")
                             .lineLimit(1)
@@ -146,7 +146,7 @@ private struct SeekBar: View {
                         Image(systemName: "pause.fill")
                     }
                     Spacer()
-                    Text("-" + Self.clock(max(0, session.duration - shown)))
+                    Text("-" + PlaybackTime.text(max(0, session.duration - shown)))
                 }
                 .font(.callout.monospacedDigit())
                 .foregroundStyle(.white.opacity(isFocused ? 1 : 0.7))
@@ -173,9 +173,13 @@ private struct SeekBar: View {
     /// Melete's previews are 320 pixels wide; drawn larger, they are still
     /// clear enough to find a scene by.
     static let previewWidth: CGFloat = 560
+}
+
+/// A place in the film, as the seek bars write it.
+enum PlaybackTime {
 
     /// "1:02:03", "4:05".
-    static func clock(_ seconds: Double) -> String {
+    static func text(_ seconds: Double) -> String {
         let total = Int(seconds.rounded(.down))
         let hours = total / 3600
         let minutes = (total % 3600) / 60

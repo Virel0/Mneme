@@ -111,7 +111,7 @@ private struct TouchStack<Root: View>: View {
                     case let .title(summary):
                         TitleView(summary: summary)
                     case let .play(target):
-                        PlayerView(target: target)
+                        TouchPlayerView(target: target)
                     case let .person(id):
                         PersonView(id: id)
                     }
