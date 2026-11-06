@@ -67,7 +67,11 @@ struct RootView: View {
     @ViewBuilder
     private var screen: some View {
         if sessions.asksWhoIsWatching, !hasChosen {
+            #if os(tvOS)
             WhoIsWatchingView { hasChosen = true }
+            #else
+            TouchWhoIsWatchingView { hasChosen = true }
+            #endif
         } else if let session = sessions.current, let client = sessions.client(for: session) {
             // Keyed on the session, so switching profiles starts the app afresh
             // for the new person rather than showing them someone else's pages.

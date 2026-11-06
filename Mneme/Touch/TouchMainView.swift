@@ -74,7 +74,7 @@ struct TouchMainView: View {
             }
         }
         .fullScreenCover(isPresented: $showsProfiles) {
-            ProfilesView()
+            TouchProfilesView()
         }
         // Outermost, so what is presented from here has them too.
         .environment(library)
