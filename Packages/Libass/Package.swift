@@ -9,6 +9,7 @@ let package = Package(
     name: "Libass",
     platforms: [
         .tvOS("26.1"),
+        .iOS("26.1"),
         // For `swift test` on the Mac that builds the app.
         .macOS(.v15),
     ],

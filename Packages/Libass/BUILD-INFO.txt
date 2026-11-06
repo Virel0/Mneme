@@ -6,8 +6,10 @@ Xcode    Xcode 26.6 Build version 17F113
 clang    Apple clang version 21.0.0 (clang-2100.1.1.101)
 SDK      appletvos 26.5
 SDK      appletvsimulator 26.5
+SDK      iphoneos 26.5
+SDK      iphonesimulator 26.5
 SDK      macosx 26.5
-build.sh sha256 87a63a5692bbb88385707b341ceb0f294c0c1a205cbcb3a04447c9b6897b7ab4
+build.sh sha256 27009427608a2a36db09f69921b68d14b15ac2e6ecdafee546eaf2c29dfa8ce0
 
 ## Sources
 libass 0.17.5  https://github.com/libass/libass/releases/download/0.17.5/libass-0.17.5.tar.xz  sha256 2dca25c0e0c837ddf00b52011b3f82cac1e4ddd3ad018227806b0c2288864acc
@@ -24,4 +26,6 @@ Flags    -O2 -DNDEBUG -fvisibility=hidden -Wno-everything
 ## Output
 tvos  arm64  sha256 81100f3e6d7672a0182727ad6e3d430db0017b4dcb7e4013e88c4a8d258d9162
 tvos-sim  x86_64 arm64  sha256 fbf9e75b992e5c2c6b2a21c357059a2b83ed138c7c6bf75f54403733cf83094c
+ios  arm64  sha256 97d9bfd3df43099ff283b0abf5f0d26f48a891c25608b0e5108de1c7dc86e584
+ios-sim  x86_64 arm64  sha256 c211c83c9e5740fdcb3b6203f892f19b6359d9794222af43d62d7730d8549dc9
 macos  x86_64 arm64  sha256 793cf86fd781656a21d067be2f974fe3bb62cc3f63b5a9398061055603d9f987

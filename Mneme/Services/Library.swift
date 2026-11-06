@@ -139,9 +139,11 @@ final class Library {
             let home = try await home
             self.home = .loaded(home)
             saveHome(home)
+            #if os(tvOS)
             let client = client
             let trailers = heroTrailers && PlaybackPreferences.previewClips
             Task { await TopShelfPublisher.publish(home, client: client, trailers: trailers) }
+            #endif
             if home.rows.contains(where: { $0.key == .becauseYouWatched }) {
                 becauseYouWatched = nil
             } else {
