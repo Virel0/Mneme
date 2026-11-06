@@ -18,6 +18,16 @@ struct SignInFlow: View {
     @State
     private var model = SignInModel()
 
+    #if os(tvOS)
+    private static let spacing: CGFloat = 48
+    private static let wordmarkHeight: CGFloat = 90
+    private static let edge = RowLayout.edge
+    #else
+    private static let spacing: CGFloat = 28
+    private static let wordmarkHeight: CGFloat = 44
+    private static let edge = TouchLayout.edge * 1.5
+    #endif
+
     var body: some View {
         ZStack(alignment: .leading) {
             Color.black.ignoresSafeArea()
@@ -25,11 +35,11 @@ struct SignInFlow: View {
 
             // On the picture's dark left side, as on the app's other full-page
             // pictures.
-            VStack(alignment: .leading, spacing: 48) {
+            VStack(alignment: .leading, spacing: Self.spacing) {
                 Image("MnemeWordmark")
                     .resizable()
                     .scaledToFit()
-                    .frame(height: 90)
+                    .frame(maxHeight: Self.wordmarkHeight)
 
                 switch model.step {
                 case .address:
@@ -45,7 +55,7 @@ struct SignInFlow: View {
                 }
             }
             .frame(maxWidth: 760, alignment: .leading)
-            .padding(.leading, RowLayout.edge)
+            .padding(.horizontal, Self.edge)
         }
         .onAppear {
             model.signedIn = { server, login in
@@ -101,6 +111,12 @@ private struct SignInView: View {
 
     @State
     private var usesPassword = false
+
+    #if os(tvOS)
+    private static let codeSize: CGFloat = 96
+    #else
+    private static let codeSize: CGFloat = 44
+    #endif
     @State
     private var username = ""
     @State
@@ -158,17 +174,20 @@ private struct SignInView: View {
                 }
             } else {
                 Text("In Melete on a phone or computer, open Your account, then Quick Connect, and enter this code.")
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Group {
                     if let code = model.quickConnectCode {
                         Text(code)
-                            .font(.system(size: 96, weight: .bold, design: .monospaced))
-                            .kerning(12)
+                            .font(.system(size: Self.codeSize, weight: .bold, design: .monospaced))
+                            .kerning(Self.codeSize / 8)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
                     } else {
                         LoadingMark()
                     }
                 }
-                .frame(height: 140)
+                .frame(height: Self.codeSize * 1.45)
 
                 Button("Sign in with a password") {
                     usesPassword = true

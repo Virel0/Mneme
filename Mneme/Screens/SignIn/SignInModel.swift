@@ -10,6 +10,7 @@
 import Foundation
 import MeleteKit
 import Observation
+import UIKit
 
 @MainActor
 @Observable
@@ -34,7 +35,13 @@ final class SignInModel {
 
     /// What the device is called in the server's device list and to whoever
     /// approves a Quick Connect code.
-    static let deviceName = "Mneme on Apple TV"
+    static var deviceName: String {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .pad: "Mneme on iPad"
+        case .phone: "Mneme on iPhone"
+        default: "Mneme on Apple TV"
+        }
+    }
 
     // MARK: - Address
 

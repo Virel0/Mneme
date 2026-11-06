@@ -127,6 +127,18 @@ struct PlayerView: View {
             session?.togglePause()
         }
         .onExitCommand(perform: exit)
+        #if os(iOS)
+        // Until the player has touch controls of its own: a touch screen
+        // has no Menu button to leave by.
+        .overlay(alignment: .topLeading) {
+            Button("Close", systemImage: "xmark", action: leave)
+                .labelStyle(.iconOnly)
+                .font(.title3.weight(.semibold))
+                .padding(12)
+                .background(.black.opacity(0.6), in: Circle())
+                .padding(16)
+        }
+        #endif
         .toolbar(.hidden, for: .navigationBar)
     }
 

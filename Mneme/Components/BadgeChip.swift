@@ -46,18 +46,37 @@ struct BadgeChip: View {
     let title: String
 
     var body: some View {
-        HStack(spacing: 9) {
+        HStack(spacing: Metrics.spacing) {
             Image(systemName: kind.systemImage)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: Metrics.glyph, weight: .semibold))
                 .foregroundStyle(kind.tint)
 
             Text(title)
-                .font(.system(size: 19, weight: .semibold))
+                .font(.system(size: Metrics.text, weight: .semibold))
                 .foregroundStyle(.white)
                 .lineLimit(1)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 9)
-        .background(Color.black.opacity(0.78), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .padding(.horizontal, Metrics.horizontal)
+        .padding(.vertical, Metrics.vertical)
+        .background(Color.black.opacity(0.78), in: RoundedRectangle(cornerRadius: Metrics.radius, style: .continuous))
+    }
+
+    /// Read across a room on a television, at arm's length on a phone.
+    private enum Metrics {
+        #if os(tvOS)
+        static let spacing: CGFloat = 9
+        static let glyph: CGFloat = 17
+        static let text: CGFloat = 19
+        static let horizontal: CGFloat = 14
+        static let vertical: CGFloat = 9
+        static let radius: CGFloat = 8
+        #else
+        static let spacing: CGFloat = 4
+        static let glyph: CGFloat = 10
+        static let text: CGFloat = 11
+        static let horizontal: CGFloat = 7
+        static let vertical: CGFloat = 4
+        static let radius: CGFloat = 5
+        #endif
     }
 }
