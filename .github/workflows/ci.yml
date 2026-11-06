@@ -65,8 +65,14 @@ jobs:
         run: python3 scripts/size_report.py .
 
   build:
-    name: Build for tvOS
+    # One app for both: "Build for tvOS" keeps the name the main branch's
+    # rules require.
+    name: Build for ${{ matrix.platform }}
     runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [tvOS, iOS]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -87,7 +93,7 @@ jobs:
           xcodebuild build \
             -project Mneme.xcodeproj \
             -scheme Mneme \
-            -destination 'generic/platform=tvOS Simulator' \
+            -destination 'generic/platform=${{ matrix.platform }} Simulator' \
             -clonedSourcePackagesDirPath .spm \
             -disableAutomaticPackageResolution \
             -skipMacroValidation \

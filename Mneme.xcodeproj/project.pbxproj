@@ -13,7 +13,7 @@
 		B10000000000000000000002 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000002 /* Nuke */; };
 		B10000000000000000000003 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000003 /* NukeUI */; };
 		B10000000000000000000004 /* AetherEngine in Frameworks */ = {isa = PBXBuildFile; productRef = D10000000000000000000004 /* AetherEngine */; };
-		B10000000000000000000005 /* MnemeTopShelf.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* MnemeTopShelf.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B10000000000000000000005 /* MnemeTopShelf.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* MnemeTopShelf.appex */; platformFilters = (tvos, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +55,14 @@
 				Resources/Info.plist,
 				Resources/Mneme.entitlements,
 			);
+			platformFiltersByRelativePath = {
+				Services/TopShelfCard.swift = (
+					tvos,
+				);
+				Services/TopShelfPublisher.swift = (
+					tvos,
+				);
+			};
 			target = A20000000000000000000001 /* Mneme */;
 		};
 		E10000000000000000000002 /* Exceptions for "MnemeTopShelf" folder in "MnemeTopShelf" target */ = {
@@ -281,6 +289,9 @@
 /* Begin PBXTargetDependency section */
 		A60000000000000000000001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
+			platformFilters = (
+				tvos,
+			);
 			target = A20000000000000000000002 /* MnemeTopShelf */;
 			targetProxy = A70000000000000000000001 /* PBXContainerItemProxy */;
 		};
@@ -337,6 +348,8 @@
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				"EXCLUDED_ARCHS[sdk=appletvsimulator*]" = x86_64;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = appletvos;
@@ -361,6 +374,8 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				"EXCLUDED_ARCHS[sdk=appletvsimulator*]" = x86_64;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
 				SDKROOT = appletvos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_VERSION = 6.0;
@@ -373,6 +388,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphoneos*]" = AppIcon;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphonesimulator*]" = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Mneme/Resources/Mneme.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				ENABLE_PREVIEWS = YES;
@@ -382,7 +399,12 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TARGETED_DEVICE_FAMILY = 3;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = "1,2,3";
 			};
 			name = Debug;
 		};
@@ -390,6 +412,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphoneos*]" = AppIcon;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphonesimulator*]" = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Mneme/Resources/Mneme.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				ENABLE_PREVIEWS = YES;
@@ -399,7 +423,12 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TARGETED_DEVICE_FAMILY = 3;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = "1,2,3";
 			};
 			name = Release;
 		};

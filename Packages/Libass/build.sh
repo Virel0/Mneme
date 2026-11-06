@@ -41,6 +41,9 @@ slices=(
     "tvos-arm64 appletvos arm64-apple-tvos26.1"
     "tvos-sim-arm64 appletvsimulator arm64-apple-tvos26.1-simulator"
     "tvos-sim-x86_64 appletvsimulator x86_64-apple-tvos26.1-simulator"
+    "ios-arm64 iphoneos arm64-apple-ios26.1"
+    "ios-sim-arm64 iphonesimulator arm64-apple-ios26.1-simulator"
+    "ios-sim-x86_64 iphonesimulator x86_64-apple-ios26.1-simulator"
     "macos-arm64 macosx arm64-apple-macos15.0"
     "macos-x86_64 macosx x86_64-apple-macos15.0"
 )
@@ -163,9 +166,11 @@ done
 
 # One library per platform, the simulator's and the Mac's for both
 # architectures.
-mkdir -p "$work/lib/tvos" "$work/lib/tvos-sim" "$work/lib/macos"
+mkdir -p "$work/lib/tvos" "$work/lib/tvos-sim" "$work/lib/ios" "$work/lib/ios-sim" "$work/lib/macos"
 cp "$work/build/tvos-arm64/libLibass.a" "$work/lib/tvos/"
 lipo -create "$work/build/tvos-sim-arm64/libLibass.a" "$work/build/tvos-sim-x86_64/libLibass.a" -output "$work/lib/tvos-sim/libLibass.a"
+cp "$work/build/ios-arm64/libLibass.a" "$work/lib/ios/"
+lipo -create "$work/build/ios-sim-arm64/libLibass.a" "$work/build/ios-sim-x86_64/libLibass.a" -output "$work/lib/ios-sim/libLibass.a"
 lipo -create "$work/build/macos-arm64/libLibass.a" "$work/build/macos-x86_64/libLibass.a" -output "$work/lib/macos/libLibass.a"
 
 # libass's own interface only; the libraries under it stay out of sight. In
@@ -188,6 +193,8 @@ rm -rf "$here/Libass.xcframework"
 xcodebuild -create-xcframework \
     -library "$work/lib/tvos/libLibass.a" -headers "$headers" \
     -library "$work/lib/tvos-sim/libLibass.a" -headers "$headers" \
+    -library "$work/lib/ios/libLibass.a" -headers "$headers" \
+    -library "$work/lib/ios-sim/libLibass.a" -headers "$headers" \
     -library "$work/lib/macos/libLibass.a" -headers "$headers" \
     -output "$here/Libass.xcframework" >/dev/null
 
@@ -206,7 +213,7 @@ cp "$src_fb/COPYING" "$licenses/fribidi-LGPL-2.1.txt"
     echo
     echo "Xcode    $(xcodebuild -version | tr '\n' ' ')"
     echo "clang    $(xcrun clang --version | head -1)"
-    for sdk in appletvos appletvsimulator macosx; do
+    for sdk in appletvos appletvsimulator iphoneos iphonesimulator macosx; do
         echo "SDK      $sdk $(xcrun --sdk "$sdk" --show-sdk-version)"
     done
     echo "build.sh sha256 $(shasum -a 256 "$here/build.sh" | cut -d' ' -f1)"
@@ -224,7 +231,7 @@ cp "$src_fb/COPYING" "$licenses/fribidi-LGPL-2.1.txt"
     echo "Flags    ${common_flags[*]}"
     echo
     echo "## Output"
-    for lib in tvos tvos-sim macos; do
+    for lib in tvos tvos-sim ios ios-sim macos; do
         echo "$lib  $(lipo -archs "$work/lib/$lib/libLibass.a")  sha256 $(shasum -a 256 "$work/lib/$lib/libLibass.a" | cut -d' ' -f1)"
     done
 } >"$here/BUILD-INFO.txt"

@@ -62,7 +62,9 @@ struct LaunchIntro: View {
         .buttonStyle(LabelOnly())
         .ignoresSafeArea()
         .focused($isFocused)
+        #if os(tvOS)
         .onMoveCommand { _ in finish() }
+        #endif
         .onPlayPauseCommand(perform: finish)
         .onExitCommand(perform: finish)
         .task {

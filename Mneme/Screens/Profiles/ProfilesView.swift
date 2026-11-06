@@ -88,7 +88,9 @@ struct ProfilesView: View {
             try? await client.signOut()
         }
         sessions.remove(session)
+        #if os(tvOS)
         TopShelfPublisher.clear()
+        #endif
         dismiss()
     }
 }

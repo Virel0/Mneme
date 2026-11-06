@@ -34,8 +34,8 @@ swiftformat --lint .
 cd MeleteKit && swift test
 ```
 
-and build the Mneme scheme for the tvOS simulator. CI also reports Swift files over 800 lines and
-functions over 100, as warnings.
+and build the Mneme scheme for the tvOS and iOS simulators. CI also reports Swift files over 800
+lines and functions over 100, as warnings.
 
 ## Pull requests
 

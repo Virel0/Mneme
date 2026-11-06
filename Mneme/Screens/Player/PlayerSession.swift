@@ -209,7 +209,12 @@ final class PlayerSession {
     private func recordDisplay() {
         guard let engine else { return }
         let window = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first
+        #if os(tvOS)
         let matching = window.map { $0.avDisplayManager.isDisplayCriteriaMatchingEnabled ? "on" : "off" } ?? "unknown"
+        #else
+        // A phone or tablet's screen follows the film by itself.
+        let matching = "n/a"
+        #endif
         let screen = window.map { "\($0.screen.maximumFramesPerSecond) Hz" } ?? "unknown"
         let film = engine.sourceVideoFrameRate.map { String(format: "%.3f fps", $0) } ?? "unknown"
         PlaybackDiagnostics.shared.record("display", "film \(film) · Match Content \(matching) · screen \(screen)")
