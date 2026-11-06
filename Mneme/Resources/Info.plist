@@ -41,12 +41,16 @@
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Mneme connects directly to your Melete server on this network, which streams faster and at higher quality than going out over the internet.</string>
+#ifdef MNEME_BACKGROUND_AUDIO
 	<!-- On iPhone and iPad a film keeps playing, as sound or in Picture in Picture,
-	     when the app goes to the background. -->
+	     when the app goes to the background. The Apple TV's player pauses there, so
+	     the Apple TV build leaves the mode out (MNEME_BACKGROUND_AUDIO is defined
+	     for the iOS SDKs only, in the project). -->
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
 	</array>
+#endif
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
