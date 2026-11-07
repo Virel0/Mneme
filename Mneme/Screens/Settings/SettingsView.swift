@@ -10,7 +10,7 @@
 import MeleteKit
 import SwiftUI
 
-/// Playback choices for this Apple TV, sending a diagnostics report, and
+/// Playback choices for this device, sending a diagnostics report, and
 /// which build this is.
 struct SettingsView: View {
 
@@ -18,6 +18,10 @@ struct SettingsView: View {
     private var library
     @Environment(SessionStore.self)
     private var sessions
+    #if os(iOS)
+    @Environment(\.dismiss)
+    private var dismiss
+    #endif
 
     @AppStorage(PlaybackPreferences.autoSkipIntrosKey)
     private var autoSkipIntros = false
@@ -72,7 +76,7 @@ struct SettingsView: View {
                         Text("Large").tag(56.0)
                         Text("Extra Large").tag(68.0)
                     }
-                    Toggle("Preview clips on Home", isOn: $previewClips)
+                    Toggle(Self.previewClipsTitle, isOn: $previewClips)
                     Toggle("Sound in preview clips", isOn: $previewSound)
                         .disabled(!previewClips)
                     Toggle("Melete converts surround sound", isOn: $meleteConvertsAudio)
@@ -80,7 +84,7 @@ struct SettingsView: View {
                     Text("Playback")
                 } footer: {
                     Text(
-                        "Credits are never skipped: the next episode is offered there instead. Over the quality chosen, Melete converts the film to fit. Preview clips play only on your home network. With Melete converting surround sound, a TrueHD or DTS soundtrack is converted by the server, lossless, instead of by this Apple TV; TrueHD's Atmos is lost. Playing the next episode is kept by Melete for all your devices; the rest are kept on this Apple TV."
+                        "Credits are never skipped: the next episode is offered there instead. Over the quality chosen, Melete converts the film to fit. Preview clips play only on your home network. With Melete converting surround sound, a TrueHD or DTS soundtrack is converted by the server, lossless, instead of by this \(Self.device); TrueHD's Atmos is lost. Playing the next episode is kept by Melete for all your devices; the rest are kept on this \(Self.device)."
                     )
                 }
 
@@ -91,7 +95,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Account")
                 } footer: {
-                    Text("Who's watching is asked only when more than one person is signed in on this Apple TV.")
+                    Text("Who's watching is asked only when more than one person is signed in on this \(Self.device).")
                 }
 
                 Section {
@@ -123,9 +127,40 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            #if os(iOS)
+            // A sheet on a touch screen, closed with a button rather
+            // than the remote's Back.
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(role: .close) {
+                        dismiss()
+                    }
+                }
+            }
+            #endif
         }
+        #if os(tvOS)
         // A full-screen cover is see-through on tvOS without a ground of its own.
         .background(PageBackground())
+        #endif
+    }
+
+    /// The device the footers speak of.
+    private static var device: String {
+        #if os(tvOS)
+        "Apple TV"
+        #else
+        UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone"
+        #endif
+    }
+
+    /// Home on a touch screen plays no clips; its title pages do.
+    private static var previewClipsTitle: String {
+        #if os(tvOS)
+        "Preview clips on Home"
+        #else
+        "Preview clips on title pages"
+        #endif
     }
 
     @ViewBuilder

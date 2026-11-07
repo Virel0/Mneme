@@ -67,6 +67,12 @@ public extension MeleteClient {
         try await send(Endpoint(.put, "api/v1/me/avatar/gallery", json: AvatarChoice(id: id)))
     }
 
+    /// A picture of the user's own, sent as it is: JPEG, PNG or WebP, up to
+    /// 5 MB, `contentType` saying which. It replaces any picture they had.
+    func uploadAvatar(_ data: Data, contentType: String) async throws(MeleteError) -> AvatarSet {
+        try await send(Endpoint(.put, "api/v1/me/avatar", body: data, contentType: contentType))
+    }
+
     func removeAvatar() async throws(MeleteError) -> AvatarSet {
         try await send(Endpoint(.delete, "api/v1/me/avatar"))
     }

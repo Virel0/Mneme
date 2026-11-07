@@ -74,7 +74,9 @@ struct TouchMainView: View {
             }
         }
         .fullScreenCover(isPresented: $showsProfiles) {
-            ProfilesView()
+            // Presented outside the tabs, so the app's white tint is given again.
+            TouchProfilesView()
+                .tint(.white)
         }
         // Outermost, so what is presented from here has them too.
         .environment(library)

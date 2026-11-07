@@ -24,12 +24,21 @@ public struct Endpoint<Response: Decodable & Sendable>: Sendable {
     public let path: String
     public let query: [URLQueryItem]
     public let body: Data?
+    /// What the body is: JSON, but for the few calls that send a file as it is.
+    public let contentType: String
 
-    init(_ method: HTTPMethod, _ path: String, query: [URLQueryItem] = [], body: Data? = nil) {
+    init(
+        _ method: HTTPMethod,
+        _ path: String,
+        query: [URLQueryItem] = [],
+        body: Data? = nil,
+        contentType: String = "application/json"
+    ) {
         self.method = method
         self.path = path
         self.query = query
         self.body = body
+        self.contentType = contentType
     }
 
     init(_ method: HTTPMethod, _ path: String, query: [URLQueryItem] = [], json: some Encodable) {

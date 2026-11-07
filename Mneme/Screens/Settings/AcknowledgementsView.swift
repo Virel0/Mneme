@@ -43,6 +43,12 @@ private struct LicenceView: View {
 
     let library: Acknowledgements.Library
 
+    #if os(tvOS)
+    private static let margins = EdgeInsets(top: 40, leading: 80, bottom: 40, trailing: 80)
+    #else
+    private static let margins = EdgeInsets(top: 16, leading: TouchLayout.edge, bottom: 16, trailing: TouchLayout.edge)
+    #endif
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 20) {
@@ -50,13 +56,18 @@ private struct LicenceView: View {
                     Text(paragraph)
                         .font(.callout)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        #if os(tvOS)
                         .focusable()
+                        #endif
                 }
             }
-            .padding(.horizontal, 80)
-            .padding(.vertical, 40)
+            .padding(Self.margins)
         }
         .navigationTitle("\(library.name) · \(library.licence)")
+        #if os(iOS)
+        // A long title, too long for the large one.
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 
     private var paragraphs: [String] {

@@ -7,6 +7,7 @@
 // Copyright (c) 2026 Mneme contributors
 //
 
+import MeleteKit
 import SwiftUI
 
 /// Who is watching: the people signed in on this Apple TV, a way to add
@@ -91,18 +92,24 @@ struct ProfilesView: View {
         }
     }
 
+    private func signOut(_ session: Session) {
+        sessions.signOut(session, using: library.client)
+        dismiss()
+    }
+}
+
+extension SessionStore {
+
     /// Ends the session on the server too, so the device stops appearing in
     /// the account's list; the device forgets it whatever the server says.
-    private func signOut(_ session: Session) {
-        let client = library.client
+    func signOut(_ session: Session, using client: MeleteClient) {
         Task {
             try? await client.signOut()
         }
-        sessions.remove(session)
+        remove(session)
         #if os(tvOS)
         TopShelfPublisher.clear()
         #endif
-        dismiss()
     }
 }
 
@@ -117,24 +124,37 @@ struct ProfileButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 16) {
+            VStack(spacing: ProfileTileMetrics.spacing) {
                 // Their profile picture, fetched as them: each profile can be
                 // on another server. The initial while it loads, and without one.
                 ArtworkImage(path: session.user.avatarUrl) {
                     Text(String(session.user.username.prefix(1)).uppercased())
-                        .font(.system(size: 80, weight: .bold))
+                        .font(.system(size: ProfileTileMetrics.initial, weight: .bold))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Color(white: isCurrent ? 0.28 : 0.15))
                 }
                 .environment(\.melete, sessions.client(for: session))
-                .frame(width: 180, height: 180)
-                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .frame(width: ProfileTileMetrics.edge, height: ProfileTileMetrics.edge)
+                .clipShape(RoundedRectangle(cornerRadius: ProfileTileMetrics.radius, style: .continuous))
+                #if os(iOS)
+                // Nothing has focus on a touch screen to say who is
+                // watching now, so the current profile is ringed.
+                .overlay {
+                    if isCurrent {
+                        RoundedRectangle(cornerRadius: ProfileTileMetrics.radius, style: .continuous)
+                            .strokeBorder(.white, lineWidth: 2)
+                    }
+                }
+                #endif
                 Text(session.user.username)
                 Text(session.server.host() ?? "")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
+        #if os(iOS)
+        .accessibilityAddTraits(isCurrent ? .isSelected : [])
+        #endif
         .buttonStyle(ProfileTileStyle())
     }
 }
@@ -152,4 +172,20 @@ struct ProfileTileStyle: ButtonStyle {
             .shadow(color: .black.opacity(isFocused ? 0.5 : 0), radius: 16, y: 8)
             .animation(.easeOut(duration: 0.15), value: isFocused)
     }
+}
+
+/// A profile's square: across a room on a television, a thumb's width and
+/// more on a phone, where two sit side by side.
+enum ProfileTileMetrics {
+    #if os(tvOS)
+    static let edge: CGFloat = 180
+    static let radius: CGFloat = 24
+    static let initial: CGFloat = 80
+    static let spacing: CGFloat = 16
+    #else
+    static let edge: CGFloat = 104
+    static let radius: CGFloat = 16
+    static let initial: CGFloat = 44
+    static let spacing: CGFloat = 8
+    #endif
 }

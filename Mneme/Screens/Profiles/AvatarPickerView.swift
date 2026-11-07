@@ -97,17 +97,13 @@ struct AvatarPickerView: View {
         }
     }
 
-    /// Makes the change, then takes the user as the server has them now, so
-    /// the new picture shows everywhere in the app at once.
     private func save(_ change: @escaping () async throws -> AvatarSet) {
         isSaving = true
         error = nil
         Task {
             defer { isSaving = false }
             do {
-                _ = try await change()
-                let user = try await client.me()
-                sessions.refresh(session, with: user)
+                try await sessions.changePicture(of: session, using: client, change)
                 dismiss()
             } catch {
                 self.error = "Couldn't change the picture: \(error.localizedDescription)"
@@ -116,9 +112,20 @@ struct AvatarPickerView: View {
     }
 }
 
+extension SessionStore {
+
+    /// Makes the change, then takes the user as the server has them now, so
+    /// the new picture shows everywhere in the app at once.
+    func changePicture(of session: Session, using client: MeleteClient, _ change: () async throws -> AvatarSet) async throws {
+        _ = try await change()
+        let user = try await client.me()
+        refresh(session, with: user)
+    }
+}
+
 /// One category's pictures in a row, fetched a page at a time as the row is
 /// scrolled.
-private struct AvatarCategoryRow: View {
+struct AvatarCategoryRow: View {
 
     let category: AvatarCategory
     let client: MeleteClient
@@ -132,25 +139,29 @@ private struct AvatarCategoryRow: View {
     @State
     private var isLoading = false
 
-    private static let edge: CGFloat = 180
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: Metrics.titleSpacing) {
             Text(category.name)
                 .font(.headline)
+                #if os(iOS)
+                .padding(.horizontal, TouchLayout.edge)
+                #endif
 
             ScrollView(.horizontal) {
-                LazyHStack(spacing: 40) {
+                LazyHStack(spacing: Metrics.spacing) {
                     ForEach(pictures) { picture in
                         Button {
                             choose(picture)
                         } label: {
                             ArtworkImage(path: picture.url)
-                                .frame(width: Self.edge, height: Self.edge)
-                                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                                .frame(width: Metrics.edge, height: Metrics.edge)
+                                .clipShape(RoundedRectangle(cornerRadius: Metrics.radius, style: .continuous))
                         }
                         .buttonStyle(ProfileTileStyle())
                         .disabled(isDisabled)
+                        #if os(iOS)
+                        .accessibilityLabel("\(category.name) picture")
+                        #endif
                         .onAppear {
                             if picture.id == pictures.last?.id {
                                 Task { await loadMore() }
@@ -159,10 +170,14 @@ private struct AvatarCategoryRow: View {
                     }
                 }
                 // Room for the focused picture to grow without being cut off.
-                .padding(.vertical, 24)
+                .padding(.vertical, Metrics.lift)
             }
+            #if os(iOS)
+            // From the page's margin, and to the screen's edge as it scrolls.
+            .contentMargins(.horizontal, TouchLayout.edge, for: .scrollContent)
+            #endif
             .scrollClipDisabled()
-            .frame(height: Self.edge + 48)
+            .frame(height: Metrics.edge + Metrics.lift * 2)
         }
         .focusSection()
         .task {
@@ -177,5 +192,23 @@ private struct AvatarCategoryRow: View {
         guard let page = try? await client.avatarPictures(in: category.id, offset: pictures.count) else { return }
         total = page.total
         pictures += page.pictures
+    }
+
+    /// Big enough to tell apart across a room; on a phone, four or so to a
+    /// screen. Nothing grows under a finger, so a phone needs no room for it.
+    private enum Metrics {
+        #if os(tvOS)
+        static let edge: CGFloat = 180
+        static let radius: CGFloat = 24
+        static let spacing: CGFloat = 40
+        static let titleSpacing: CGFloat = 20
+        static let lift: CGFloat = 24
+        #else
+        static let edge: CGFloat = 80
+        static let radius: CGFloat = 14
+        static let spacing: CGFloat = 12
+        static let titleSpacing: CGFloat = 10
+        static let lift: CGFloat = 0
+        #endif
     }
 }
