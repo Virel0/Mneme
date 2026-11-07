@@ -111,7 +111,7 @@ private struct TouchStack<Root: View>: View {
                 .navigationDestination(for: Route.self) { route in
                     switch route {
                     case let .title(summary):
-                        TitleView(summary: summary)
+                        TouchTitleView(summary: summary)
                     case let .play(target):
                         TouchPlayerView(target: target)
                     case let .person(id):

@@ -134,7 +134,7 @@ struct TitleView: View {
 }
 
 /// The logo, the facts, the overview, and what can be done with the title.
-private struct TitleHeader: View {
+struct TitleHeader: View {
 
     @Environment(Library.self)
     private var library
@@ -147,7 +147,7 @@ private struct TitleHeader: View {
         model.summary
     }
 
-    private var facts: String {
+    var facts: String {
         var parts = [summary.facts]
         if let series = model.series {
             let count = model.seasonList.filter { $0.season > 0 }.count
