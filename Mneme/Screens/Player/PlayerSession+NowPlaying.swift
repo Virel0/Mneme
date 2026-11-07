@@ -1,0 +1,124 @@
+//
+// Mneme is free software: you can redistribute it and/or modify it under the
+// terms of the GNU General Public License as published by the Free Software
+// Foundation, either version 3 of the License, or (at your option) any later
+// version. See LICENSE.md.
+//
+// Copyright (c) 2026 Mneme contributors
+//
+
+import AetherEngine
+import MediaPlayer
+import MeleteKit
+import Nuke
+import UIKit
+
+/// The film as the system sees it: its name and poster, where it is, and
+/// buttons that answer from outside the player. On the Apple TV that is the
+/// Remote in an iPhone's Control Center and the television's own Control
+/// Center; on a phone or tablet, the lock screen and Control Center.
+extension PlayerSession {
+
+    /// Before `start()`: the engine reads these when it builds its player.
+    /// It then publishes the elapsed time and rate itself; the app gives it
+    /// the name and poster and answers the buttons.
+    func prepareNowPlaying() {
+        guard let engine else { return }
+        engine.ownsVideoNowPlayingSession = true
+        // The software path (Dolby Vision FEL) answers its own buttons.
+        engine.ownsSoftwareNowPlaying = true
+        engine.remoteSkipInterval = Self.remoteSkip
+    }
+
+    /// The buttons on the native path, once its player exists. Each load can
+    /// bring a new one, so this runs again after each, and clears what it set
+    /// before so no button is answered twice.
+    func registerRemoteCommands() {
+        guard let center = engine?.videoNowPlayingSession?.remoteCommandCenter else { return }
+        center.playCommand.removeTarget(nil)
+        center.playCommand.addTarget { [weak self] _ in
+            MainActor.assumeIsolated { self?.setPaused(false) }
+            return .success
+        }
+        center.pauseCommand.removeTarget(nil)
+        center.pauseCommand.addTarget { [weak self] _ in
+            MainActor.assumeIsolated { self?.setPaused(true) }
+            return .success
+        }
+        center.togglePlayPauseCommand.removeTarget(nil)
+        center.togglePlayPauseCommand.addTarget { [weak self] _ in
+            MainActor.assumeIsolated { self?.togglePause() }
+            return .success
+        }
+        center.skipForwardCommand.preferredIntervals = [NSNumber(value: Self.remoteSkip)]
+        center.skipForwardCommand.removeTarget(nil)
+        center.skipForwardCommand.addTarget { [weak self] _ in
+            MainActor.assumeIsolated { self?.jump(by: Self.remoteSkip) }
+            return .success
+        }
+        center.skipBackwardCommand.preferredIntervals = [NSNumber(value: Self.remoteSkip)]
+        center.skipBackwardCommand.removeTarget(nil)
+        center.skipBackwardCommand.addTarget { [weak self] _ in
+            MainActor.assumeIsolated { self?.jump(by: -Self.remoteSkip) }
+            return .success
+        }
+        center.changePlaybackPositionCommand.removeTarget(nil)
+        center.changePlaybackPositionCommand.addTarget { [weak self] event in
+            guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
+            MainActor.assumeIsolated { self?.seek(to: event.positionTime) }
+            return .success
+        }
+    }
+
+    /// The name and poster of what is playing: the movie, or the episode
+    /// under its series. Asked for once the picture is up, for each file.
+    func publishNowPlaying(for target: PlayTarget) async {
+        guard let engine else { return }
+        var info: [String: Any] = [
+            MPNowPlayingInfoPropertyMediaType: NSNumber(value: MPNowPlayingInfoMediaType.video.rawValue),
+        ]
+        let poster: String?
+        switch target.title.kind {
+        case .movie:
+            guard let movie = try? await client.movie(target.title.id) else { return }
+            info[MPMediaItemPropertyTitle] = movie.title
+            poster = movie.poster
+        case .series:
+            guard let series = try? await client.series(target.title.id) else { return }
+            let code = target.season.flatMap { season in
+                target.episode.flatMap { Format.episodeCode(season: season, episode: $0) }
+            }
+            var name: String?
+            if let season = target.season, let number = target.episode {
+                name = try? await client.season(season, ofSeries: target.title.id)
+                    .episodes.first { $0.episode == number }?.name
+            }
+            info[MPMediaItemPropertyTitle] = name ?? code ?? series.title
+            info[MPMediaItemPropertyArtist] = [series.title, name == nil ? nil : code].compactMap(\.self).joined(separator: " · ")
+            poster = series.poster
+        }
+        if let image = await Self.artwork(poster, client: client) {
+            info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        }
+        // The next file may have started while this was asked for.
+        guard self.target == target else { return }
+        engine.setVideoNowPlayingInfo(info)
+    }
+
+    private static func artwork(_ path: String?, client: MeleteClient) async -> UIImage? {
+        guard let request = client.artworkRequest(ArtworkSlot(path: path, kind: .poster, width: 300)),
+              let image = try? await ImagePipeline.shared.image(for: request)
+        else { return nil }
+        // Drawn ready, as the engine asks: the system reads it off the main
+        // thread.
+        return image.preparingForDisplay() ?? image
+    }
+
+    private func setPaused(_ paused: Bool) {
+        if isPaused != paused {
+            togglePause()
+        }
+    }
+
+    private static let remoteSkip: Double = 10
+}

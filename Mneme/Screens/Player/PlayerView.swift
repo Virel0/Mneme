@@ -71,6 +71,7 @@ struct PlayerView: View {
             let session = PlayerSession(target: target, library: library)
             self.session = session
             focus = .catcher
+            session.prepareNowPlaying()
             await session.start()
         }
         .task(id: session?.trickplay) {
@@ -137,6 +138,10 @@ struct PlayerView: View {
                 AetherPlayerSurface(engine: engine)
             }
             .ignoresSafeArea()
+            // Each load can bring a new player for the buttons to answer on.
+            .onReceive(engine.$videoRoute) { _ in
+                session.registerRemoteCommands()
+            }
             SubtitleOverlay(engine: engine)
                 .ignoresSafeArea()
             if let renderer = session.assRenderer {
@@ -192,6 +197,8 @@ struct PlayerView: View {
             }
 
             if controlsVisible {
+                // Off while a list is open: the button that opened it lets go
+                // of focus, and Left cannot wander back out of the list.
                 PlayerControls(
                     session: session,
                     previews: previews,
@@ -200,6 +207,7 @@ struct PlayerView: View {
                     select: selectOnBar,
                     openPicker: { picker = $0 }
                 )
+                .disabled(picker != nil)
                 .transition(.opacity)
             }
 

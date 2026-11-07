@@ -212,6 +212,7 @@ final class PlayerSession {
             recordDisplay()
 
             Task { await loadExtras(for: target, stream: url) }
+            Task { await publishNowPlaying(for: target) }
         } catch let error as MeleteError {
             fail(error.localizedDescription)
         } catch {

@@ -31,6 +31,10 @@ struct TrackPicker: View {
     let session: PlayerSession
     let close: () -> Void
 
+    /// The row with the remote's focus, by its place in the list.
+    @FocusState
+    private var focusedRow: Int?
+
     var body: some View {
         HStack {
             Spacer()
@@ -41,10 +45,9 @@ struct TrackPicker: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 6) {
-                        switch kind {
-                        case .audio: audioRows
-                        case .subtitles: subtitleRows
-                        case .speed: speedRows
+                        ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                            self.row(row)
+                                .focused($focusedRow, equals: index)
                         }
                     }
                     .padding(.vertical, 8)
@@ -54,9 +57,17 @@ struct TrackPicker: View {
             .frame(width: 640)
             .frame(maxHeight: .infinity)
             .background(.regularMaterial)
+            .focusSection()
         }
         .ignoresSafeArea()
         .onExitCommand(perform: close)
+        // Focus goes straight to the choice in use, so the list answers the
+        // remote as soon as it opens. A moment later, once the rows are on
+        // screen: set in the same instant, tvOS drops the move.
+        .task {
+            try? await Task.sleep(for: .milliseconds(60))
+            focusedRow = rows.firstIndex(where: \.isOn) ?? 0
+        }
     }
 
     private var title: String {
@@ -67,48 +78,60 @@ struct TrackPicker: View {
         }
     }
 
-    @ViewBuilder
-    private var speedRows: some View {
-        ForEach(Self.speeds, id: \.self) { rate in
-            row(title: Self.speedTitle(rate), isOn: session.rate == rate) {
+    private struct Row {
+        let title: String
+        let isOn: Bool
+        let action: () -> Void
+    }
+
+    private var rows: [Row] {
+        switch kind {
+        case .audio: audioRows
+        case .subtitles: subtitleRows
+        case .speed: speedRows
+        }
+    }
+
+    private var speedRows: [Row] {
+        Self.speeds.map { rate in
+            Row(title: Self.speedTitle(rate), isOn: session.rate == rate) {
                 session.setRate(rate)
                 close()
             }
         }
     }
 
-    @ViewBuilder
-    private var audioRows: some View {
-        ForEach(session.audioTracks, id: \.id) { track in
-            row(title: Self.title(of: track), isOn: session.activeAudio == track.id) {
+    private var audioRows: [Row] {
+        session.audioTracks.map { track in
+            Row(title: Self.title(of: track), isOn: session.activeAudio == track.id) {
                 session.selectAudio(track)
                 close()
             }
         }
     }
 
-    @ViewBuilder
-    private var subtitleRows: some View {
-        row(title: "Off", isOn: session.subtitleTrack == nil) {
+    private var subtitleRows: [Row] {
+        let off = Row(title: "Off", isOn: session.subtitleTrack == nil) {
             session.selectSubtitle(nil)
             close()
         }
         // Picture tracks beside the video cannot be fetched as text.
-        ForEach(session.subtitles.filter { $0.text || $0.embeddedIndex != nil }) { track in
-            row(title: Self.title(of: track), isOn: session.subtitleTrack == track.track) {
+        let tracks = session.subtitles.filter { $0.text || $0.embeddedIndex != nil }.map { track in
+            Row(title: Self.title(of: track), isOn: session.subtitleTrack == track.track) {
                 session.selectSubtitle(track)
                 close()
             }
         }
+        return [off] + tracks
     }
 
-    private func row(title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+    private func row(_ row: Row) -> some View {
+        Button(action: row.action) {
             HStack {
-                Text(title)
+                Text(row.title)
                     .lineLimit(1)
                 Spacer()
-                if isOn {
+                if row.isOn {
                     Image(systemName: "checkmark")
                 }
             }
