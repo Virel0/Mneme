@@ -21,6 +21,22 @@ struct MnemeApp: App {
                 .environment(sessions)
                 .preferredColorScheme(.dark)
         }
+        .hearsDownloads()
+    }
+}
+
+private extension Scene {
+
+    /// Downloads go on with the app closed; the system wakes it to say how
+    /// they ended. The Apple TV keeps none.
+    func hearsDownloads() -> some Scene {
+        #if os(iOS)
+        backgroundTask(.urlSession(DownloadTransfer.sessionIdentifier)) {
+            await DownloadTransfer.hearBackgroundEvents()
+        }
+        #else
+        self
+        #endif
     }
 }
 

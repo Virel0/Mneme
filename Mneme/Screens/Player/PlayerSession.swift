@@ -103,7 +103,17 @@ final class PlayerSession {
     }
 
     var guide: SegmentGuide? {
-        play.map { SegmentGuide(segments: $0.segments, duration: duration > 0 ? duration : $0.durationSeconds) }
+        guard let segments = play?.segments ?? downloadedSegments else { return nil }
+        return SegmentGuide(segments: segments, duration: duration > 0 ? duration : play?.durationSeconds)
+    }
+
+    /// A download's parts to skip, kept with it.
+    private var downloadedSegments: FileSegments? {
+        #if os(iOS)
+        target.downloadID.flatMap { DownloadStore.shared.download($0)?.segments }
+        #else
+        nil
+        #endif
     }
 
     var skipOffer: SkipOffer? {
@@ -141,6 +151,13 @@ final class PlayerSession {
             assTrack = nil
             assRenderer = nil
         }
+
+        #if os(iOS)
+        if let id = target.downloadID {
+            await loadDownload(id)
+            return
+        }
+        #endif
 
         // Asked for beside the play link; the stream chosen waits on it only
         // when a subtitle is on.
@@ -201,6 +218,40 @@ final class PlayerSession {
             fail(error.localizedDescription)
         }
     }
+
+    #if os(iOS)
+    /// A download plays from the device, with no server to ask: where the
+    /// viewer was is kept with it, its subtitles are files beside it, its
+    /// parts to skip were kept with it, and the next episode is the next one
+    /// downloaded. The seek bar's previews are left out.
+    private func loadDownload(_ id: UUID) async {
+        guard let engine, let download = DownloadStore.shared.download(id),
+              let video = DownloadStore.shared.videoURL(of: download)
+        else {
+            fail("This download is no longer on the device.")
+            return
+        }
+        subtitles = download.subtitles
+        PlaybackDiagnostics.shared.record("play", "download of file \(download.fileID) · \(download.label)")
+        do {
+            var options = LoadOptions()
+            options.forwardBufferSegments = Self.forwardBufferSegments
+            try await engine.load(
+                url: video,
+                startPosition: startPosition(resume: download.position, restarts: false),
+                options: options
+            )
+            engine.play()
+            applyRate()
+            isPaused = false
+            phase = .playing
+            recordDisplay()
+            next = DownloadStore.shared.episode(after: download)?.playTarget
+        } catch {
+            fail(error.localizedDescription)
+        }
+    }
+    #endif
 
     /// The film's frame rate against the television's: a film at 24 frames
     /// on a television left at 60 stutters, however well it plays. Whether
@@ -339,9 +390,17 @@ final class PlayerSession {
     // MARK: - Progress
 
     func report(force: Bool = false) async {
-        guard play != nil, position > 0 else { return }
+        guard play != nil || target.downloadID != nil, position > 0 else { return }
         guard force || ProgressCadence.isDue(lastReport: lastReport, now: .now) else { return }
         lastReport = .now
+        #if os(iOS)
+        // Kept with the download, and sent from there when the server can
+        // be reached.
+        if let id = target.downloadID {
+            DownloadStore.shared.record(position: position, duration: duration > 0 ? duration : nil, of: id)
+            return
+        }
+        #endif
         _ = try? await client.reportProgress(
             file: target.fileID,
             ProgressReport(positionSeconds: position, durationSeconds: duration > 0 ? duration : nil, restart: target.restarts)

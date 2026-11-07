@@ -14,9 +14,10 @@ import SwiftUI
 /// The signed-in app on iPhone and iPad: tabs along the bottom, or a sidebar
 /// on a wide iPad, each with a navigation stack of its own.
 ///
-/// Four tabs rather than the Apple TV's seven: a phone's tab bar holds five
-/// before it folds the rest under More, so Movies, Shows and Anime are a
-/// switch at the top of Home instead.
+/// Four tabs rather than the Apple TV's seven, and Downloads as a fifth
+/// while there are any: a phone's tab bar holds five before it folds the
+/// rest under More, so Movies, Shows and Anime are a switch at the top of
+/// Home instead.
 struct TouchMainView: View {
 
     let session: Session
@@ -39,6 +40,10 @@ struct TouchMainView: View {
         _colours = State(initialValue: ArtworkColours(client: library.client))
     }
 
+    private var hasDownloads: Bool {
+        !DownloadStore.shared.downloads(for: session.id).isEmpty
+    }
+
     var body: some View {
         TabView(selection: $selected) {
             Tab("Home", systemImage: "house", value: TouchTab.home) {
@@ -55,6 +60,13 @@ struct TouchMainView: View {
                 TouchStack { TouchRequestsView() }
             }
 
+            // Only while there is something downloaded or on its way.
+            if hasDownloads {
+                Tab("Downloads", systemImage: "arrow.down.circle", value: TouchTab.downloads) {
+                    TouchStack { TouchDownloadsView() }
+                }
+            }
+
             Tab(value: TouchTab.search, role: .search) {
                 TouchStack { TouchSearchView() }
             }
@@ -62,15 +74,29 @@ struct TouchMainView: View {
         .tabViewStyle(.sidebarAdaptable)
         .tint(.white)
         .task {
+            DownloadStore.shared.attach(library.client, sessionID: session.id)
             await library.load()
+        }
+        // The last download removed takes its tab with it.
+        .onChange(of: hasDownloads) { _, has in
+            if !has, selected == .downloads {
+                selected = .home
+            }
         }
         .task {
             await library.listen()
         }
         // The user as signed in may have a new name or profile picture since.
+        // With no way to the server, the app opens on what is downloaded,
+        // the one thing that can be watched.
         .task {
-            if let user = try? await library.client.me() {
+            do throws(MeleteError) {
+                let user = try await library.client.me()
                 sessions.refresh(session, with: user)
+            } catch {
+                if case .transport = error, hasDownloads, selected == .home {
+                    selected = .downloads
+                }
             }
         }
         .fullScreenCover(isPresented: $showsProfiles) {
@@ -89,6 +115,7 @@ enum TouchTab: Hashable {
     case home
     case myList
     case requests
+    case downloads
     case search
 }
 

@@ -9,6 +9,12 @@ commit.
 ## [Unreleased]
 
 ### Added
+- Downloads on iPhone and iPad, from servers with offline copies turned on: Download on a movie,
+  an episode or a whole season, at a size chosen each time. Copies are HEVC, keeping HDR, with
+  the film's own surround sound up to 7.1. A Downloads tab appears while anything is
+  downloaded or on its way, plays without a connection, with Skip Intro and the next
+  downloaded episode, and is where the app opens when the server can't be reached. The
+  server's copy is deleted once the device has it.
 - Change Picture on Who's Watching: a new profile picture from the server's gallery, or none.
 
 ### Fixed
