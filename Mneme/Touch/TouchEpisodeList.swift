@@ -20,8 +20,40 @@ struct TouchEpisodeList: View {
     private var sizeClass
     @Environment(Router.self)
     private var router
+    @Environment(SessionStore.self)
+    private var sessions
 
     let model: TitleModel
+
+    /// A season's episodes being asked for at once.
+    @State
+    private var askingSeason: DownloadAsk?
+
+    /// Whether the server signed in to makes copies to download.
+    private var canDownload: Bool {
+        sessions.current.map { DownloadStore.shared.copiesOn[$0.id] == true } ?? false
+    }
+
+    private func downloadSubject(_ episode: Episode, season: Int) -> DownloadSubject? {
+        guard let file = episode.files.first else { return nil }
+        return DownloadSubject(
+            fileID: file.id,
+            title: model.summary.ref,
+            name: episode.name ?? Format.episodeCode(season: season, episode: episode.episode) ?? model.summary.title,
+            seriesName: model.series?.title ?? model.summary.title,
+            season: season,
+            episode: episode.episode,
+            artwork: episode.still
+        )
+    }
+
+    /// The season's episodes not downloaded or on their way yet.
+    private func undownloaded(in season: Int) -> [DownloadSubject] {
+        guard let session = sessions.current else { return [] }
+        return (model.seasons[season]?.episodes ?? [])
+            .compactMap { downloadSubject($0, season: season) }
+            .filter { DownloadStore.shared.download(of: $0.fileID, in: session.id) == nil }
+    }
 
     private var columns: [GridItem] {
         Array(repeating: GridItem(.flexible(), spacing: 20, alignment: .top), count: sizeClass == .regular ? 2 : 1)
@@ -46,6 +78,7 @@ struct TouchEpisodeList: View {
                         }
                     }
                     .padding(.horizontal, TouchLayout.edge)
+                    .downloadSizes($askingSeason)
                 } else {
                     ProgressView()
                         .frame(maxWidth: .infinity, minHeight: 120)
@@ -102,6 +135,13 @@ struct TouchEpisodeList: View {
             ) {
                 Task { await model.setSeasonWatched(season, !watched) }
             }
+            if canDownload {
+                let missing = undownloaded(in: season)
+                Button("Download Season", systemImage: "arrow.down.circle") {
+                    askingSeason = DownloadAsk(subjects: missing)
+                }
+                .disabled(missing.isEmpty)
+            }
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.title3)
@@ -114,6 +154,16 @@ struct TouchEpisodeList: View {
     // MARK: - Episodes
 
     private func row(_ episode: Episode, season: Int) -> some View {
+        HStack(alignment: .top, spacing: 4) {
+            playButton(episode, season: season)
+            if canDownload, let subject = downloadSubject(episode, season: season) {
+                DownloadButton(subject: subject, look: .icon)
+                    .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func playButton(_ episode: Episode, season: Int) -> some View {
         let watched = model.isWatched(episode)
         return Button {
             if let target = model.target(for: episode, season: season) {

@@ -25,6 +25,8 @@ struct PlayTarget: Hashable, Sendable {
     let episode: Int?
     /// Start from the beginning rather than where it was left.
     let restarts: Bool
+    /// A download on this device to play instead of the server's file.
+    var downloadID: UUID?
 
     /// What the summary itself says, when that is enough: the episode the
     /// home says is next or partway through, or the movie's file last played.

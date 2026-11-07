@@ -63,6 +63,7 @@ struct ContractTests {
         ("AvatarCategory", AvatarCategory.self, []),
         ("AvatarPictures", AvatarPictures.self, []),
         ("AvatarSet", AvatarSet.self, []),
+        ("OfflineCopy", OfflineCopy.self, []),
         ("WatchHome", WatchHome.self, []),
         ("WatchHomeRow", WatchHomeRow.self, []),
         ("WatchHomeItem", WatchHomeItem.self, []),
@@ -118,7 +119,7 @@ struct ContractTests {
         (
             "FileInfo",
             FileInfo.self,
-            ["modified_at", "segments", "trickplay", "subtitle_search", "offline", "media.subtitles", "media.video[].dolby_vision"]
+            ["modified_at", "trickplay", "subtitle_search", "offline", "media.subtitles", "media.video[].dolby_vision"]
         ),
         ("TranscodeRequest", TranscodeRequest.self, ["audio_mode"]),
         ("TranscodeResponse", TranscodeResponse.self, []),
@@ -153,6 +154,53 @@ struct ContractTests {
         let encoded = try JSONSerialization.jsonObject(with: JSONEncoder.melete.encode(decoded))
 
         Self.expectSameKeys(encoded, sample, skipped: skipped, at: "")
+    }
+
+    /// Answers whose schema is written out in the operation rather than
+    /// named: method and path, status, and the model.
+    nonisolated(unsafe) static let answers: [(String, String, String, any Codable.Type)] = [
+        ("get", "/api/v1/files/{id}/offline", "200", OfflineChoices.self),
+        ("post", "/api/v1/offline/{id}/link", "200", OfflineLink.self),
+    ]
+
+    static func operation(_ method: String, _ path: String) -> [String: Any]? {
+        let paths = spec["paths"] as? [String: Any]
+        return (paths?[path] as? [String: Any])?[method] as? [String: Any]
+    }
+
+    @Test(arguments: answers.map { "\($0.0) \($0.1)" })
+    func `answer matches schema`(_ name: String) throws {
+        let (method, path, status, type) = try #require(Self.answers.first { "\($0.0) \($0.1)" == name })
+        let operation = try #require(Self.operation(method, path), "\(name) is not in openapi.json")
+        let responses = try #require(operation["responses"] as? [String: Any])
+        let response = try #require(responses[status] as? [String: Any])
+        let content = try #require((response["content"] as? [String: Any])?["application/json"] as? [String: Any])
+        let schema = try #require(content["schema"] as? [String: Any])
+
+        let sample = Self.sample(schema)
+        let decoded = try JSONDecoder.melete.decode(type, from: JSONSerialization.data(withJSONObject: sample))
+        let encoded = try JSONSerialization.jsonObject(with: JSONEncoder.melete.encode(decoded))
+
+        Self.expectSameKeys(encoded, sample, skipped: [], at: "")
+    }
+
+    /// Every field an offline copy is asked for with is one the server reads:
+    /// a transcode's choice, or the subtitles to keep.
+    @Test
+    func `offline request fields are in the schema`() throws {
+        let operation = try #require(Self.operation("post", "/api/v1/files/{id}/offline"))
+        let body = try #require(operation["requestBody"] as? [String: Any])
+        let content = try #require((body["content"] as? [String: Any])?["application/json"] as? [String: Any])
+        let schema = try #require(content["schema"] as? [String: Any])
+        var known = Set((schema["properties"] as? [String: Any] ?? [:]).keys)
+        for part in schema["allOf"] as? [[String: Any]] ?? [] {
+            known.formUnion((Self.resolve(part)["properties"] as? [String: Any] ?? [:]).keys)
+        }
+
+        let request = OfflineRequest(maxHeight: 720, videoCodec: "hevc", audioStream: 1, audioChannels: 8, subtitles: ["s3"])
+        let sent = try #require(JSONSerialization.jsonObject(with: JSONEncoder.melete.encode(request)) as? [String: Any])
+        #expect(Set(sent.keys).subtracting(known).isEmpty, "not in the schema: \(Set(sent.keys).subtracting(known))")
+        #expect(Set(sent.keys) == ["max_height", "video_codec", "audio_stream", "audio_channels", "subtitles"])
     }
 
     // MARK: - Sample values

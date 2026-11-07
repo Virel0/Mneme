@@ -22,6 +22,8 @@ struct TouchTitleView: View {
 
     @Environment(Library.self)
     private var library
+    @Environment(SessionStore.self)
+    private var sessions
 
     @State
     private var model: TitleModel?
@@ -53,6 +55,10 @@ struct TouchTitleView: View {
             let model = TitleModel(summary: summary, library: library)
             self.model = model
             await model.load()
+            // Whether Download shows, once per server.
+            if let file = model.target?.fileID, let session = sessions.current {
+                await DownloadStore.shared.checkCopiesOn(fileID: file, sessionID: session.id)
+            }
         }
     }
 
@@ -150,11 +156,24 @@ private struct TouchTitleButtons: View {
     private var library
     @Environment(Router.self)
     private var router
+    @Environment(SessionStore.self)
+    private var sessions
 
     let model: TitleModel
 
     private var summary: TitleSummary {
         model.summary
+    }
+
+    /// A movie's file, to download, on a server that makes copies.
+    private var downloadSubject: DownloadSubject? {
+        guard summary.kind == .movie, let movie = model.movie, let file = model.target?.fileID,
+              let session = sessions.current, DownloadStore.shared.copiesOn[session.id] == true
+        else { return nil }
+        return DownloadSubject(
+            fileID: file, title: summary.ref, name: movie.title,
+            seriesName: nil, season: nil, episode: nil, artwork: movie.poster
+        )
     }
 
     var body: some View {
@@ -202,6 +221,10 @@ private struct TouchTitleButtons: View {
                     )
                 }
                 .accessibilityHint(model.isTitleWatched ? "Marks it unwatched" : "")
+
+                if let downloadSubject {
+                    DownloadButton(subject: downloadSubject)
+                }
             }
             .buttonStyle(.plain)
             .labelStyle(StackedLabelStyle())

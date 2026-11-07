@@ -29,6 +29,14 @@ extension PlayerSession {
     }
 
     func selectSubtitle(_ track: SubtitleTrack?) {
+        #if os(iOS)
+        if let id = target.downloadID, let download = DownloadStore.shared.download(id),
+           let video = DownloadStore.shared.videoURL(of: download)
+        {
+            applySubtitle(track?.track, stream: video)
+            return
+        }
+        #endif
         guard let play, let url = client.url(for: play.streamUrl) else { return }
         rememberChoice(audioLanguage: audioTracks.first { $0.id == activeAudio }?.language)
         // A picture track over a conversion that hasn't drawn it in, or a
@@ -66,6 +74,16 @@ extension PlayerSession {
             }
             return
         }
+        #if os(iOS)
+        // A download's tracks are WebVTT files beside it.
+        if let id = target.downloadID {
+            if let download = DownloadStore.shared.download(id), let url = DownloadStore.shared.subtitleURL(of: download, track: track) {
+                engine.selectSidecarSubtitle(url: url)
+                recordSubtitle(track, way: "downloaded WebVTT")
+            }
+            return
+        }
+        #endif
         // A styled track is drawn as made once its script and fonts are in;
         // until then, and if that fails, its plain version shows.
         if let listed = subtitles.first(where: { $0.track == track }), listed.ass == true, listed.assUrl != nil, assTrack != track {

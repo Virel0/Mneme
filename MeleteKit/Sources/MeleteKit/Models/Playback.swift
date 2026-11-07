@@ -193,6 +193,9 @@ public struct PlaybackSettings: Codable, Sendable {
     public let autoplayNext: Bool
     public let countdownSeconds: Int
     public let heroTrailers: HeroTrailers
+    /// Whether the player passes over a recap, an intro or a preview by
+    /// itself as it starts. Nil from a server older than the field.
+    public let autoSkip: Bool?
 
     /// Where the home's hero plays its picks' trailers. Kept open, so a
     /// choice a newer server adds does not fail the request.
