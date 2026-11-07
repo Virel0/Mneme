@@ -282,7 +282,7 @@ final class Library {
             favouritesVersion += 1
 
         case "requests":
-            requests = event.decode([MediaRequest].self)
+            requests = event.decode([MediaRequest].self)?.filter(\.isVideo)
 
         default:
             break

@@ -15,7 +15,7 @@ struct StepTrack: View {
 
     let step: String
 
-    private static let steps: [(key: String, name: String)] = [
+    static let steps: [(key: String, name: String)] = [
         ("wanted", "Waiting"),
         ("searching", "Searching"),
         ("downloading", "Downloading"),
@@ -72,7 +72,7 @@ struct SeasonGrid: View {
     }
 
     /// "8 of 10 episodes · Downloading 40%", or "Not looked for".
-    private static func line(_ season: RequestSeason) -> String {
+    static func line(_ season: RequestSeason) -> String {
         guard season.monitored else { return "Not looked for" }
         let episodes = season.episodes.map { "\(season.inLibrary) of \($0) episodes" } ?? "\(season.inLibrary) episodes"
         let step: String? = switch season.step {

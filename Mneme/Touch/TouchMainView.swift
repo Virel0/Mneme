@@ -52,11 +52,11 @@ struct TouchMainView: View {
             }
 
             Tab("Requests", systemImage: "tray.and.arrow.down", value: TouchTab.requests) {
-                TouchStack { RequestsView() }
+                TouchStack { TouchRequestsView() }
             }
 
             Tab(value: TouchTab.search, role: .search) {
-                TouchStack { SearchView() }
+                TouchStack { TouchSearchView() }
             }
         }
         .tabViewStyle(.sidebarAdaptable)

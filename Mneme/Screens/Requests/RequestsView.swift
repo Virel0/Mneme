@@ -26,7 +26,7 @@ struct RequestsView: View {
     private var loaded: [MediaRequest]?
 
     private var requests: [MediaRequest]? {
-        (library.requests ?? loaded)?.filter { $0.kind == "movie" || $0.kind == "series" }
+        (library.requests ?? loaded)?.filter(\.isVideo)
     }
 
     var body: some View {
@@ -77,7 +77,7 @@ struct RequestsView: View {
     }
 
     /// Where a request has got to, in the order the page shows them.
-    private enum Stage: CaseIterable {
+    enum Stage: CaseIterable {
         case onTheWay
         case waiting
         case arrived

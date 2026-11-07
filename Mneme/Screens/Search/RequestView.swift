@@ -116,10 +116,15 @@ struct RequestView: View {
             do {
                 let made = try await library.client.request(NewRequest(kind: item.kind, tmdbId: item.tmdbId, season: season))
                 model?.add(made)
-                state = .sent(made.state == "approved" ? "Requested and on its way" : "Requested: waiting for approval")
+                state = .sent(Self.outcome(of: made))
             } catch {
                 state = .failed(error.localizedDescription)
             }
         }
+    }
+
+    /// What became of a request just made: let through, or left for an admin.
+    static func outcome(of made: MediaRequest) -> String {
+        made.state == "approved" ? "Requested and on its way" : "Requested: waiting for approval"
     }
 }
