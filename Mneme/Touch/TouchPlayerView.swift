@@ -59,7 +59,7 @@ struct TouchPlayerView: View {
         .task {
             let session = PlayerSession(target: target, library: library)
             self.session = session
-            session.prepareForTouch()
+            session.prepareNowPlaying()
             await session.start()
         }
         .task(id: session?.trickplay) {

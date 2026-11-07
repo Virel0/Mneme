@@ -10,11 +10,15 @@ commit.
 
 ### Added
 - Change Picture on Who's Watching: a new profile picture from the server's gallery, or none.
+- The Remote on an iPhone, and the Apple TV's own Control Center, show what is playing with its
+  name and poster, and their play, pause, skip and scrub controls work the film.
 
 ### Fixed
 - Search no longer lists requests for music, which Mneme doesn't play.
 - Changing the order or genre of All Movies, All Shows or All Anime while titles are loading no
   longer mixes in titles from the old choice.
+- Choosing Audio, Subtitles or Speed in the player moves focus into the list straight away, onto
+  the choice in use; before, Menu had to be pressed to reach it.
 
 ## [1.0 build 15] - 2026-11-06
 
