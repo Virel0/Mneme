@@ -21,6 +21,7 @@ struct TouchPlayerControls: View {
     let previews: TrickplayPreviews?
     @Binding
     var scrubTarget: Double?
+    let pictureInPicture: PictureInPicture
     let jump: (_ forward: Bool) -> Void
     /// Any touch on the controls, which keeps them up.
     let touched: () -> Void
@@ -67,6 +68,21 @@ struct TouchPlayerControls: View {
                 .lineLimit(1)
 
             Spacer()
+
+            if pictureInPicture.isPossible {
+                Button("Picture in Picture", systemImage: pictureInPicture.isActive ? "pip.exit" : "pip.enter") {
+                    touched()
+                    pictureInPicture.toggle()
+                }
+                .labelStyle(.iconOnly)
+                .font(.title3)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+            }
+
+            AirPlayButton()
+                .frame(width: 44, height: 44)
+                .accessibilityLabel("AirPlay")
         }
     }
 
@@ -107,6 +123,10 @@ struct TouchPlayerControls: View {
 
     private var bottomBar: some View {
         VStack(spacing: 10) {
+            if let engine = session.engine {
+                AirPlaySoundOnlyNotice(engine: engine)
+            }
+
             TouchSeekBar(session: session, previews: previews, scrubTarget: $scrubTarget, touched: touched)
 
             HStack(spacing: 8) {

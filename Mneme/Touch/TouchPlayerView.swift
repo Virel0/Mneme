@@ -41,6 +41,8 @@ struct TouchPlayerView: View {
     private var scrubTarget: Double?
     @State
     private var skipFlash: SkipFlash?
+    @State
+    private var pictureInPicture = PictureInPicture()
 
     /// How long the controls stay up untouched, while playing.
     private static let controlsTimeout: TimeInterval = 4
@@ -57,6 +59,7 @@ struct TouchPlayerView: View {
         .task {
             let session = PlayerSession(target: target, library: library)
             self.session = session
+            session.prepareForTouch()
             await session.start()
         }
         .task(id: session?.trickplay) {
@@ -68,11 +71,12 @@ struct TouchPlayerView: View {
         .task(id: controlsVisible) {
             await hideControlsWhenIdle()
         }
+        // Unlike the Apple TV's player, nothing pauses here on the way to
+        // the background: the film carries on as sound, or in Picture in
+        // Picture, and the engine looks after itself there.
         .onChange(of: scenePhase) { _, phase in
-            switch phase {
-            case .background: session?.enterBackground()
-            case .active: Task { await session?.enterForeground() }
-            default: break
+            if phase == .active {
+                Task { await session?.restoreAfterBackground() }
             }
         }
         .onChange(of: session?.phase) { _, phase in
@@ -81,7 +85,10 @@ struct TouchPlayerView: View {
             }
         }
         .onAppear(perform: PlayerScreen.enter)
-        .onDisappear(perform: PlayerScreen.leave)
+        .onDisappear {
+            pictureInPicture.detach()
+            PlayerScreen.leave()
+        }
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .statusBarHidden(!controlsVisible)
@@ -95,6 +102,17 @@ struct TouchPlayerView: View {
                 AetherPlayerSurface(engine: engine)
             }
             .ignoresSafeArea()
+            // Each load can draw into another layer, or take the other path.
+            .onReceive(engine.$videoRoute) { _ in
+                pictureInPicture.attach(to: engine)
+                session.registerRemoteCommands()
+            }
+            .onReceive(engine.$softwarePiPSource) { _ in
+                pictureInPicture.attach(to: engine)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIScreen.capturedDidChangeNotification)) { _ in
+                engine.setScreenMirrored(PlayerScreen.isMirrored)
+            }
             SubtitleOverlay(engine: engine)
                 .ignoresSafeArea()
             if let renderer = session.assRenderer {
@@ -121,6 +139,7 @@ struct TouchPlayerView: View {
                     session: session,
                     previews: previews,
                     scrubTarget: $scrubTarget,
+                    pictureInPicture: pictureInPicture,
                     jump: { jump(forward: $0) },
                     touched: touch,
                     close: leave
@@ -249,6 +268,14 @@ private enum PlayerScreen {
     static func leave() {
         UIApplication.shared.isIdleTimerDisabled = false
         turn(to: .portrait)
+    }
+
+    /// Whether the screen is being shown elsewhere too, as when mirrored to
+    /// a television, which then carries a picture the engine draws itself.
+    /// Recording the screen reads the same; the engine only keeps its
+    /// picture where it is in that case.
+    static var isMirrored: Bool {
+        (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.screen.isCaptured ?? false
     }
 
     private static func turn(to orientations: UIInterfaceOrientationMask) {

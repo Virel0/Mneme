@@ -394,6 +394,9 @@
 				CODE_SIGN_STYLE = Automatic;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Mneme/Resources/Info.plist;
+				INFOPLIST_PREPROCESS = YES;
+				"INFOPLIST_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*]" = MNEME_BACKGROUND_AUDIO;
+				"INFOPLIST_PREPROCESSOR_DEFINITIONS[sdk=iphonesimulator*]" = MNEME_BACKGROUND_AUDIO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -418,6 +421,9 @@
 				CODE_SIGN_STYLE = Automatic;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Mneme/Resources/Info.plist;
+				INFOPLIST_PREPROCESS = YES;
+				"INFOPLIST_PREPROCESSOR_DEFINITIONS[sdk=iphoneos*]" = MNEME_BACKGROUND_AUDIO;
+				"INFOPLIST_PREPROCESSOR_DEFINITIONS[sdk=iphonesimulator*]" = MNEME_BACKGROUND_AUDIO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

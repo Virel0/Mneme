@@ -48,6 +48,16 @@ extension PlayerSession {
             if case .ended = state {
                 ended()
             }
+            #if os(iOS)
+            // On a phone the film is also paused and played from outside the
+            // player: Picture in Picture, the lock screen, headphones taken
+            // out. The player's own state follows whatever did it.
+            switch state {
+            case .playing: isPaused = false
+            case .paused: isPaused = true
+            default: break
+            }
+            #endif
         }
     }
 
