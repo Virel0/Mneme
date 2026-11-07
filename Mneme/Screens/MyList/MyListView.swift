@@ -56,13 +56,13 @@ struct MyListView: View {
         .environment(\.tileSpotlight, spotlight)
         // Reloaded whenever My List changes anywhere in the app.
         .task(id: library.favouritesVersion) {
-            guard let list = try? await library.client.favourites(limit: 500) else {
+            guard let list = await Self.load(from: library.client) else {
                 items = items ?? []
                 return
             }
             let previous = items ?? []
             let lost = focused
-            items = list.items.filter(\.present).map(TitleSummary.init)
+            items = list
             refocus(after: lost, in: previous)
         }
     }
@@ -104,6 +104,13 @@ struct MyListView: View {
         // The page keeps its own 60-point margins, as every row does, rather
         // than tvOS's wider safe area on top of them.
         .ignoresSafeArea(edges: [.top, .horizontal])
+    }
+
+    /// The titles on My List still in the library; nil when it couldn't be
+    /// fetched. The touch layout's list loads the same.
+    static func load(from client: MeleteClient) async -> [TitleSummary]? {
+        guard let list = try? await client.favourites(limit: 500) else { return nil }
+        return list.items.filter(\.present).map(TitleSummary.init)
     }
 
     /// A title taken off the list while focused leaves its neighbour
