@@ -15,14 +15,14 @@ import SwiftUI
 ///
 /// Sheets are tiled JPEGs; picture *i* is on sheet i / (columns × rows), at
 /// column i % columns and row (i / columns) % rows. They load without
-/// headers from the stream link, and each is fetched once.
+/// headers from the stream link, or from a download's folder, and each is
+/// fetched once.
 @MainActor
 @Observable
 final class TrickplayPreviews {
 
     private let trickplay: Trickplay
-    private let stream: URL
-    private let client: MeleteClient
+    private let sheetURL: @Sendable (Int) -> URL
 
     @ObservationIgnored
     private var sheets: [Int: CGImage] = [:]
@@ -31,10 +31,9 @@ final class TrickplayPreviews {
     /// Raised when a sheet arrives, so a preview waiting on it redraws.
     private(set) var version = 0
 
-    init(trickplay: Trickplay, stream: URL, client: MeleteClient) {
+    init(trickplay: Trickplay, sheetURL: @escaping @Sendable (Int) -> URL) {
         self.trickplay = trickplay
-        self.stream = stream
-        self.client = client
+        self.sheetURL = sheetURL
     }
 
     var aspectRatio: CGFloat {
@@ -81,7 +80,7 @@ final class TrickplayPreviews {
     private func load(_ sheet: Int) {
         guard sheet < trickplay.sheets, !loading.contains(sheet) else { return }
         loading.insert(sheet)
-        let url = client.trickplaySheetURL(stream: stream, sheet: sheet)
+        let url = sheetURL(sheet)
         Task {
             if let image = try? await ImagePipeline.shared.image(for: url).cgImage {
                 sheets[sheet] = image

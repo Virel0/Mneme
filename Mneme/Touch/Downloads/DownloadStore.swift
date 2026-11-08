@@ -20,7 +20,7 @@ import Observation
 /// comes over a background session that carries on with the app closed.
 /// Once the whole copy is here the server's is deleted, so it takes no room
 /// there. Each one lives in a folder of its own: the video, its subtitles
-/// as WebVTT and its picture, left out of backups.
+/// as WebVTT, its seek-bar previews and its picture, left out of backups.
 @MainActor
 @Observable
 final class DownloadStore {
@@ -180,6 +180,11 @@ final class DownloadStore {
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
 
+    /// Where a download's preview sheets are: `0.jpg`, `1.jpg`…
+    nonisolated static func previewsFolder(of id: UUID) -> URL {
+        folder(of: id).appending(path: "trickplay", directoryHint: .isDirectory)
+    }
+
     nonisolated static var root: URL {
         URL.applicationSupportDirectory.appending(path: "Downloads", directoryHint: .isDirectory)
     }
@@ -294,11 +299,35 @@ final class DownloadStore {
                 else { continue }
                 try? data.write(to: Self.folder(of: download.id).appending(path: "\(subtitle.track).vtt"))
             }
-            update(download.id) { $0.phase = .downloading(0) }
+            let previews = await savePreviews(link.trickplay, of: download.id, client: client)
+            update(download.id) {
+                $0.trickplay = previews
+                $0.phase = .downloading(0)
+            }
             transfer.start(download.id, from: video)
         } catch {
             update(download.id) { $0.phase = .failed(error.localizedDescription) }
         }
+    }
+
+    /// The seek bar's previews, a few small sheets, kept beside the video.
+    /// All of them or none: a missing sheet would leave part of the bar
+    /// blank.
+    private func savePreviews(_ previews: OfflineLink.Previews?, of id: UUID, client: MeleteClient) async -> Trickplay? {
+        guard let previews, previews.sheetUrls.count == previews.index.sheets else { return nil }
+        let folder = Self.previewsFolder(of: id)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        for (sheet, address) in previews.sheetUrls.enumerated() {
+            guard let url = client.url(for: address),
+                  let (data, response) = try? await URLSession.shared.data(from: url),
+                  (response as? HTTPURLResponse)?.statusCode == 200,
+                  (try? data.write(to: folder.appending(path: "\(sheet).jpg"))) != nil
+            else {
+                try? FileManager.default.removeItem(at: folder)
+                return nil
+            }
+        }
+        return previews.index
     }
 
     private func deleteServerCopy(of id: UUID) async {

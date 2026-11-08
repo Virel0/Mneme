@@ -58,6 +58,9 @@ struct Download: Codable, Hashable, Identifiable, Sendable {
     var position: Double = 0
     var duration: Double?
     var positionUnsent = false
+    /// The seek bar's previews, kept beside the video; nil when the server
+    /// had none for it.
+    var trickplay: Trickplay?
 
     var isReady: Bool {
         phase == .ready

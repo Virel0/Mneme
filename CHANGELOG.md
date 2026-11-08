@@ -18,6 +18,16 @@ commit.
 - Change Picture on Who's Watching: a new profile picture from the server's gallery, or none.
 - The Remote on an iPhone, and the Apple TV's own Control Center, show what is playing with its
   name and poster, and their play, pause, skip and scrub controls work the film.
+- Downloads keep their seek-bar previews, so scrubbing a downloaded episode or film shows where
+  it lands, with or without a connection (Melete 0.8 or later).
+- Languages of their own for movies, shows and anime, under Settings → Languages: anime with
+  Japanese audio and English subtitles, say, while everything else keeps yours (Melete 0.7 or
+  later).
+
+### Changed
+- Skip intros, recaps and previews is kept by Melete for each person, as Play the next episode
+  is, so it follows them to every device and the web. A device that had it on turns it on for
+  each profile once.
 
 ### Fixed
 - Search no longer lists requests for music, which Mneme doesn't play.

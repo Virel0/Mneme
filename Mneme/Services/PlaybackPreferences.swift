@@ -17,6 +17,8 @@ enum PlaybackPreferences {
 
     static let autoPlayNextKey = "autoPlayNext"
     static let autoSkipIntrosKey = "autoSkipIntros"
+    /// The profiles this device's skipping choice was handed to Melete for.
+    static let autoSkipCarriedKey = "autoSkipCarried"
     static let maxBitrateKey = "maxBitrate"
     static let resumeOffsetKey = "resumeOffset"
     static let subtitleSizeKey = "subtitleSize"
@@ -30,8 +32,9 @@ enum PlaybackPreferences {
         UserDefaults.standard.object(forKey: autoPlayNextKey) as? Bool ?? true
     }
 
-    /// Skip recaps, intros and previews without a press. Credits are never
-    /// skipped; the next episode is offered there instead.
+    /// Skip recaps, intros and previews without a press, where the server
+    /// doesn't keep the choice. Credits are never skipped; the next episode
+    /// is offered there instead.
     static var autoSkipIntros: Bool {
         UserDefaults.standard.bool(forKey: autoSkipIntrosKey)
     }

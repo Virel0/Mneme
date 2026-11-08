@@ -217,10 +217,17 @@ public struct PlaybackSettingsChange: Codable, Sendable {
     public let autoplayNext: Bool?
     public let countdownSeconds: Int?
     public let heroTrailers: PlaybackSettings.HeroTrailers?
+    public let autoSkip: Bool?
 
-    public init(autoplayNext: Bool? = nil, countdownSeconds: Int? = nil, heroTrailers: PlaybackSettings.HeroTrailers? = nil) {
+    public init(
+        autoplayNext: Bool? = nil,
+        countdownSeconds: Int? = nil,
+        heroTrailers: PlaybackSettings.HeroTrailers? = nil,
+        autoSkip: Bool? = nil
+    ) {
         self.autoplayNext = autoplayNext
         self.countdownSeconds = countdownSeconds
         self.heroTrailers = heroTrailers
+        self.autoSkip = autoSkip
     }
 }

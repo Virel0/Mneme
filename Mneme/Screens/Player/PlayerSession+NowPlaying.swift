@@ -72,6 +72,13 @@ extension PlayerSession {
 
     /// The name and poster of what is playing: the movie, or the episode
     /// under its series. Asked for once the picture is up, for each file.
+    /// MediaPlayer asks for the picture on a queue of its own, so the
+    /// closure that hands it over is made outside the main actor: made in
+    /// it, it would belong to it, and the call would stop the app.
+    private nonisolated static func artworkItem(_ image: UIImage) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+    }
+
     func publishNowPlaying(for target: PlayTarget) async {
         guard let engine else { return }
         var info: [String: Any] = [
@@ -98,7 +105,7 @@ extension PlayerSession {
             poster = series.poster
         }
         if let image = await Self.artwork(poster, client: client) {
-            info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+            info[MPMediaItemPropertyArtwork] = Self.artworkItem(image)
         }
         // The next file may have started while this was asked for.
         guard self.target == target else { return }

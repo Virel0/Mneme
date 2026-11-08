@@ -37,7 +37,7 @@ extension PlayerSession {
     }
 
     private func autoSkipIfWanted() {
-        guard PlaybackPreferences.autoSkipIntros, let offer = skipOffer, !autoSkipped.contains(offer.kind) else { return }
+        guard autoSkips, let offer = skipOffer, !autoSkipped.contains(offer.kind) else { return }
         autoSkipped.insert(offer.kind)
         skip(offer)
     }

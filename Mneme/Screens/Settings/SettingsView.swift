@@ -23,8 +23,6 @@ struct SettingsView: View {
     private var dismiss
     #endif
 
-    @AppStorage(PlaybackPreferences.autoSkipIntrosKey)
-    private var autoSkipIntros = false
     @AppStorage(PlaybackPreferences.maxBitrateKey)
     private var maxBitrate = 0
     @AppStorage(PlaybackPreferences.resumeOffsetKey)
@@ -59,7 +57,10 @@ struct SettingsView: View {
                         get: { library.autoplayNext },
                         set: { on in Task { await library.setAutoplayNext(on) } }
                     ))
-                    Toggle("Skip intros, recaps and previews", isOn: $autoSkipIntros)
+                    Toggle("Skip intros, recaps and previews", isOn: Binding(
+                        get: { library.autoSkip },
+                        set: { on in Task { await library.setAutoSkip(on) } }
+                    ))
                     Picker("Quality", selection: $maxBitrate) {
                         ForEach(PlaybackPreferences.bitrateChoices, id: \.self) { bitrate in
                             Text(bitrate == 0 ? "Original" : "Up to \(bitrate / 1_000_000) Mbps").tag(bitrate)
@@ -84,7 +85,7 @@ struct SettingsView: View {
                     Text("Playback")
                 } footer: {
                     Text(
-                        "Credits are never skipped: the next episode is offered there instead. Over the quality chosen, Melete converts the film to fit. Preview clips play only on your home network. With Melete converting surround sound, a TrueHD or DTS soundtrack is converted by the server, lossless, instead of by this \(Self.device); TrueHD's Atmos is lost. Playing the next episode is kept by Melete for all your devices; the rest are kept on this \(Self.device)."
+                        "Credits are never skipped: the next episode is offered there instead. Over the quality chosen, Melete converts the film to fit. Preview clips play only on your home network. With Melete converting surround sound, a TrueHD or DTS soundtrack is converted by the server, lossless, instead of by this \(Self.device); TrueHD's Atmos is lost. Playing the next episode and skipping are kept by Melete for all your devices; the rest are kept on this \(Self.device)."
                     )
                 }
 

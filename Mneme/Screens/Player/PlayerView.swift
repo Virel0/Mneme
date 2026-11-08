@@ -75,10 +75,8 @@ struct PlayerView: View {
             await session.start()
         }
         .task(id: session?.trickplay) {
-            guard let session, let trickplay = session.trickplay, let play = session.play,
-                  let url = library.client.url(for: play.streamUrl)
-            else { return }
-            previews = TrickplayPreviews(trickplay: trickplay, stream: url, client: library.client)
+            guard let session, let trickplay = session.trickplay, let sheetURL = session.previewSheetURL else { return }
+            previews = TrickplayPreviews(trickplay: trickplay, sheetURL: sheetURL)
         }
         .task(id: controlsVisible) {
             await hideControlsWhenIdle()
