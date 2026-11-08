@@ -8,7 +8,12 @@ commit.
 
 ## [Unreleased]
 
+## [1.0 build 16] - 2026-11-08
+
 ### Added
+- The iPhone and iPad app, now on Melete: the Apple TV app's home, title pages, My List, search,
+  requests, profiles and player, laid out for touch, with Picture in Picture, AirPlay and sound
+  carrying on in the background.
 - Downloads on iPhone and iPad, from servers with offline copies turned on: Download on a movie,
   an episode or a whole season, at a size chosen each time. Copies are HEVC, keeping HDR, with
   the film's own surround sound up to 7.1. A Downloads tab appears while anything is
@@ -137,7 +142,8 @@ Build 11 was never uploaded, so its changes are listed here too.
 ### Not yet back
 - The iPhone and iPad app.
 
-[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.15...main
+[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.16...main
+[1.0 build 16]: https://github.com/Virel0/Mneme/commits/v1.0-build.16
 [1.0 build 15]: https://github.com/Virel0/Mneme/commits/v1.0-build.15
 [1.0 build 14]: https://github.com/Virel0/Mneme/commits/v1.0-build.14
 [1.0 build 13]: https://github.com/Virel0/Mneme/commits/v1.0-build.13
