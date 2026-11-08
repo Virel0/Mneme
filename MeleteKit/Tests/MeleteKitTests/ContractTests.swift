@@ -70,7 +70,8 @@ struct ContractTests {
         ("WatchHomeHeroItem", WatchHomeItem.self, []),
         ("File", MediaFile.self, []),
         ("MovieDetail", MovieDetail.self, []),
-        ("SeriesDetail", SeriesDetail.self, []),
+        // Seasons and episodes come already numbered in the order it follows.
+        ("SeriesDetail", SeriesDetail.self, ["episode_order"]),
         ("SeasonSummary", SeasonSummary.self, []),
         ("Season", Season.self, []),
         ("Episode", Episode.self, []),
@@ -124,6 +125,7 @@ struct ContractTests {
         ("TranscodeRequest", TranscodeRequest.self, ["audio_mode"]),
         ("TranscodeResponse", TranscodeResponse.self, []),
         ("Languages", Languages.self, []),
+        ("KindLanguages", KindLanguages.self, []),
         ("PlaybackPreferences", PlaybackSettings.self, []),
         ("SimilarTitles", SimilarTitles.self, []),
         ("AiPick", AiPick.self, []),

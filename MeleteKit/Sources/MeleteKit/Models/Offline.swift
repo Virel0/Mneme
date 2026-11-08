@@ -93,7 +93,17 @@ public struct OfflineLink: Codable, Sendable {
         public let url: String
     }
 
+    /// The seek bar's previews to keep with a copy: the index, and each
+    /// sheet in order under the link.
+    public struct Previews: Codable, Hashable, Sendable {
+        public let index: Trickplay
+        public let sheetUrls: [String]
+    }
+
     public let downloadUrl: String
     public let expiresAt: Int
     public let subtitles: [Subtitle]
+    /// Nil when the file has none, has changed since the copy was made, or
+    /// the server is older than the field.
+    public let trickplay: Previews?
 }

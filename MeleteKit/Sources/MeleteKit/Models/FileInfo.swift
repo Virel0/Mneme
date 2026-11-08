@@ -154,6 +154,30 @@ public struct Languages: Codable, Hashable, Sendable {
     }
 }
 
+/// The languages one kind of title plays with: its own, or the viewer's,
+/// which it then follows.
+public struct KindLanguages: Codable, Hashable, Sendable {
+
+    public enum Kind: String, Codable, CaseIterable, Sendable {
+        case movies
+        case shows
+        /// A series wanted as anime, or in a library for anime.
+        case anime
+    }
+
+    public let kind: Kind
+    /// Whether these are the kind's own; false when it follows the
+    /// viewer's languages, which these then are.
+    public let own: Bool
+    public let audioLanguages: [String]
+    public let subtitleLanguages: [String]
+    public let subtitleMode: String
+
+    public var languages: Languages {
+        Languages(audioLanguages: audioLanguages, subtitleLanguages: subtitleLanguages, subtitleMode: subtitleMode)
+    }
+}
+
 public struct QuickConnectApproveRequest: Codable, Sendable {
     public let code: String
 }
@@ -188,6 +212,22 @@ public extension MeleteClient {
 
     func setLanguages(_ languages: Languages) async throws(MeleteError) -> Languages {
         try await send(Endpoint(.put, "api/v1/me/languages", json: languages))
+    }
+
+    /// What one kind of title plays with. Not found from a server older
+    /// than languages by kind.
+    func languages(for kind: KindLanguages.Kind) async throws(MeleteError) -> KindLanguages {
+        try await send(Endpoint(.get, "api/v1/me/languages/\(kind.rawValue)"))
+    }
+
+    /// Gives the kind languages of its own.
+    func setLanguages(_ languages: Languages, for kind: KindLanguages.Kind) async throws(MeleteError) -> KindLanguages {
+        try await send(Endpoint(.put, "api/v1/me/languages/\(kind.rawValue)", json: languages))
+    }
+
+    /// Drops the kind's own languages: it follows the viewer's again.
+    func followLanguages(for kind: KindLanguages.Kind) async throws(MeleteError) -> KindLanguages {
+        try await send(Endpoint(.delete, "api/v1/me/languages/\(kind.rawValue)"))
     }
 
     /// Which device a Quick Connect code belongs to, before approving it.

@@ -97,6 +97,12 @@ final class Library {
         playbackSettings?.autoplayNext ?? PlaybackPreferences.autoPlayNext
     }
 
+    /// Pass over recaps, intros and previews without a press: the viewer's
+    /// choice in Melete, or this device's where the server doesn't keep it.
+    var autoSkip: Bool {
+        playbackSettings?.autoSkip ?? PlaybackPreferences.autoSkipIntros
+    }
+
     /// Seconds the next episode is offered before it starts.
     var countdownSeconds: Int {
         playbackSettings?.countdownSeconds ?? 10
@@ -112,13 +118,27 @@ final class Library {
         }
     }
 
+    func setAutoSkip(_ on: Bool) async {
+        guard playbackSettings?.autoSkip != nil else {
+            UserDefaults.standard.set(on, forKey: PlaybackPreferences.autoSkipIntrosKey)
+            return
+        }
+        if let settings = try? await client.setPlaybackSettings(PlaybackSettingsChange(autoSkip: on)) {
+            playbackSettings = settings
+        }
+    }
+
     private var completed: [TitleRef: TitleSummary] = [:]
     private var lastLibraryVersion: Int?
     private var lastFavouritesVersion: Int?
 
+    /// The session, hashed: a name for what is kept for it on the device.
+    private let sessionName: String
+
     init(client: MeleteClient, sessionID: String) {
         self.client = client
         let name = SHA256.hash(data: Data(sessionID.utf8)).prefix(12).map { String(format: "%02x", $0) }.joined()
+        sessionName = name
         homeCache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?
             .appending(path: "home-\(name).json")
     }
@@ -220,6 +240,24 @@ final class Library {
     /// row is simply not there.
     private func loadPlaybackSettings() async {
         playbackSettings = try? await client.playbackSettings()
+        await carryOverAutoSkip()
+    }
+
+    /// Skipping was this device's choice, for every profile on it, before
+    /// Melete kept it: once the server keeps it, a device that had it on
+    /// turns it on for each profile once.
+    private func carryOverAutoSkip() async {
+        guard let settings = playbackSettings, settings.autoSkip != nil, PlaybackPreferences.autoSkipIntros else { return }
+        let key = PlaybackPreferences.autoSkipCarriedKey
+        var carried = UserDefaults.standard.stringArray(forKey: key) ?? []
+        guard !carried.contains(sessionName) else { return }
+        if settings.autoSkip == false {
+            // Tried again next time if the server doesn't take it.
+            guard let updated = try? await client.setPlaybackSettings(PlaybackSettingsChange(autoSkip: true)) else { return }
+            playbackSettings = updated
+        }
+        carried.append(sessionName)
+        UserDefaults.standard.set(carried, forKey: key)
     }
 
     private func loadBecauseYouWatched(from home: WatchHome) async {

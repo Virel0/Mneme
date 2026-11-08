@@ -38,11 +38,28 @@ final class PlayerSession {
         library.client
     }
 
+    /// Whether the viewer has recaps, intros and previews passed over.
+    var autoSkips: Bool {
+        library.autoSkip
+    }
+
     private(set) var target: PlayTarget
     private(set) var phase: Phase = .loading
     private(set) var play: PlayResponse?
     private(set) var subtitles: [SubtitleTrack] = []
     private(set) var trickplay: Trickplay?
+    /// Where each sheet of the seek bar's previews is: under the stream
+    /// link, or in a download's folder.
+    var previewSheetURL: (@Sendable (Int) -> URL)? {
+        #if os(iOS)
+        if let id = target.downloadID {
+            return { DownloadStore.previewsFolder(of: id).appending(path: "\($0).jpg") }
+        }
+        #endif
+        guard let play, let stream = client.url(for: play.streamUrl) else { return nil }
+        return { [client] in client.trickplaySheetURL(stream: stream, sheet: $0) }
+    }
+
     /// Whether Melete is converting this file to fit a bitrate limit.
     private(set) var isConverted = false
     /// The file's own chapters, for ticks on the seek bar.
@@ -224,7 +241,7 @@ final class PlayerSession {
     /// A download plays from the device, with no server to ask: where the
     /// viewer was is kept with it, its subtitles are files beside it, its
     /// parts to skip were kept with it, and the next episode is the next one
-    /// downloaded. The seek bar's previews are left out.
+    /// downloaded, and the seek bar's previews are its own.
     private func loadDownload(_ id: UUID) async {
         guard let engine, let download = DownloadStore.shared.download(id),
               let video = DownloadStore.shared.videoURL(of: download)
@@ -248,6 +265,7 @@ final class PlayerSession {
             phase = .playing
             recordDisplay()
             next = DownloadStore.shared.episode(after: download)?.playTarget
+            trickplay = download.trickplay
         } catch {
             fail(error.localizedDescription)
         }
