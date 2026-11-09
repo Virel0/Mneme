@@ -53,12 +53,14 @@ final class SearchModel {
     func loadStart() async {
         async let ai = try? client.ai()
         async let requests = try? client.requests()
-        async let trending = try? client.trending()
+        async let trendingMovies = try? client.trending(kind: .movie)
+        async let trendingSeries = try? client.trending(kind: .series)
 
         aiEnabled = await ai?.enabled ?? false
         self.requests = await (requests?.items ?? []).filter(\.isVideo)
         // Refused unless discovery is on in Melete; then the row is left out.
-        self.trending = await (trending ?? []).filter { $0.state != .playable }
+        self.trending = await Self.interleaved(trendingMovies ?? [], trendingSeries ?? [])
+            .filter { $0.state != .playable }
     }
 
     /// Searches as the viewer types. Called with every change; waits out a
@@ -80,15 +82,34 @@ final class SearchModel {
 
         async let movies = try? client.movies(query: query, limit: 30)
         async let shows = try? client.series(query: query, limit: 30)
-        async let elsewhere = try? client.discoverSearch(query)
+        // TMDB is asked for movies and series apart: anime comes with them.
+        async let moviesElsewhere = try? client.discoverSearch(query, kind: .movie)
+        async let seriesElsewhere = try? client.discoverSearch(query, kind: .series)
 
         let found = await Results(
             movies: (movies?.items ?? []).map { TitleSummary($0, kind: .movie) },
             shows: (shows?.items ?? []).map { TitleSummary($0, kind: .series) },
-            elsewhere: (elsewhere ?? []).filter { $0.state != .playable }
+            elsewhere: Self.interleaved(moviesElsewhere ?? [], seriesElsewhere ?? [])
+                .filter { $0.state != .playable }
         )
         guard !Task.isCancelled else { return }
         results = found
+    }
+
+    /// Movies and series in one row, taking turns, so the best of each
+    /// comes first.
+    static func interleaved(_ movies: [DiscoverItem], _ series: [DiscoverItem]) -> [DiscoverItem] {
+        var merged: [DiscoverItem] = []
+        merged.reserveCapacity(movies.count + series.count)
+        for index in 0 ..< max(movies.count, series.count) {
+            if index < movies.count {
+                merged.append(movies[index])
+            }
+            if index < series.count {
+                merged.append(series[index])
+            }
+        }
+        return merged
     }
 
     /// Asks the AI for titles matching a description, movies and series
