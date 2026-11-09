@@ -102,8 +102,12 @@ final class SearchModel {
         var merged: [DiscoverItem] = []
         merged.reserveCapacity(movies.count + series.count)
         for index in 0 ..< max(movies.count, series.count) {
-            if index < movies.count { merged.append(movies[index]) }
-            if index < series.count { merged.append(series[index]) }
+            if index < movies.count {
+                merged.append(movies[index])
+            }
+            if index < series.count {
+                merged.append(series[index])
+            }
         }
         return merged
     }
