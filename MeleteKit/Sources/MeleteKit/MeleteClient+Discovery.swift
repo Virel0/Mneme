@@ -27,16 +27,21 @@ public extension MeleteClient {
         ))
     }
 
-    /// TMDB's first page for the words, each marked playable, requested or
-    /// requestable. Needs only a TMDB key on the server.
-    func discoverSearch(_ query: String) async throws(MeleteError) -> [DiscoverItem] {
-        try await send(Endpoint(.get, "api/v1/discover/search", query: [URLQueryItem(name: "q", value: query)]))
+    /// TMDB's first page of movies or series for the words, each marked
+    /// playable, requested or requestable. Needs only a TMDB key on the
+    /// server. Anime is among the series and movies: TMDB has no kind of its
+    /// own for it.
+    func discoverSearch(_ query: String, kind: TitleKind) async throws(MeleteError) -> [DiscoverItem] {
+        try await send(Endpoint(.get, "api/v1/discover/search", query: [
+            URLQueryItem(name: "q", value: query),
+            URLQueryItem(name: "kind", value: kind.rawValue),
+        ]))
     }
 
-    /// What is trending on TMDB. Refused (409) unless the server has
-    /// discovery turned on.
-    func trending() async throws(MeleteError) -> [DiscoverItem] {
-        try await send(Endpoint(.get, "api/v1/discover/trending"))
+    /// The movies or series trending on TMDB. Refused (409) unless the
+    /// server has discovery turned on.
+    func trending(kind: TitleKind) async throws(MeleteError) -> [DiscoverItem] {
+        try await send(Endpoint(.get, "api/v1/discover/trending", query: [URLQueryItem(name: "kind", value: kind.rawValue)]))
     }
 
     func request(_ request: NewRequest) async throws(MeleteError) -> MediaRequest {
