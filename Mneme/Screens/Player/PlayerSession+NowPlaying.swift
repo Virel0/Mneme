@@ -68,7 +68,81 @@ extension PlayerSession {
             MainActor.assumeIsolated { self?.seek(to: event.positionTime) }
             return .success
         }
+        // A track chosen from the lists `publishTrackOptions` gives.
+        center.enableLanguageOptionCommand.removeTarget(nil)
+        center.enableLanguageOptionCommand.addTarget { [weak self] event in
+            guard let event = event as? MPChangeLanguageOptionCommandEvent else { return .commandFailed }
+            let id = event.languageOption.identifier ?? ""
+            let chosen = MainActor.assumeIsolated { self?.chooseTrack(id) ?? false }
+            return chosen ? .success : .noSuchContent
+        }
+        center.disableLanguageOptionCommand.removeTarget(nil)
+        center.disableLanguageOptionCommand.addTarget { [weak self] event in
+            guard let event = event as? MPChangeLanguageOptionCommandEvent,
+                  event.languageOption.languageOptionType == .legible
+            else { return .commandFailed }
+            MainActor.assumeIsolated { self?.selectSubtitle(nil) }
+            return .success
+        }
     }
+
+    /// The audio and subtitle tracks, as the player's own lists name them,
+    /// and which are on, laid over the name and poster: the Remote and
+    /// Control Center offer them. Again after every change of track.
+    func publishTrackOptions() {
+        guard let engine, let nowPlaying, nowPlaying.target == target else { return }
+        let audio = audioTracks.map { track in
+            MPNowPlayingInfoLanguageOption(
+                type: .audible,
+                languageTag: track.language ?? "und",
+                characteristics: nil,
+                displayName: TrackPicker.title(of: track),
+                identifier: Self.audioOption + String(track.id)
+            )
+        }
+        // The ones the player's list offers: picture tracks beside the video
+        // can't be fetched as text.
+        let subtitles = subtitles.filter { $0.text || $0.embeddedIndex != nil }.map { track in
+            MPNowPlayingInfoLanguageOption(
+                type: .legible,
+                languageTag: track.language ?? "und",
+                characteristics: nil,
+                displayName: TrackPicker.title(of: track),
+                identifier: Self.subtitleOption + track.track
+            )
+        }
+        let current = audio.filter { $0.identifier == activeAudio.map { Self.audioOption + String($0) } }
+            + subtitles.filter { $0.identifier == subtitleTrack.map { Self.subtitleOption + $0 } }
+
+        var info = nowPlaying.info
+        info[MPNowPlayingInfoPropertyAvailableLanguageOptions] = [
+            MPNowPlayingInfoLanguageOptionGroup(languageOptions: audio, defaultLanguageOption: nil, allowEmptySelection: false),
+            MPNowPlayingInfoLanguageOptionGroup(languageOptions: subtitles, defaultLanguageOption: nil, allowEmptySelection: true),
+        ]
+        info[MPNowPlayingInfoPropertyCurrentLanguageOptions] = current
+        engine.setVideoNowPlayingInfo(info)
+    }
+
+    /// Plays the track a list's identifier names, as the player's own list
+    /// would; false for one no longer there.
+    private func chooseTrack(_ id: String) -> Bool {
+        if id.hasPrefix(Self.audioOption), let index = Int(id.dropFirst(Self.audioOption.count)),
+           let track = audioTracks.first(where: { $0.id == index })
+        {
+            selectAudio(track)
+            return true
+        }
+        if id.hasPrefix(Self.subtitleOption),
+           let track = subtitles.first(where: { $0.track == id.dropFirst(Self.subtitleOption.count) })
+        {
+            selectSubtitle(track)
+            return true
+        }
+        return false
+    }
+
+    private static let audioOption = "audio:"
+    private static let subtitleOption = "subtitle:"
 
     /// The name and poster of what is playing: the movie, or the episode
     /// under its series. Asked for once the picture is up, for each file.
@@ -80,7 +154,7 @@ extension PlayerSession {
     }
 
     func publishNowPlaying(for target: PlayTarget) async {
-        guard let engine else { return }
+        guard engine != nil else { return }
         var info: [String: Any] = [
             MPNowPlayingInfoPropertyMediaType: NSNumber(value: MPNowPlayingInfoMediaType.video.rawValue),
         ]
@@ -109,7 +183,8 @@ extension PlayerSession {
         }
         // The next file may have started while this was asked for.
         guard self.target == target else { return }
-        engine.setVideoNowPlayingInfo(info)
+        nowPlaying = (target, info)
+        publishTrackOptions()
     }
 
     private static func artwork(_ path: String?, client: MeleteClient) async -> UIImage? {
