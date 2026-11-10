@@ -16,8 +16,9 @@ import SwiftUI
 /// at a time, with Play, More Info and My List on the artwork.
 ///
 /// Steps to the next pick every 16 seconds unless somebody is on the card,
-/// and by hand with Left from Play, or from the dots: Select enters them,
-/// Left and Right then step, and Back or Select again leaves.
+/// and by hand with Left from Play and Right from the dots at the end of the
+/// row, or inside the dots: Select enters them, Left and Right then step,
+/// and Back or Select again leaves.
 struct HeroBillboard: View {
 
     @Environment(\.melete)
@@ -112,8 +113,9 @@ private struct HeroCard: View {
         case list
         /// The dots; Select enters them, see `inPager`.
         case pager
-        /// The invisible target before Play; see `stepTarget`.
+        /// The invisible targets at the ends of the row; see `stepTarget`.
         case stepBack
+        case stepForward
     }
 
     /// Entered with Select on the dots: Left and Right step the picks
@@ -273,7 +275,7 @@ private struct HeroCard: View {
     @ViewBuilder
     private var actions: some View {
         HStack(spacing: 18) {
-            stepTarget(.stepBack, armedBy: .play) {
+            stepTarget(.stepBack, armed: focusedAction == .play) {
                 onPrevious()
                 focusedAction = .play
             }
@@ -324,6 +326,12 @@ private struct HeroCard: View {
                 // page's, which takes focus up to the strip.
                 .onExitCommand(perform: inPager ? { inPager = false } : nil)
                 .padding(.leading, 10)
+
+                // Not once entered: there Right is a move command.
+                stepTarget(.stepForward, armed: focusedAction == .pager && !inPager) {
+                    onNext()
+                    focusedAction = .pager
+                }
             }
         }
         // Play is the point of the card, so focus arriving lands there.
@@ -340,7 +348,7 @@ private struct HeroCard: View {
         }
     }
 
-    /// The place before Play that steps the picks back.
+    /// One of the places at the ends of the row that step the picks.
     ///
     /// Invisible, and focusable only while its neighbour has focus: Left from
     /// More Info finds Play, because the target beyond Play is not a
@@ -350,10 +358,10 @@ private struct HeroCard: View {
     /// moved and stepped. The entered dots can use one: nothing beside them
     /// takes focus.
     @ViewBuilder
-    private func stepTarget(_ action: Action, armedBy neighbour: Action, perform: @escaping () -> Void) -> some View {
+    private func stepTarget(_ action: Action, armed: Bool, perform: @escaping () -> Void) -> some View {
         Color.clear
             .frame(width: 1, height: 1)
-            .focusable(focusedAction == neighbour || focusedAction == action)
+            .focusable(armed || focusedAction == action)
             .focused($focusedAction, equals: action)
             .onChange(of: focusedAction) { _, current in
                 if current == action {
