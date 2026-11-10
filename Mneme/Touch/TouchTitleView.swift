@@ -187,9 +187,8 @@ private struct TouchTitleButtons: View {
                     .lineLimit(1)
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.white)
-            .foregroundStyle(.black)
+            // Grey like the buttons beside it: white read as already chosen.
+            .buttonStyle(.bordered)
             .disabled(model.target == nil)
 
             if let restart = model.restartTarget {

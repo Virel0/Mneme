@@ -16,7 +16,8 @@ import SwiftUI
 /// at a time, with Play, More Info and My List on the artwork.
 ///
 /// Steps to the next pick every 16 seconds unless somebody is on the card,
-/// and by hand with Left from Play and Right from My List.
+/// and by hand with Left from Play, or Left and Right on the dots, which
+/// Right from My List reaches.
 struct HeroBillboard: View {
 
     @Environment(\.melete)
@@ -106,10 +107,19 @@ private struct HeroCard: View {
         case play
         case info
         case list
-        /// The two invisible targets at the ends of the buttons; see `stepTarget`.
+        /// The dots, where Left and Right step the picks.
+        case pager
+        /// The invisible targets beside Play and the dots; see `stepTarget`.
         case stepBack
-        case stepForward
+        case pagerBack
+        case pagerForward
     }
+
+    /// Where focus goes back to after a step. Focus passes through nil on
+    /// the way back from a step target, so it arrives like focus from
+    /// outside the card, which otherwise lands on Play.
+    @State
+    private var stepReturn: Action?
 
     /// Play's target, looked up when the pick does not say.
     @State
@@ -279,32 +289,61 @@ private struct HeroCard: View {
             }
             .focused($focusedAction, equals: .list)
 
-            stepTarget(.stepForward, armedBy: .list) {
-                onNext()
-                focusedAction = .list
-            }
+            if position != nil {
+                HStack(spacing: 0) {
+                    stepTarget(.pagerBack, armedBy: .pager) {
+                        onPrevious()
+                        stepReturn = .pager
+                        focusedAction = .pager
+                    }
 
-            pager
+                    pager
+                        .focusable()
+                        .focused($focusedAction, equals: .pager)
+                        // Back leaves the dots for Play before the page's
+                        // own Back takes focus up to the strip.
+                        .onExitCommand {
+                            focusedAction = .play
+                        }
+
+                    stepTarget(.pagerForward, armedBy: .pager) {
+                        onNext()
+                        stepReturn = .pager
+                        focusedAction = .pager
+                    }
+                }
                 .padding(.leading, 10)
+            }
         }
-        // Play is the point of the card, so focus arriving lands there.
-        // `defaultFocus` does not do this: a move into the card is resolved
-        // by geometry first. Arrival is the one change from nil.
+        // Play is the point of the card, so focus arriving lands there,
+        // unless it is coming back from a step on the dots. `defaultFocus`
+        // does not do this: a move into the card is resolved by geometry
+        // first. Arrival is the one change from nil.
         .onChange(of: focusedAction) { previous, current in
-            if previous == nil, let current, current != .play {
-                focusedAction = .play
+            guard let current else { return }
+            if previous == nil {
+                let landing = stepReturn ?? .play
+                stepReturn = nil
+                if current != landing {
+                    focusedAction = landing
+                }
+            } else if current == stepReturn {
+                // Straight back, without passing through nil.
+                stepReturn = nil
             }
         }
     }
 
-    /// One of the two places at the ends of the buttons that step the picks.
+    /// One of the places beside Play and the dots that step the picks.
     ///
     /// Invisible, and focusable only while its neighbour has focus: Left from
     /// More Info finds Play, because the target beyond Play is not a
     /// candidate yet; the next Left finds the target, which steps and hands
-    /// focus straight back. A move command would be simpler, but on the
-    /// device it arrives after focus has already moved, so one press both
-    /// moved and stepped.
+    /// focus back (through nil; see `stepReturn`). On the dots the targets
+    /// sit closer than My List, so Left steps back rather than leaving; Up
+    /// and Down leave. A move command would be simpler, but on the device it
+    /// arrives after focus has already moved, so one press both moved and
+    /// stepped.
     @ViewBuilder
     private func stepTarget(_ action: Action, armedBy neighbour: Action, perform: @escaping () -> Void) -> some View {
         Color.clear
@@ -319,26 +358,33 @@ private struct HeroCard: View {
     }
 
     /// One dot per pick, between chevrons that say Left and Right step them.
+    /// Focused, it turns white like the buttons, the dots black on it.
     @ViewBuilder
     private var pager: some View {
         if let position {
+            let isOn = focusedAction == .pager
+            let ink: Color = isOn ? .black : .white
             HStack(spacing: 10) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(ink.opacity(isOn ? 0.7 : 0.55))
 
                 ForEach(0 ..< position.1, id: \.self) { dot in
                     Circle()
-                        .fill(.white.opacity(dot == position.0 - 1 ? 0.95 : 0.35))
+                        .fill(ink.opacity(dot == position.0 - 1 ? 0.95 : 0.35))
                         .frame(width: 10, height: 10)
                 }
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(ink.opacity(isOn ? 0.7 : 0.55))
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
+            .background(.white.opacity(isOn ? 1 : 0), in: Capsule())
+            .scaleEffect(isOn ? 1.06 : 1)
+            .shadow(color: .black.opacity(isOn ? 0.5 : 0), radius: 14, y: 6)
+            .animation(.easeOut(duration: 0.15), value: isOn)
         }
     }
 }
