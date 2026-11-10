@@ -26,6 +26,7 @@ extension PlayerSession {
         guard let engine, engine.activeAudioTrackIndex != track.id else { return }
         engine.selectAudioTrack(index: track.id)
         rememberChoice(audioLanguage: track.language)
+        publishTrackOptions()
     }
 
     func selectSubtitle(_ track: SubtitleTrack?) {
@@ -60,6 +61,7 @@ extension PlayerSession {
     func applySubtitle(_ track: String?, stream: URL) {
         guard let engine else { return }
         subtitleTrack = track
+        publishTrackOptions()
         if track != assTrack {
             assLoad?.cancel()
             assTrack = nil

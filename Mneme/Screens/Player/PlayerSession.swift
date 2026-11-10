@@ -102,6 +102,10 @@ final class PlayerSession {
     var assTrack: String?
     @ObservationIgnored
     var assLoad: Task<Void, Never>?
+    /// The name and poster as last published, and the file they are for;
+    /// the track lists are laid over them each time a track changes.
+    @ObservationIgnored
+    var nowPlaying: (target: PlayTarget, info: [String: Any])?
     /// Looks, once a subtitle is chosen, at whether it came.
     @ObservationIgnored
     var subtitleCheck: Task<Void, Never>?
