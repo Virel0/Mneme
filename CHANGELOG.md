@@ -8,6 +8,24 @@ commit.
 
 ## [Unreleased]
 
+## [1.0 build 18] - 2026-11-09
+
+### Added
+- The rows on Home, Movies, Shows and Anime go round: after the last title the first ones
+  follow, for as far as you go. A row that fits on one screen stays as it is.
+- On Apple TV, the dots under the hero can be entered: Select on them, then Left and Right
+  step through the picks, and Back leaves. Right from the dots steps on, as Left from Play
+  steps back.
+- Left alone on Home, the full-screen trailers play to their end before the next title.
+
+### Changed
+- Play is no longer white until it is selected: grey like the buttons beside it on iPhone and
+  iPad, and a shade lighter than them on Apple TV.
+
+### Fixed
+- The hero's trailer no longer plays on under the full-screen one when Home is left alone.
+- A trailer that ends early goes back to its picture instead of holding its last frame.
+
 ## [1.0 build 17] - 2026-11-09
 
 ### Fixed
@@ -147,7 +165,8 @@ Build 11 was never uploaded, so its changes are listed here too.
 ### Not yet back
 - The iPhone and iPad app.
 
-[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.17...main
+[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.18...main
+[1.0 build 18]: https://github.com/Virel0/Mneme/commits/v1.0-build.18
 [1.0 build 17]: https://github.com/Virel0/Mneme/commits/v1.0-build.17
 [1.0 build 16]: https://github.com/Virel0/Mneme/commits/v1.0-build.16
 [1.0 build 15]: https://github.com/Virel0/Mneme/commits/v1.0-build.15
