@@ -42,13 +42,16 @@ final class PreviewClip {
     private static let volume: Float = 0.6
     /// Enough for nearly any trailer to finish.
     private static let trailerLength: Duration = .seconds(150)
+    /// For a trailer played to its end: only a stream that stalls gets here.
+    private static let wholeTrailerLength: Duration = .seconds(300)
 
     /// Said once a launch, so a report shows why no clip plays without a
     /// line for every title focused.
     private static var saidOffNetwork = false
 
     /// Plays the trailer file when given one, else a clip of the title.
-    func start(for summary: TitleSummary, client: MeleteClient, trailerFile: Int? = nil) {
+    /// `wholeTrailer` lets a trailer run past the usual limit to its end.
+    func start(for summary: TitleSummary, client: MeleteClient, trailerFile: Int? = nil, wholeTrailer: Bool = false) {
         stop()
         guard PlaybackPreferences.previewClips, !UIAccessibility.isReduceMotionEnabled else { return }
         guard client.baseURL.isOnHomeNetwork else {
@@ -62,7 +65,7 @@ final class PreviewClip {
         task = Task { [weak self] in
             try? await Task.sleep(for: Self.delay)
             guard !Task.isCancelled else { return }
-            await self?.play(summary, trailerFile: trailerFile, client: client)
+            await self?.play(summary, trailerFile: trailerFile, wholeTrailer: wholeTrailer, client: client)
         }
     }
 
@@ -76,11 +79,11 @@ final class PreviewClip {
 
     /// Each step that can fail says so in the diagnostics report: a clip
     /// that doesn't start otherwise leaves no trace.
-    private func play(_ summary: TitleSummary, trailerFile: Int?, client: MeleteClient) async {
+    private func play(_ summary: TitleSummary, trailerFile: Int?, wholeTrailer: Bool, client: MeleteClient) async {
         let diagnostics = PlaybackDiagnostics.shared
         let source: (file: Int, start: Double, length: Duration, what: String)
         if let file = trailerFile {
-            source = (file, 0, Self.trailerLength, "trailer")
+            source = (file, 0, wholeTrailer ? Self.wholeTrailerLength : Self.trailerLength, "trailer")
         } else if let clip = summary.clip {
             source = (clip.fileId, clip.startSeconds, .seconds(clip.durationSeconds), "clip")
         } else if let target = try? await PlayTarget.lookUp(for: summary, client: client),
@@ -146,7 +149,22 @@ final class PreviewClip {
         }
         diagnostics.record("clip", "file \(source.file) · playing the \(source.what) from \(Int(source.start))s")
 
+        // Its length, or sooner if it ends: a trailer shorter than the
+        // limit otherwise held its last frame. Stopping cancels the sleep.
+        let ending = Task { [weak self] in
+            for await state in engine.$state.values {
+                switch state {
+                case .ended, .error:
+                    if self?.engine === engine {
+                        self?.stop()
+                    }
+                    return
+                default: continue
+                }
+            }
+        }
         try? await Task.sleep(for: source.length)
+        ending.cancel()
         guard !Task.isCancelled else { return }
         stop()
     }

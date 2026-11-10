@@ -80,9 +80,8 @@ private struct TouchHeroCard: View {
                         .lineLimit(1)
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.white)
-                .foregroundStyle(.black)
+                // Grey like the buttons beside it: white read as already chosen.
+                .buttonStyle(.bordered)
 
                 // A glyph alone, so Play keeps the width for what it says
                 // it will do: "Resume S1:E3 · 11m left".

@@ -16,7 +16,9 @@ import SwiftUI
 /// at a time, with Play, More Info and My List on the artwork.
 ///
 /// Steps to the next pick every 16 seconds unless somebody is on the card,
-/// and by hand with Left from Play and Right from My List.
+/// and by hand with Left from Play and Right from the dots at the end of the
+/// row, or inside the dots: Select enters them, Left and Right then step,
+/// and Back or Select again leaves.
 struct HeroBillboard: View {
 
     @Environment(\.melete)
@@ -98,6 +100,9 @@ private struct HeroCard: View {
     private var library
     @Environment(ArtworkColours.self)
     private var colours: ArtworkColours?
+    /// Off while cinematic mode is over the page, playing trailers of its own.
+    @Environment(\.isEnabled)
+    private var isEnabled
 
     @FocusState
     private var focusedAction: Action?
@@ -106,10 +111,19 @@ private struct HeroCard: View {
         case play
         case info
         case list
-        /// The two invisible targets at the ends of the buttons; see `stepTarget`.
+        /// The dots; Select enters them, see `inPager`.
+        case pager
+        /// The invisible targets at the ends of the row; see `stepTarget`.
         case stepBack
         case stepForward
     }
+
+    /// Entered with Select on the dots: Left and Right step the picks
+    /// instead of moving, until Back or Select again. The buttons are off
+    /// meanwhile, so the arrows have nowhere to take focus and reach the
+    /// dots as move commands.
+    @State
+    private var inPager = false
 
     /// Play's target, looked up when the pick does not say.
     @State
@@ -139,7 +153,10 @@ private struct HeroCard: View {
     }
 
     var body: some View {
-        artwork
+        // The picture behind a base that stays the same view: it is keyed on
+        // the title, and the buttons laid over it lost focus on every step.
+        Color.clear
+            .background { artwork }
             .overlay(alignment: .bottomLeading) {
                 lockup
                     .padding(HeroLayout.inset)
@@ -167,9 +184,16 @@ private struct HeroCard: View {
                 if isFocused {
                     colours?.focus(on: pick.backdrop)
                 }
-                if isFocused, let client {
+                if isFocused, isEnabled, let client {
                     clip.start(for: pick, client: client, trailerFile: trailerFile)
                 } else {
+                    clip.stop()
+                }
+            }
+            // Cinematic mode switches the page off without taking its focus,
+            // and its trailer played over this one.
+            .onChange(of: isEnabled) {
+                if !isEnabled {
                     clip.stop()
                 }
             }
@@ -182,7 +206,7 @@ private struct HeroCard: View {
             .task(id: pick.ref) {
                 // A step changes the title under a focused card; its clip
                 // follows.
-                if isFocused, let client {
+                if isFocused, isEnabled, let client {
                     clip.start(for: pick, client: client, trailerFile: trailerFile)
                 }
                 target = PlayTarget.known(for: pick)
@@ -251,7 +275,7 @@ private struct HeroCard: View {
     @ViewBuilder
     private var actions: some View {
         HStack(spacing: 18) {
-            stepTarget(.stepBack, armedBy: .play) {
+            stepTarget(.stepBack, armed: focusedAction == .play) {
                 onPrevious()
                 focusedAction = .play
             }
@@ -264,11 +288,13 @@ private struct HeroCard: View {
                 }
             }
             .focused($focusedAction, equals: .play)
+            .disabled(inPager)
 
             HeroActionButton(title: "More Info", systemImage: "info.circle", isProminent: false) {
                 open(pick)
             }
             .focused($focusedAction, equals: .info)
+            .disabled(inPager)
 
             HeroActionButton(
                 title: nil,
@@ -278,14 +304,35 @@ private struct HeroCard: View {
                 Task { await library.toggleFavourite(pick.ref) }
             }
             .focused($focusedAction, equals: .list)
+            .disabled(inPager)
 
-            stepTarget(.stepForward, armedBy: .list) {
-                onNext()
-                focusedAction = .list
-            }
-
-            pager
+            if position != nil {
+                Button {
+                    inPager.toggle()
+                } label: {
+                    pager
+                }
+                .buttonStyle(BareButtonStyle())
+                .focused($focusedAction, equals: .pager)
+                .onMoveCommand { direction in
+                    guard inPager else { return }
+                    switch direction {
+                    case .left: withAnimation { onPrevious() }
+                    case .right: withAnimation { onNext() }
+                    default: break
+                    }
+                }
+                // Back leaves the dots once entered; otherwise it is the
+                // page's, which takes focus up to the strip.
+                .onExitCommand(perform: inPager ? { inPager = false } : nil)
                 .padding(.leading, 10)
+
+                // Not once entered: there Right is a move command.
+                stepTarget(.stepForward, armed: focusedAction == .pager && !inPager) {
+                    onNext()
+                    focusedAction = .pager
+                }
+            }
         }
         // Play is the point of the card, so focus arriving lands there.
         // `defaultFocus` does not do this: a move into the card is resolved
@@ -294,22 +341,27 @@ private struct HeroCard: View {
             if previous == nil, let current, current != .play {
                 focusedAction = .play
             }
+            // Up or Down out of the entered dots leaves them too.
+            if current != .pager {
+                inPager = false
+            }
         }
     }
 
-    /// One of the two places at the ends of the buttons that step the picks.
+    /// One of the places at the ends of the row that step the picks.
     ///
     /// Invisible, and focusable only while its neighbour has focus: Left from
     /// More Info finds Play, because the target beyond Play is not a
     /// candidate yet; the next Left finds the target, which steps and hands
     /// focus straight back. A move command would be simpler, but on the
     /// device it arrives after focus has already moved, so one press both
-    /// moved and stepped.
+    /// moved and stepped. The entered dots can use one: nothing beside them
+    /// takes focus.
     @ViewBuilder
-    private func stepTarget(_ action: Action, armedBy neighbour: Action, perform: @escaping () -> Void) -> some View {
+    private func stepTarget(_ action: Action, armed: Bool, perform: @escaping () -> Void) -> some View {
         Color.clear
             .frame(width: 1, height: 1)
-            .focusable(focusedAction == neighbour || focusedAction == action)
+            .focusable(armed || focusedAction == action)
             .focused($focusedAction, equals: action)
             .onChange(of: focusedAction) { _, current in
                 if current == action {
@@ -319,26 +371,43 @@ private struct HeroCard: View {
     }
 
     /// One dot per pick, between chevrons that say Left and Right step them.
+    /// Focused, it turns white like the buttons, the dots black on it;
+    /// entered, a ring goes round it and the chevrons darken.
     @ViewBuilder
     private var pager: some View {
         if let position {
+            let isOn = focusedAction == .pager
+            let isIn = isOn && inPager
+            let ink: Color = isOn ? .black : .white
+            let chevron = ink.opacity(isIn ? 1 : isOn ? 0.45 : 0.55)
             HStack(spacing: 10) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(chevron)
 
                 ForEach(0 ..< position.1, id: \.self) { dot in
                     Circle()
-                        .fill(.white.opacity(dot == position.0 - 1 ? 0.95 : 0.35))
+                        .fill(ink.opacity(dot == position.0 - 1 ? 0.95 : 0.35))
                         .frame(width: 10, height: 10)
                 }
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .foregroundStyle(chevron)
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
+            .background(.white.opacity(isOn ? 1 : 0), in: Capsule())
+            .overlay {
+                Capsule()
+                    .strokeBorder(.white, lineWidth: 3)
+                    .padding(-8)
+                    .opacity(isIn ? 1 : 0)
+            }
+            .scaleEffect(isOn ? 1.06 : 1)
+            .shadow(color: .black.opacity(isOn ? 0.5 : 0), radius: 14, y: 6)
+            .animation(.easeOut(duration: 0.15), value: isOn)
+            .animation(.easeOut(duration: 0.15), value: isIn)
         }
     }
 }

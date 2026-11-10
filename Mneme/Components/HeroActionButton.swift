@@ -9,7 +9,7 @@
 
 import SwiftUI
 
-/// A capsule: light when it is the main action, translucent otherwise, and
+/// A translucent capsule, a shade lighter when it is the main action, and
 /// solid white with a black label when focused.
 struct HeroActionButton: View {
 
@@ -44,13 +44,13 @@ private struct HeroActionButtonStyle: ButtonStyle {
 
     let isProminent: Bool
 
+    /// Only focus is white. A lighter Play at rest read as focused, so it is
+    /// a shade above the others and no more.
     private var background: Color {
         if isFocused {
             .white
         } else if isProminent {
-            // Not white: if Play at rest were the same white as focus, focus
-            // would be invisible on it.
-            .white.opacity(0.62)
+            .white.opacity(0.32)
         } else {
             .white.opacity(0.22)
         }
@@ -58,7 +58,7 @@ private struct HeroActionButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(isFocused || isProminent ? .black : .white)
+            .foregroundStyle(isFocused ? .black : .white)
             .background(background, in: Capsule())
             // A lift as well as a fill: one signal can be missed on a bright
             // backdrop, two cannot.

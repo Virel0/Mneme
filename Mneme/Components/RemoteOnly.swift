@@ -25,5 +25,18 @@ extension View {
     func onPlayPauseCommand(perform _: (() -> Void)?) -> some View {
         self
     }
+
+    func onMoveCommand(perform _: ((MoveCommandDirection) -> Void)?) -> some View {
+        self
+    }
+}
+
+/// SwiftUI's has no iOS version; this one lets `onMoveCommand` above take
+/// the same closures.
+enum MoveCommandDirection {
+    case up
+    case down
+    case left
+    case right
 }
 #endif
