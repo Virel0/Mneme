@@ -90,7 +90,8 @@ struct TouchWatchPage: View {
                     items: row.items,
                     shape: row.shape,
                     open: { select($0, in: row) },
-                    goToTitle: row.shape == .landscape ? { router.open($0) } : nil
+                    goToTitle: row.shape == .landscape ? { router.open($0) } : nil,
+                    loops: true
                 )
             }
 
