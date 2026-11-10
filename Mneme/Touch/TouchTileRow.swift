@@ -25,6 +25,15 @@ struct TouchTileRow: View {
     /// For a row whose tiles play: opens the title instead, from the tile's
     /// long-press menu.
     var goToTitle: ((TitleSummary) -> Void)?
+    /// After the last title, the first again, for as far as anybody swipes.
+    var loops = false
+
+    /// How many times over the titles are laid out; one more is added as
+    /// the last comes into view, so the end is never reached.
+    @State
+    private var rounds = 2
+    @State
+    private var rowWidth: CGFloat = 0
 
     /// About one and a half wide tiles to a phone's width, or three posters
     /// and a bit; more of each on an iPad.
@@ -37,6 +46,14 @@ struct TouchTileRow: View {
         }
     }
 
+    /// Only a row longer than the screen goes round: a shorter one would
+    /// show the same titles side by side.
+    private var places: [(place: RowPlace, item: TitleSummary)] {
+        let fits = rowWidth / (tileWidth + 10)
+        let goesRound = loops && CGFloat(items.count) > fits
+        return items.inRounds(goesRound ? rounds : 1)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
@@ -45,8 +62,13 @@ struct TouchTileRow: View {
 
             ScrollView(.horizontal) {
                 LazyHStack(alignment: .top, spacing: 10) {
-                    ForEach(items) { item in
+                    ForEach(places, id: \.place) { place, item in
                         tile(item)
+                            .onAppear {
+                                if place.round == rounds - 1 {
+                                    rounds += 1
+                                }
+                            }
                     }
                 }
                 .scrollTargetLayout()
@@ -54,6 +76,7 @@ struct TouchTileRow: View {
             .contentMargins(.horizontal, TouchLayout.edge, for: .scrollContent)
             .scrollTargetBehavior(.viewAligned)
             .scrollIndicators(.hidden)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { rowWidth = $0 }
         }
     }
 

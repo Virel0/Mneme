@@ -28,13 +28,20 @@ struct TileRow: View {
     /// For a row whose tiles play when selected: opens the title instead,
     /// from the tile's long-press menu.
     var goToTitle: ((TitleSummary) -> Void)?
+    /// After the last title, the first again, for as far as anybody goes.
+    var loops = false
 
     /// Seeded with the screen width so the first frame is already right.
     @State
     private var rowWidth: CGFloat = UIScreen.main.bounds.width
 
     @FocusState
-    private var focusedTile: TitleRef?
+    private var focusedTile: RowPlace?
+
+    /// How many times over the titles are laid out; one more is added on
+    /// reaching the last, so the end is never reached.
+    @State
+    private var rounds = 2
 
     /// Made on first use: a `@State` initial value is evaluated every time
     /// the struct is built, which would be a prefetcher per render.
@@ -43,6 +50,13 @@ struct TileRow: View {
 
     private var isActive: Bool {
         focusedTile != nil
+    }
+
+    /// Only a row longer than the screen goes round: a shorter one would
+    /// show the same titles side by side.
+    private var places: [(place: RowPlace, item: TitleSummary)] {
+        let goesRound = loops && CGFloat(items.count) > RowLayout.defaultColumns(for: shape)
+        return items.inRounds(goesRound ? rounds : 1)
     }
 
     private var slot: TileSlot {
@@ -63,12 +77,12 @@ struct TileRow: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: RowLayout.spacing) {
-                    ForEach(items) { item in
+                    ForEach(places, id: \.place) { place, item in
                         // The lifted tile over its neighbours: here, on the
                         // stack's own child, is the only place it means anything.
                         tile(item)
-                            .zIndex(focusedTile == item.ref ? 1 : 0)
-                            .focused($focusedTile, equals: item.ref)
+                            .zIndex(focusedTile == place ? 1 : 0)
+                            .focused($focusedTile, equals: place)
                     }
                 }
                 .padding(.vertical, RowLayout.verticalPadding)
@@ -91,6 +105,11 @@ struct TileRow: View {
                     .padding(.vertical, -RowLayout.verticalBleed)
             }
             .focusSection()
+        }
+        .onChange(of: focusedTile) {
+            if let place = focusedTile, place.round == rounds - 1 {
+                rounds += 1
+            }
         }
         .task(id: items.map(\.ref)) {
             prefetch()
@@ -133,5 +152,21 @@ struct TileRow: View {
             prefetcher = ImagePrefetcher(destination: .diskCache)
         }
         prefetcher?.startPrefetching(with: requests)
+    }
+}
+
+/// A title's place in a row that goes round: the same title has one in each
+/// round.
+struct RowPlace: Hashable {
+    let round: Int
+    let ref: TitleRef
+}
+
+extension [TitleSummary] {
+    /// The titles `rounds` times over, each with its place.
+    func inRounds(_ rounds: Int) -> [(place: RowPlace, item: TitleSummary)] {
+        (0 ..< rounds).flatMap { round in
+            map { (RowPlace(round: round, ref: $0.ref), $0) }
+        }
     }
 }
