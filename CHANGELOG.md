@@ -8,6 +8,18 @@ commit.
 
 ## [Unreleased]
 
+## [1.0 build 19] - 2026-11-09
+
+### Added
+- Subtitles can be turned on and off from the Remote in an iPhone's Control Center while
+  something plays.
+
+### Fixed
+- With Melete converting surround sound, the audio list shows every soundtrack the file has, and
+  choosing another plays it from the same moment. It had shown only the one playing.
+- The Remote on an iPhone answers while Melete converts a file, as it does for the file itself.
+- Reopening a film to show a picture subtitle keeps the soundtrack that was playing.
+
 ## [1.0 build 18] - 2026-11-09
 
 ### Added
@@ -165,7 +177,8 @@ Build 11 was never uploaded, so its changes are listed here too.
 ### Not yet back
 - The iPhone and iPad app.
 
-[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.18...main
+[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.19...main
+[1.0 build 19]: https://github.com/Virel0/Mneme/commits/v1.0-build.19
 [1.0 build 18]: https://github.com/Virel0/Mneme/commits/v1.0-build.18
 [1.0 build 17]: https://github.com/Virel0/Mneme/commits/v1.0-build.17
 [1.0 build 16]: https://github.com/Virel0/Mneme/commits/v1.0-build.16
