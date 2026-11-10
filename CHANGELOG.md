@@ -8,6 +8,11 @@ commit.
 
 ## [Unreleased]
 
+## [1.0 build 17] - 2026-11-09
+
+### Fixed
+- Search's Not in the Library list and Trending show series and anime, not only movies.
+
 ## [1.0 build 16] - 2026-11-08
 
 ### Added
@@ -142,7 +147,8 @@ Build 11 was never uploaded, so its changes are listed here too.
 ### Not yet back
 - The iPhone and iPad app.
 
-[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.16...main
+[Unreleased]: https://github.com/Virel0/Mneme/compare/v1.0-build.17...main
+[1.0 build 17]: https://github.com/Virel0/Mneme/commits/v1.0-build.17
 [1.0 build 16]: https://github.com/Virel0/Mneme/commits/v1.0-build.16
 [1.0 build 15]: https://github.com/Virel0/Mneme/commits/v1.0-build.15
 [1.0 build 14]: https://github.com/Virel0/Mneme/commits/v1.0-build.14
