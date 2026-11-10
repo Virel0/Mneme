@@ -62,6 +62,11 @@ final class PlayerSession {
 
     /// Whether Melete is converting this file to fit a bitrate limit.
     private(set) var isConverted = false
+    /// A conversion's soundtrack, as the file's stream index, and every
+    /// soundtrack the file has: a conversion carries only the one, so the
+    /// others are listed from Melete and asked for in a new conversion.
+    private(set) var convertedAudio: Int?
+    private(set) var fileAudio: [AudioStream] = []
     /// The file's own chapters, for ticks on the seek bar.
     private(set) var chapters: [Chapter] = []
     /// Playback speed, 1 for normal.
@@ -153,8 +158,8 @@ final class PlayerSession {
     }
 
     /// `reloading` opens the same title again where it is, with a subtitle
-    /// the stream playing couldn't show.
-    private func load(_ target: PlayTarget, reloading: (at: Double, subtitle: String?)? = nil) async {
+    /// or a soundtrack the stream playing couldn't give.
+    private func load(_ target: PlayTarget, reloading: (at: Double, subtitle: String?, audio: Int?)? = nil) async {
         guard let engine else { return }
         phase = .loading
         next = nil
@@ -200,11 +205,14 @@ final class PlayerSession {
             let source = try await PlaybackSource.choose(
                 for: target.fileID,
                 play: play,
+                audio: reloading?.audio,
                 pictureSubtitle: pictureTrack(subtitle),
                 client: client
             )
             isConverted = source.isConverted
             burnedSubtitle = source.burnedSubtitle
+            convertedAudio = source.isConverted ? source.audioStream : nil
+            fileAudio = source.fileAudio
 
             var options = LoadOptions()
             options.forwardBufferSegments = Self.forwardBufferSegments
@@ -217,7 +225,7 @@ final class PlayerSession {
                 options: options,
                 // The chosen audio from the first frame, rather than a switch
                 // a second in. A conversion already carries only that one.
-                audioSourceStreamIndex: source.isConverted ? nil : play.tracks?.audio.map(Int32.init)
+                audioSourceStreamIndex: source.isConverted ? nil : source.audioStream.map(Int32.init)
             )
 
             if subtitle == nil {
@@ -231,6 +239,10 @@ final class PlayerSession {
             isPaused = false
             phase = .playing
             recordDisplay()
+            // Again now the player is certain to exist: a conversion reports
+            // its route before the player is made, so the buttons asked for
+            // then found nothing to answer on.
+            registerRemoteCommands()
 
             Task { await loadExtras(for: target, stream: url) }
             Task { await publishNowPlaying(for: target) }
@@ -444,10 +456,12 @@ final class PlayerSession {
 
     /// Opens the title again where it is, for a subtitle the stream playing
     /// can't show.
-    func reload(showing track: String?) {
+    /// Keeps the soundtrack playing unless given another.
+    func reload(showing track: String?, audio: Int? = nil) {
+        let audio = audio ?? activeAudio
         Task {
             await report(force: true)
-            await load(target, reloading: (position, track))
+            await load(target, reloading: (position, track, audio))
         }
     }
 

@@ -14,15 +14,34 @@ import MeleteKit
 
 extension PlayerSession {
 
+    /// A conversion carries one soundtrack; the file's others are listed
+    /// from Melete, to be asked for in a new conversion.
     var audioTracks: [TrackInfo] {
-        engine?.audioTracks ?? []
+        guard isConverted, !fileAudio.isEmpty else { return engine?.audioTracks ?? [] }
+        return fileAudio.map {
+            TrackInfo(
+                id: $0.index,
+                name: $0.title ?? "",
+                codec: $0.codec,
+                language: $0.language,
+                channels: $0.channels ?? 0,
+                isDefault: $0.default
+            )
+        }
     }
 
     var activeAudio: Int? {
-        engine?.activeAudioTrackIndex
+        isConverted ? convertedAudio : engine?.activeAudioTrackIndex
     }
 
     func selectAudio(_ track: TrackInfo) {
+        if isConverted {
+            guard track.id != convertedAudio else { return }
+            rememberChoice(audioLanguage: track.language)
+            PlaybackDiagnostics.shared.record("audio", "stream \(track.id) · reopening, a conversion carries one soundtrack")
+            reload(showing: subtitleTrack, audio: track.id)
+            return
+        }
         guard let engine, engine.activeAudioTrackIndex != track.id else { return }
         engine.selectAudioTrack(index: track.id)
         rememberChoice(audioLanguage: track.language)

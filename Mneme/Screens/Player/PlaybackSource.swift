@@ -20,6 +20,11 @@ struct PlaybackSource {
     let isConverted: Bool
     /// The picture track a conversion has drawn into its picture.
     var burnedSubtitle: String?
+    /// The soundtrack playing, as the file's stream index.
+    var audioStream: Int?
+    /// Every soundtrack the file has, when Melete was asked: a conversion
+    /// carries only one, so the others are listed from here.
+    var fileAudio: [AudioStream] = []
 
     /// The audio formats the Apple TV plays itself. Anything else (TrueHD,
     /// DTS, PCM) has to be converted, on the Apple TV or by Melete.
@@ -38,9 +43,12 @@ struct PlaybackSource {
     static func choose(
         for fileID: Int,
         play: PlayResponse,
+        audio: Int? = nil,
         pictureSubtitle: String?,
         client: MeleteClient
     ) async throws(MeleteError) -> PlaybackSource {
+        // One chosen by hand, else Melete's choice for the file.
+        let audio = audio ?? play.tracks?.audio
         guard let direct = client.url(for: play.streamUrl) else {
             throw .transport("Melete gave an address the player cannot open.")
         }
@@ -52,16 +60,16 @@ struct PlaybackSource {
         let bitrate = info?.media?.bitRate
         guard let limit, bitrate.map({ $0 > limit }) ?? true else {
             if PlaybackPreferences.meleteConvertsAudio, pictureSubtitle == nil,
-               let copied = await audioConverted(fileID: fileID, play: play, media: info?.media, client: client)
+               let copied = await audioConverted(fileID: fileID, audio: audio, media: info?.media, client: client)
             {
                 return copied
             }
-            return PlaybackSource(url: direct, isConverted: false)
+            return PlaybackSource(url: direct, isConverted: false, audioStream: audio)
         }
 
         let converted = try await client.transcode(file: fileID, TranscodeRequest(
             maxBitrate: limit,
-            audioStream: play.tracks?.audio,
+            audioStream: audio,
             // HEVC keeps HDR; only where the Apple TV decodes it in hardware.
             videoCodec: VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC) ? "hevc" : "h264",
             burnSubtitle: pictureSubtitle
@@ -73,7 +81,13 @@ struct PlaybackSource {
             "play.converted",
             "file \(fileID) · \(bitrate.map { "\($0 / 1_000_000) Mbps" } ?? "bitrate unknown") over the \(limit / 1_000_000) Mbps limit"
         )
-        return PlaybackSource(url: url, isConverted: true, burnedSubtitle: pictureSubtitle)
+        return PlaybackSource(
+            url: url,
+            isConverted: true,
+            burnedSubtitle: pictureSubtitle,
+            audioStream: audio,
+            fileAudio: info?.media?.audio ?? []
+        )
     }
 
     /// Melete's stream of the file with the video unchanged and only the
@@ -83,8 +97,8 @@ struct PlaybackSource {
     /// Melete refuses the request, as a server from before the choice of
     /// formats does.
     @MainActor
-    private static func audioConverted(fileID: Int, play: PlayResponse, media: MediaInfo?, client: MeleteClient) async -> PlaybackSource? {
-        guard let streams = media?.audio, let track = streams.first(where: { $0.index == play.tracks?.audio }) ?? streams.first,
+    private static func audioConverted(fileID: Int, audio: Int?, media: MediaInfo?, client: MeleteClient) async -> PlaybackSource? {
+        guard let streams = media?.audio, let track = streams.first(where: { $0.index == audio }) ?? streams.first,
               !audioCodecs.contains(track.codec.lowercased()),
               // Its video can't be copied; Melete would refuse.
               media?.video.contains(where: { $0.parameterSetsInStreamOnly == true }) != true
@@ -99,6 +113,6 @@ struct PlaybackSource {
         )), let url = client.url(for: converted.playlistUrl) else { return nil }
 
         PlaybackDiagnostics.shared.record("play.converted", "file \(fileID) · \(track.codec) audio converted by Melete, video copied")
-        return PlaybackSource(url: url, isConverted: true)
+        return PlaybackSource(url: url, isConverted: true, audioStream: track.index, fileAudio: streams)
     }
 }
