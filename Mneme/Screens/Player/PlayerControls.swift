@@ -42,6 +42,13 @@ struct PlayerControls: View {
                     .font(.title3.weight(.semibold))
                     .shadow(radius: 8)
 
+                if let party = session.partyHere, party.held, !party.waiting.isEmpty {
+                    Text("Waiting for \(ListFormatter.localizedString(byJoining: party.waiting))…")
+                        .font(.callout)
+                        .shadow(radius: 8)
+                        .padding(.top, 8)
+                }
+
                 Spacer()
 
                 SeekBar(session: session, previews: previews, scrubTarget: scrubTarget, select: select)
@@ -58,14 +65,26 @@ struct PlayerControls: View {
                     }
                     .focused(focus, equals: .subtitles)
 
+                    // In a watch party the party sets the speed.
+                    if session.parties.party == nil {
+                        HeroActionButton(
+                            title: session.rate == 1 ? "Speed" : TrackPicker.speedTitle(session.rate),
+                            systemImage: "gauge.with.dots.needle.67percent",
+                            isProminent: false
+                        ) {
+                            openPicker(.speed)
+                        }
+                        .focused(focus, equals: .speed)
+                    }
+
                     HeroActionButton(
-                        title: session.rate == 1 ? "Speed" : TrackPicker.speedTitle(session.rate),
-                        systemImage: "gauge.with.dots.needle.67percent",
+                        title: session.parties.party.map { "Party \($0.code)" } ?? "Together",
+                        systemImage: "person.2",
                         isProminent: false
                     ) {
-                        openPicker(.speed)
+                        openPicker(.together)
                     }
-                    .focused(focus, equals: .speed)
+                    .focused(focus, equals: .together)
                 }
                 .padding(.top, 28)
             }

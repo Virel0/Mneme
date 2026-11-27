@@ -45,6 +45,8 @@ final class Library {
     }
 
     let client: MeleteClient
+    /// The watch party this device is in, followed from the event stream.
+    let parties: WatchParties
     /// Where this person's home is kept between launches.
     private let homeCache: URL?
 
@@ -137,6 +139,7 @@ final class Library {
 
     init(client: MeleteClient, sessionID: String) {
         self.client = client
+        parties = WatchParties(client: client)
         let name = SHA256.hash(data: Data(sessionID.utf8)).prefix(12).map { String(format: "%02x", $0) }.joined()
         sessionName = name
         homeCache = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?
@@ -321,6 +324,11 @@ final class Library {
 
         case "requests":
             requests = event.decode([MediaRequest].self)?.filter(\.isVideo)
+
+        case "watch_party":
+            if let list = event.decode([WatchParty].self) {
+                parties.take(list)
+            }
 
         default:
             break
