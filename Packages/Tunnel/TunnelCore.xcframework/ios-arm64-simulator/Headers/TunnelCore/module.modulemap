@@ -1,0 +1,4 @@
+module TunnelCore {
+    header "tunnel_core.h"
+    export *
+}
