@@ -235,7 +235,13 @@ struct RequestDetailView: View {
         } else if progress.step == "downloading", let percent = progress.percent {
             parts.append("\(Int(percent))% downloaded")
         }
-        if let message = progress.message, !message.isEmpty {
+        // In place of Melete's message, which says the same less fully.
+        if progress.dead == true {
+            parts.append(
+                "No one is sharing what was found, so nothing will come of it. "
+                    + "It's still looked out for, in case another release appears"
+            )
+        } else if let message = progress.message, !message.isEmpty {
             parts.append(message)
         }
         return parts.isEmpty ? nil : parts.joined(separator: ". ")

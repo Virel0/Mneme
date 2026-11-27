@@ -46,6 +46,12 @@ public extension MeleteClient {
         _ = try await send(Endpoint<NoContent>(.put, "api/v1/files/\(id)/track-choice", json: choice))
     }
 
+    /// The file's intro or credits played through to its end: it is no
+    /// longer new to this viewer, in this or any episode it is in.
+    func segmentSeen(file id: Int, _ kind: SeenSegment) async throws(MeleteError) {
+        _ = try await send(Endpoint<NoContent>(.put, "api/v1/files/\(id)/segments/seen", json: SeenSegmentBody(kind: kind)))
+    }
+
     func sendDiagnostics(_ report: DiagnosticsReport) async throws(MeleteError) -> DiagnosticsKept {
         try await send(Endpoint(.post, "api/v1/me/diagnostics", json: report))
     }
@@ -92,4 +98,14 @@ public extension MeleteClient {
     func trickplaySheetURL(stream streamURL: URL, sheet: Int) -> URL {
         streamURL.appending(path: "trickplay/\(sheet).jpg")
     }
+}
+
+/// The parts of a file that can be new to a viewer.
+public enum SeenSegment: String, Encodable, Sendable {
+    case intro
+    case credits
+}
+
+private struct SeenSegmentBody: Encodable, Sendable {
+    let kind: SeenSegment
 }

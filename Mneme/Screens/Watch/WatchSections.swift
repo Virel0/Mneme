@@ -38,7 +38,7 @@ struct WatchSections {
     let rows: [Row]
 
     /// As many picks as the home's hero has.
-    private static let heroCount = 8
+    private static let heroCount = 12
 
     init(
         home: WatchHome,

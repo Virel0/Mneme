@@ -14,9 +14,9 @@ import SwiftUI
 /// Home left alone: the hero's picks take the whole screen one at a time,
 /// each with its trailer or a clip of it, its logo and facts low in the
 /// corner, crossfading to the next after 40 seconds, or once its trailer has
-/// played to the end: nobody is busy with anything else. After eight it rests on
-/// the last picture, with nothing playing, so the Apple TV's own screensaver
-/// can come.
+/// played to the end: nobody is busy with anything else. After twelve, as
+/// many as the hero holds, it rests on the last picture, with nothing
+/// playing, so the Apple TV's own screensaver can come.
 struct CinematicView: View {
 
     @Environment(Library.self)
@@ -30,7 +30,7 @@ struct CinematicView: View {
     private var clip = PreviewClip()
 
     private static let each: Duration = .seconds(40)
-    private static let most = 8
+    private static let most = 12
 
     private var pick: TitleSummary? {
         picks.isEmpty ? nil : picks[index % picks.count]

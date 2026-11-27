@@ -87,6 +87,10 @@ public struct WantedProgress: Codable, Hashable, Sendable {
     public let copied: Copying?
     /// Where it is coming from: `torrent` or `soulseek`.
     public let source: String?
+    /// Its latest download died: no one was sharing it and nothing else
+    /// could be grabbed. The step stays `searching` for a title still looked
+    /// for, so this is the only sign. Nil from a server older than the field.
+    public let dead: Bool?
     /// When the download last changed, in Unix seconds; nil for a step
     /// worked out from the library.
     public let updatedAt: Int?
@@ -139,6 +143,9 @@ public struct RequestSeason: Codable, Hashable, Sendable {
     /// The same steps as a request's progress.
     public let step: String
     public let percent: Double?
+    /// Not all of it is here, nothing is on its way, and a download for
+    /// what's missing died. Nil from a server older than the field.
+    public let dead: Bool?
 }
 
 /// The season a waiting series request asks for: one, or nil for all of it.
