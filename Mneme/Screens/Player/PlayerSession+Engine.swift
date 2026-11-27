@@ -26,6 +26,7 @@ extension PlayerSession {
 
     private func followClock(of engine: AetherEngine) async {
         for await time in engine.clock.$currentTime.values {
+            noteSeen(from: position, to: time)
             position = time
             duration = engine.duration
             autoSkipIfWanted()
@@ -36,10 +37,32 @@ extension PlayerSession {
         }
     }
 
+    /// An intro the viewer hasn't heard plays, with its Skip button, and is
+    /// skipped by itself from the next time, as in Melete's web player.
     private func autoSkipIfWanted() {
-        guard autoSkips, let offer = skipOffer, !autoSkipped.contains(offer.kind) else { return }
+        guard autoSkips, let offer = skipOffer, !offer.isNew, !autoSkipped.contains(offer.kind) else { return }
         autoSkipped.insert(offer.kind)
         skip(offer)
+    }
+
+    /// A new intro or credits played across its end, not skipped or seeked
+    /// over (a seek moves further than a tick): Melete is told once, so it
+    /// is no longer new in this or any episode it is in.
+    private func noteSeen(from previous: Double, to time: Double) {
+        guard let segments = play?.segments, time > previous, time - previous < 2 else { return }
+        let parts: [(SeenSegment, Segment?)] = [(.intro, segments.intro), (.credits, segments.credits)]
+        for (kind, segment) in parts {
+            guard let segment, segment.isNew, !seenSaid.contains(kind),
+                  previous < segment.endSeconds, time >= segment.endSeconds
+            else { continue }
+            seenSaid.insert(kind)
+            PlaybackDiagnostics.shared.record("segments", "\(kind.rawValue) played through, no longer new")
+            let file = target.fileID
+            let client = client
+            Task {
+                try? await client.segmentSeen(file: file, kind)
+            }
+        }
     }
 
     private func followState(of engine: AetherEngine) async {

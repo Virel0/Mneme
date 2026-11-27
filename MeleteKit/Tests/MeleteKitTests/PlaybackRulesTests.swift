@@ -40,6 +40,14 @@ struct SegmentGuideTests {
     }
 
     @Test
+    func `marks an intro the viewer hasn't heard`() {
+        var intro = segment(60, 150)
+        intro.new = true
+        #expect(guide(intro: intro).skip(at: 90) == SkipOffer(kind: .intro, end: 150, isNew: true))
+        #expect(guide(intro: segment(60, 150)).skip(at: 90)?.isNew == false)
+    }
+
+    @Test
     func `drops the offer in the last seconds`() {
         // Pressing Skip two seconds before the end would jump two seconds.
         let guide = guide(intro: segment(60, 150))

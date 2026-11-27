@@ -76,6 +76,7 @@ struct SeasonGrid: View {
         guard season.monitored else { return "Not looked for" }
         let episodes = season.episodes.map { "\(season.inLibrary) of \($0) episodes" } ?? "\(season.inLibrary) episodes"
         let step: String? = switch season.step {
+        case _ where season.dead == true: "No one is sharing it"
         case "in_library": nil
         case "downloading": season.percent.map { "Downloading \(Int($0))%" } ?? "Downloading"
         case "wanted": "Waiting"
