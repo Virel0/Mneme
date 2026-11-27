@@ -187,10 +187,11 @@ final class PreviewClip {
 extension URL {
 
     /// Whether the address is on the local network: a private address, a
-    /// `.local` name or a name without dots. A guess, which is all it needs
-    /// to be: it only decides whether clips play.
+    /// `.local` name or a name without dots, but not Melete's address
+    /// through Mneme's tunnel. A guess, which is all it needs to be: it only
+    /// decides whether clips play.
     var isOnHomeNetwork: Bool {
-        guard let host = host()?.lowercased() else { return false }
+        guard let host = host()?.lowercased(), !AwayFromHome.isThroughTunnel(self) else { return false }
         if host == "localhost" || host.hasSuffix(".local") || !host.contains(".") {
             return true
         }

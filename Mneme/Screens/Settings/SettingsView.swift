@@ -99,6 +99,8 @@ struct SettingsView: View {
                     Text("Who's watching is asked only when more than one person is signed in on this \(Self.device).")
                 }
 
+                AwayFromHomeSection()
+
                 Section {
                     Button(action: sendDiagnostics) {
                         HStack {
@@ -147,7 +149,7 @@ struct SettingsView: View {
     }
 
     /// The device the footers speak of.
-    private static var device: String {
+    static var device: String {
         #if os(tvOS)
         "Apple TV"
         #else

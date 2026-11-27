@@ -19,7 +19,7 @@ struct AcknowledgementsView: View {
             Section {
                 ForEach(Acknowledgements.libraries) { library in
                     NavigationLink {
-                        LicenceView(library: library)
+                        LicenceView(name: library.name, licence: library.licence, text: library.text)
                     } label: {
                         LabeledContent(library.name, value: library.licence)
                     }
@@ -32,8 +32,68 @@ struct AcknowledgementsView: View {
                     }
                 }
             }
+            if !TunnelCrate.all.isEmpty {
+                Section {
+                    NavigationLink {
+                        TunnelCratesView()
+                    } label: {
+                        LabeledContent("WireGuard", value: "\(TunnelCrate.all.count) Rust crates")
+                    }
+                } footer: {
+                    Text("Built into Mneme's tunnel to Melete: Mullvad's gotatun and the crates it is built with.")
+                }
+            }
         }
         .navigationTitle("Acknowledgements")
+    }
+}
+
+/// A Rust crate in Mneme's tunnel, with its licences, as `build.sh` in
+/// Packages/Tunnel wrote them into the tunnel's bundle.
+private struct TunnelCrate: Identifiable {
+    let name: String
+    let licence: String
+    let text: String
+
+    var id: String {
+        name
+    }
+
+    /// Read from the tunnel's bundle inside the app, so the licences ship
+    /// once. Each crate's part starts after a line of `=`, with its name,
+    /// version and licence on the first line.
+    static let all: [TunnelCrate] = {
+        guard let url = Bundle.main.builtInPlugInsURL?
+            .appending(path: "MnemeTunnel.appex/Tunnel_Tunnel.bundle/Licenses/rust-crates.txt"),
+            let file = try? String(contentsOf: url, encoding: .utf8)
+        else { return [] }
+        let rule = "\n" + String(repeating: "=", count: 78) + "\n"
+        return file.components(separatedBy: rule).dropFirst().compactMap { part in
+            let lines = part.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
+            guard let first = lines.first else { return nil }
+            let heading = first.components(separatedBy: "  ")
+            return TunnelCrate(
+                name: heading[0],
+                licence: heading.dropFirst().joined(separator: " ").trimmingCharacters(in: .whitespaces),
+                text: lines.count > 1 ? String(lines[1]) : ""
+            )
+        }
+    }()
+}
+
+private struct TunnelCratesView: View {
+
+    var body: some View {
+        Form {
+            ForEach(TunnelCrate.all) { crate in
+                NavigationLink {
+                    LicenceView(name: crate.name, licence: crate.licence, text: crate.text)
+                } label: {
+                    LabeledContent(crate.name, value: crate.licence)
+                }
+            }
+        }
+        .navigationTitle("WireGuard")
     }
 }
 
@@ -41,7 +101,9 @@ struct AcknowledgementsView: View {
 /// through it.
 private struct LicenceView: View {
 
-    let library: Acknowledgements.Library
+    let name: String
+    let licence: String
+    let text: String
 
     #if os(tvOS)
     private static let margins = EdgeInsets(top: 40, leading: 80, bottom: 40, trailing: 80)
@@ -63,7 +125,7 @@ private struct LicenceView: View {
             }
             .padding(Self.margins)
         }
-        .navigationTitle("\(library.name) · \(library.licence)")
+        .navigationTitle("\(name) · \(licence)")
         #if os(iOS)
         // A long title, too long for the large one.
         .navigationBarTitleDisplayMode(.inline)
@@ -71,7 +133,7 @@ private struct LicenceView: View {
     }
 
     private var paragraphs: [String] {
-        library.text
+        text
             .components(separatedBy: "\n\n")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }

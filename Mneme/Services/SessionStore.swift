@@ -60,9 +60,11 @@ final class SessionStore {
         current = sessions.first { $0.id == currentID }
     }
 
-    func client(for session: Session) -> MeleteClient? {
+    /// A client for the session's server, at its own address or at
+    /// another way in to it (through Mneme's tunnel, away from home).
+    func client(for session: Session, at address: URL? = nil) -> MeleteClient? {
         guard let token = Keychain.string(for: session.id) else { return nil }
-        return MeleteClient(baseURL: session.server, token: token)
+        return MeleteClient(baseURL: address ?? session.server, token: token)
     }
 
     func add(server: URL, login: LoginResponse) {
