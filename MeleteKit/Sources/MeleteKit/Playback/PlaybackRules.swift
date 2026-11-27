@@ -21,6 +21,9 @@ public struct SkipOffer: Hashable, Sendable {
     public let kind: Kind
     /// Where skipping lands.
     public let end: Double
+    /// An intro this viewer hasn't played through: offered, but not skipped
+    /// by itself.
+    public var isNew = false
 
     public var title: String {
         switch kind {
@@ -55,7 +58,7 @@ public struct SegmentGuide: Sendable {
         let candidates: [(SkipOffer.Kind, Segment?)] = [(.recap, segments.recap), (.intro, segments.intro), (.preview, segments.preview)]
         for (kind, segment) in candidates {
             guard let segment, segment.startSeconds <= time, time < segment.endSeconds - Self.minimumSkip else { continue }
-            return SkipOffer(kind: kind, end: segment.endSeconds)
+            return SkipOffer(kind: kind, end: segment.endSeconds, isNew: segment.isNew)
         }
         return nil
     }

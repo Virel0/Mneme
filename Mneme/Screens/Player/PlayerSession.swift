@@ -90,6 +90,9 @@ final class PlayerSession {
     /// not again on every tick while the seek lands.
     @ObservationIgnored
     var autoSkipped: Set<SkipOffer.Kind> = []
+    /// The new intro or credits Melete has been told played through.
+    @ObservationIgnored
+    var seenSaid: Set<SeenSegment> = []
 
     @ObservationIgnored
     private var lastReport: Date?
@@ -169,6 +172,7 @@ final class PlayerSession {
         nextCountdown = nil
         isNextDismissed = false
         autoSkipped = []
+        seenSaid = []
         lastReport = nil
         // Another title's styled track, even under the same id, is another
         // script; reopening the same title keeps the one drawn.

@@ -15,6 +15,14 @@ public struct Segment: Codable, Hashable, Sendable {
     public let endSeconds: Double
     /// How it was found: `chapter`, `audio` or `ending`.
     public let source: String
+    /// An intro or credits this viewer hasn't played through in any
+    /// episode. Nil for a recap or preview, and from a server older than
+    /// the field.
+    public var new: Bool?
+
+    public var isNew: Bool {
+        new == true
+    }
 }
 
 public struct FileSegments: Codable, Hashable, Sendable {

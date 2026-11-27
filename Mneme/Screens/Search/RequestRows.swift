@@ -66,6 +66,9 @@ struct RequestRow: View {
             return request.reason.map { "Declined: \($0)" } ?? "Declined"
         case "approved":
             guard let progress = request.progress else { return "Approved" }
+            if progress.dead == true {
+                return "No one is sharing it"
+            }
             if progress.step == "downloading", let percent = progress.percent {
                 return "\(stepName(progress.step)) · \(Int(percent))%"
             }
