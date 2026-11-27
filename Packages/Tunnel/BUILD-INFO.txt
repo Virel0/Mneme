@@ -1,0 +1,22 @@
+# TunnelCore build record
+
+Written by build.sh.
+
+Xcode    Xcode 26.6 Build version 17F113 
+rustc    rustc 1.99.1 (58cf8f9c3 2026-10-13)
+cargo    cargo 1.99.1 (5f94df478 2026-08-27)
+build.sh sha256 ecf28a10ddb880d8bef0933125e0715ff16e158bd4d139b714f31d764224d5b6
+Cargo.lock sha256 2ab7949f96f5435d35654448de2f63e895d2dcac7d8ca5e5f84657909ec9b1e8
+
+## Sources
+gotatun 0.10.3  https://github.com/mullvad/gotatun  (crates.io, checked against Cargo.lock)
+Floors   tvOS 26.1, iOS 26.1, macOS 15.0
+Profile  release, LTO, one codegen unit, debug info and local symbols stripped, paths remapped
+Crypto   ring (gotatun feature "ring")
+
+## Output
+tvos  aarch64-apple-tvos  arm64  sha256 f90e669ff0e7914e98fc85583a333cae20bfb7f3b63340e45e2c2c5f14dc8f1f
+tvos-sim  aarch64-apple-tvos-sim  arm64  sha256 7bba6b69fb937a92134ff40b9f0c1bd11b9ae232737a181739bc9a1e897568bc
+ios  aarch64-apple-ios  arm64  sha256 73bcb49646a747c0a0ffd79b132da92da2ce850abc6e23849334f628085e545b
+ios-sim  aarch64-apple-ios-sim  arm64  sha256 e96ae8ec0fe3b7056d789bdef1a1934b13c4553693768e49a5496ce0839625e7
+macos  aarch64-apple-darwin  arm64  sha256 2d204c5fafae78f2df6f154c97cf7f66f773eb24572c3a46777bd2fec1fbe239

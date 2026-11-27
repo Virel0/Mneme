@@ -61,6 +61,12 @@ jobs:
         working-directory: Packages/Libass
         run: swift test
 
+      # WireGuard as built by Packages/Tunnel/build.sh: a handshake with
+      # CryptoKit's keys and a packet carried across.
+      - name: Tunnel tests
+        working-directory: Packages/Tunnel
+        run: swift test
+
       - name: Size report
         run: python3 scripts/size_report.py .
 
