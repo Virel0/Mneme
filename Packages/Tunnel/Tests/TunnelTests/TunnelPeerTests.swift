@@ -48,14 +48,26 @@ struct TunnelPeerTests {
         ))
 
         let packet = ipv4Packet(Array("hello melete".utf8))
-        guard case let .toNetwork(initiation) = phone.send(packet) else { Issue.record("no handshake"); return }
-        guard case let .toNetwork(response) = melete.receive(initiation) else { Issue.record("no response"); return }
-        guard case let .toNetwork(keepalive) = phone.receive(response) else { Issue.record("no keepalive"); return }
+        guard case let .toNetwork(initiation) = phone.send(packet) else {
+            Issue.record("no handshake")
+            return
+        }
+        guard case let .toNetwork(response) = melete.receive(initiation) else {
+            Issue.record("no response")
+            return
+        }
+        guard case let .toNetwork(keepalive) = phone.receive(response) else {
+            Issue.record("no keepalive")
+            return
+        }
         #expect(melete.receive(keepalive) == .nothing)
 
         let held = try #require(phone.nextQueued())
         #expect(phone.nextQueued() == nil)
-        guard case let .toDevice(opened) = melete.receive(held) else { Issue.record("not opened"); return }
+        guard case let .toDevice(opened) = melete.receive(held) else {
+            Issue.record("not opened")
+            return
+        }
         #expect(opened.prefix(packet.count) == packet)
     }
 

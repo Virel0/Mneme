@@ -28,7 +28,7 @@ public final class TunnelPeer {
 
     private let core: OpaquePointer
     /// Room for any packet the tunnel's MTU lets through, and its overhead.
-    private var buffer = [UInt8](repeating: 0, count: 65_536)
+    private var buffer = [UInt8](repeating: 0, count: 65536)
 
     /// Keys are 32 bytes each, as WireGuard writes them (base64 decoded).
     /// `keepalive` is in seconds, 0 for none. Nil for a key of another length.
@@ -38,10 +38,20 @@ public final class TunnelPeer {
             peerPublicKey.withUnsafeBytes { peer in
                 if let presharedKey {
                     return presharedKey.withUnsafeBytes { psk in
-                        tunnel_core_new(privateKey.bindMemory(to: UInt8.self).baseAddress, peer.bindMemory(to: UInt8.self).baseAddress, psk.bindMemory(to: UInt8.self).baseAddress, keepalive)
+                        tunnel_core_new(
+                            privateKey.bindMemory(to: UInt8.self).baseAddress,
+                            peer.bindMemory(to: UInt8.self).baseAddress,
+                            psk.bindMemory(to: UInt8.self).baseAddress,
+                            keepalive
+                        )
                     }
                 }
-                return tunnel_core_new(privateKey.bindMemory(to: UInt8.self).baseAddress, peer.bindMemory(to: UInt8.self).baseAddress, nil, keepalive)
+                return tunnel_core_new(
+                    privateKey.bindMemory(to: UInt8.self).baseAddress,
+                    peer.bindMemory(to: UInt8.self).baseAddress,
+                    nil,
+                    keepalive
+                )
             }
         }
         guard let made else { return nil }
@@ -78,7 +88,10 @@ public final class TunnelPeer {
         step(Data()) { tunnel_core_tick(core, $2, $3) }
     }
 
-    private func step(_ input: Data, _ call: (UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<UInt8>?, Int) -> TunnelCoreResult) -> Output {
+    private func step(
+        _ input: Data,
+        _ call: (UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<UInt8>?, Int) -> TunnelCoreResult
+    ) -> Output {
         let capacity = buffer.count
         let result = input.withUnsafeBytes { input in
             buffer.withUnsafeMutableBufferPointer { out in
