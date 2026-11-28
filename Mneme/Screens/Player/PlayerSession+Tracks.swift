@@ -37,14 +37,14 @@ extension PlayerSession {
     func selectAudio(_ track: TrackInfo) {
         if isConverted {
             guard track.id != convertedAudio else { return }
-            rememberChoice(audioLanguage: track.language)
+            rememberChoice(audioLanguage: track.language, subtitle: subtitleTrack)
             PlaybackDiagnostics.shared.record("audio", "stream \(track.id) · reopening, a conversion carries one soundtrack")
             reload(showing: subtitleTrack, audio: track.id)
             return
         }
         guard let engine, engine.activeAudioTrackIndex != track.id else { return }
         engine.selectAudioTrack(index: track.id)
-        rememberChoice(audioLanguage: track.language)
+        rememberChoice(audioLanguage: track.language, subtitle: subtitleTrack)
         publishTrackOptions()
     }
 
@@ -58,7 +58,9 @@ extension PlayerSession {
         }
         #endif
         guard let play, let url = client.url(for: play.streamUrl) else { return }
-        rememberChoice(audioLanguage: audioTracks.first { $0.id == activeAudio }?.language)
+        // The track chosen, not the one still up: told the one being
+        // replaced, Melete opened the next episode with that.
+        rememberChoice(audioLanguage: audioTracks.first { $0.id == activeAudio }?.language, subtitle: track?.track)
         // A picture track over a conversion that hasn't drawn it in, or a
         // change from the one it has: the stream has to be chosen again.
         let picture = pictureTrack(track?.track)
@@ -200,9 +202,9 @@ extension PlayerSession {
 
     /// A choice made by hand in an episode carries to the series' next
     /// episodes, on Melete's side.
-    private func rememberChoice(audioLanguage: String?) {
+    private func rememberChoice(audioLanguage: String?, subtitle track: String?) {
         guard target.season != nil else { return }
-        let subtitle = subtitles.first { $0.track == subtitleTrack }.map {
+        let subtitle = subtitles.first { $0.track == track }.map {
             TrackChoice.Subtitle(language: $0.language, forced: $0.forced, hearingImpaired: $0.hearingImpaired)
         }
         let file = target.fileID
