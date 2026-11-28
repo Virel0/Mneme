@@ -210,9 +210,16 @@ struct PlayerView: View {
             }
 
             if let picker {
-                TrackPicker(kind: picker, session: session) {
-                    self.picker = nil
-                    focus = .bar
+                if picker == .together {
+                    TogetherPanel(session: session) {
+                        self.picker = nil
+                        focus = .bar
+                    }
+                } else {
+                    TrackPicker(kind: picker, session: session) {
+                        self.picker = nil
+                        focus = .bar
+                    }
                 }
             }
         }
@@ -382,6 +389,7 @@ enum PlayerFocus: Hashable {
     case audio
     case subtitles
     case speed
+    case together
     case skip
     case nextUp
 }
@@ -393,7 +401,7 @@ extension PlayerFocus? {
     /// can be dropped as the controls go, and the remote must still work.
     var allowsJumping: Bool {
         switch self {
-        case .audio, .subtitles, .speed: false
+        case .audio, .subtitles, .speed, .together: false
         default: true
         }
     }

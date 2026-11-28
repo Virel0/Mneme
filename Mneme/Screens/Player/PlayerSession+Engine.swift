@@ -19,6 +19,9 @@ extension PlayerSession {
         tasks += [
             Task { [weak self] in await self?.followClock(of: engine) },
             Task { [weak self] in await self?.followState(of: engine) },
+            Task { [weak self] in await self?.followParty() },
+            Task { [weak self] in await self?.keepInStepWithParty() },
+            Task { [weak self] in await self?.sayWaitingToParty(of: engine) },
             Task { await Self.recordStalls(of: engine) },
             Task { await Self.sampleTelemetry(of: engine) },
         ]

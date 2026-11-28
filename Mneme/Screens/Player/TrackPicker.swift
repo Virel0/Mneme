@@ -18,6 +18,8 @@ struct TrackPicker: View {
         case audio
         case subtitles
         case speed
+        /// Watch Together, which has a panel of its own (`TogetherPanel`).
+        case together
     }
 
     static let speeds: [Float] = [0.5, 0.75, 1, 1.25, 1.5, 2]
@@ -75,6 +77,7 @@ struct TrackPicker: View {
         case .audio: "Audio"
         case .subtitles: "Subtitles"
         case .speed: "Speed"
+        case .together: "Watch Together"
         }
     }
 
@@ -89,6 +92,7 @@ struct TrackPicker: View {
         case .audio: audioRows
         case .subtitles: subtitleRows
         case .speed: speedRows
+        case .together: []
         }
     }
 

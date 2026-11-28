@@ -33,7 +33,7 @@ final class PlayerSession {
     }
 
     let engine: AetherEngine?
-    private let library: Library
+    let library: Library
     var client: MeleteClient {
         library.client
     }
@@ -110,6 +110,20 @@ final class PlayerSession {
     var assTrack: String?
     @ObservationIgnored
     var assLoad: Task<Void, Never>?
+    /// A watch party's start set ahead, waited for; this viewer's change on
+    /// its way; a stall about to be said.
+    @ObservationIgnored
+    var partyStartTask: Task<Void, Never>?
+    @ObservationIgnored
+    var partySendTask: Task<Void, Never>?
+    @ObservationIgnored
+    var partyWaitTask: Task<Void, Never>?
+    /// Whether the party was told this player is waiting.
+    @ObservationIgnored
+    var saidWaiting = false
+    /// Until when the player's own changes are the party's, not the viewer's.
+    @ObservationIgnored
+    var partySettledAt = Date.distantPast
     /// The name and poster as last published, and the file they are for;
     /// the track lists are laid over them each time a track changes.
     @ObservationIgnored
@@ -225,7 +239,7 @@ final class PlayerSession {
 
             try await engine.load(
                 url: source.url,
-                startPosition: reloading?.at ?? startPosition(resume: play.resumeSeconds, restarts: target.restarts),
+                startPosition: reloading?.at ?? partyStart ?? startPosition(resume: play.resumeSeconds, restarts: target.restarts),
                 options: options,
                 // The chosen audio from the first frame, rather than a switch
                 // a second in. A conversion already carries only that one.
@@ -247,6 +261,7 @@ final class PlayerSession {
             // its route before the player is made, so the buttons asked for
             // then found nothing to answer on.
             registerRemoteCommands()
+            partyLoaded()
 
             Task { await loadExtras(for: target, stream: url) }
             Task { await publishNowPlaying(for: target) }
@@ -342,6 +357,7 @@ final class PlayerSession {
             Task { await report() }
         }
         isPaused.toggle()
+        tellParty(isPaused ? .pause : .play)
     }
 
     /// Where the playhead is going, while a seek is on its way. The clock
@@ -368,6 +384,7 @@ final class PlayerSession {
         let target = min(max(0, seconds), max(0, duration - 1))
         seekGoal = target
         pendingSeek = target
+        tellParty(.seek)
         guard seekTask == nil else { return }
 
         seekTask = Task {
@@ -394,8 +411,9 @@ final class PlayerSession {
         engine?.setRate(rate)
     }
 
+    /// In a watch party the party sets the speed.
     private func applyRate() {
-        guard rate != 1 else { return }
+        guard rate != 1, parties.party == nil else { return }
         engine?.setRate(rate)
     }
 
@@ -470,7 +488,8 @@ final class PlayerSession {
     }
 
     func playNext() {
-        guard let next else { return }
+        // In someone else's party the next file is the host's to choose.
+        guard let next, !followsParty else { return }
         countdownTask?.cancel()
         nextCountdown = nil
         // Let go of at once: while the last position is sent, the credits
@@ -486,10 +505,35 @@ final class PlayerSession {
         }
     }
 
+    /// The file a watch party's host took it to, opened where the party is.
+    func openPartyFile(_ party: WatchParty) {
+        guard phase == .playing else { return }
+        let title = party.movieId.map { TitleRef(kind: .movie, id: $0) } ?? party.seriesId.map { TitleRef(kind: .series, id: $0) }
+        guard let title else { return }
+        let code = party.season.flatMap { season in party.episode.flatMap { Format.episodeCode(season: season, episode: $0) } }
+        let partyFile = PlayTarget(
+            fileID: party.fileId,
+            label: code.map { "Watch Party · \($0)" } ?? "Watch Party",
+            title: title,
+            season: party.season,
+            episode: party.episode,
+            restarts: false
+        )
+        countdownTask?.cancel()
+        nextCountdown = nil
+        next = nil
+        phase = .loading
+        Task {
+            await report(force: true)
+            target = partyFile
+            await load(partyFile)
+        }
+    }
+
     /// Starts the countdown once the credits begin, if there is a next
     /// episode and the viewer has not turned it away.
     func considerNext() {
-        guard next != nil, nextCountdown == nil, !isNextDismissed, !isPaused,
+        guard next != nil, nextCountdown == nil, !isNextDismissed, !isPaused, !followsParty,
               library.autoplayNext,
               let start = guide?.nextUpStart, position >= start
         else { return }
