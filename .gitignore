@@ -11,3 +11,6 @@ XcodeConfig/DevelopmentTeam.xcconfig
 
 # Package checkouts made by CI builds.
 .spm/
+
+# Rust's build folder for Packages/Tunnel; build.sh builds elsewhere.
+Packages/Tunnel/rust/target/

@@ -1,0 +1,23 @@
+[package]
+name = "tunnel-core"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "GPL-3.0-or-later"
+publish = false
+description = "WireGuard for Mneme's packet tunnel: Mullvad's gotatun behind a small C interface."
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+# WireGuard in userspace: Mullvad's fork of BoringTun, MPL-2.0, the same
+# release as Melete's own tunnel. Only its protocol (`noise`); the extension
+# moves the packets. Its crypto from ring rather than aws-lc (Melete's): the
+# same algorithms, a library under half the size in a memory-capped extension.
+gotatun = { version = "=0.10.3", default-features = false, features = ["ring"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "debuginfo"
